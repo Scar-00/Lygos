@@ -1,0 +1,18 @@
+fn print_int(i: i32) -> i32;
+
+fn foo(i: i32) -> i32;
+
+fn test(i: i32, j: i32) -> i32 {
+    return i / j;
+}
+
+struct Human {
+    age: i32;
+};
+
+fn main() -> i32 {
+    let mut foo: Human;
+    foo.age = 10;
+    let x = printf("%d", foo.age);
+    return foo.age;
+}
