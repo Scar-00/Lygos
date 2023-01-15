@@ -38,6 +38,7 @@ enum class TokenType {
     Semi,
     Colon,
     Ampercent,
+    Hash,
     TypeDef,
     FunctionType,
 
@@ -71,6 +72,7 @@ enum class TokenType {
     KwFn,
     KwRet,
     KwIn,
+    KwInclude,
 
     Eof,
 };
@@ -87,6 +89,7 @@ static std::map<std::string, TokenType> KeyWords = {
     {"fn", TokenType::KwFn},
     {"return", TokenType::KwRet},
     {"in", TokenType::KwIn},
+    {"include", TokenType::KwInclude},
 };
 
 static std::set<std::string> base_types = {

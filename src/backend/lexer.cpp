@@ -125,6 +125,7 @@ Token Lexer::NextToken() {
             case '<': return AdvanceToken({"<", TokenType::OpLe});
             case '>': return AdvanceToken({">", TokenType::OpGr});
             case '&': return AdvanceToken({"&", TokenType::Ampercent});
+            case '#': return AdvanceToken({"#", TokenType::Hash});
             case '=': {
                 switch (src[index + 1]) {
                     case '=': Advance(); return AdvanceToken({"==", TokenType::OpEqEq});

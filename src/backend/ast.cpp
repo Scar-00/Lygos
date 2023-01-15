@@ -18,6 +18,7 @@
 #include "llvm/Support/Format.h"
 #include <bits/ranges_util.h>
 #include <cerrno>
+#include <climits>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -105,9 +106,6 @@ Val *VarDecl::GenCode(Scope *scope) {
     }
     auto val = (*value)->GenCode(scope);
 
-    //if(this->data_type != "Unknown")
-        //val->getType()->
-
     auto alloca = builder->CreateAlloca(val->getType(), 0, "");
     builder->CreateStore(val, alloca);
     scope->DeclVar(id, cnst, alloca);
@@ -153,23 +151,16 @@ Val *AssignmentExpr::GenCode(Scope *scope) {
     if(scope->GetConstants().contains(id->GetValue()))
         error("Cannot assign to immutale variable %s", id->GetValue().c_str());
 
-    //id->GenCode(scope);
-    /*if(this->id->type == ASTType::MemberExpr) {
-        auto t = id->GenCode(scope);
-
-        if(!t->getType()->isPointerTy())
-            t->mutateType(llvm::PointerType::get(t->getType(), 0));
-
-        //error("%s", t->getName().data());
-        auto res = builder->CreateStore(value->GenCode(scope), t);
-        return res;
-    }*/
-
-    auto val = id->GenCode(scope);
+    auto id = this->id->GenCode(scope);
+    auto val = this->value->GenCode(scope);
+    if(this->value->type == ASTType::Id
+    || this->value->type == ASTType::MemberExpr) {
+        val = LoadOrIgnore(val);
+    }
 
     //builder->CreateStore(value->GenCode(scope), scope->GetVars().at(id->GetValue()));
-    builder->CreateStore(value->GenCode(scope), val);
-    return scope->GetVars().at(id->GetValue());
+    builder->CreateStore(value->GenCode(scope), id);
+    return id;
 }
 
 std::string MemberExpr::GetValue() {
@@ -177,20 +168,22 @@ std::string MemberExpr::GetValue() {
 }
 
 Val *MemberExpr::GenCode(Scope *scope) {
-    auto obj = (llvm::AllocaInst *)this->obj->GenCode(scope);
+    auto obj = this->obj->GenCode(scope);
 
-    auto gep = builder->CreateStructGEP(obj->getAllocatedType(), obj, 0);
-    //auto load = builder->CreateLoad(llvm::Type::getInt32Ty(*ctx), gep);
+    auto member = scope->GetStruct(static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data());
+    size_t index;
+    for(size_t i = 0; i < member.size(); i++) {
+        if(member[i] == property->GetValue())
+            index = i;
+    }
 
-    //gep->getType()->getStructElementType(0);
+    if(this->property->type == ASTType::MemberExpr) {
+        this->property->GenCode(scope);
+    }
 
-    //if(this->property->type == ASTType::MemberExpr) {
-    //    this->property->GenCode(scope);
-    //}
+    auto gep = builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, index);
 
     return gep;
-    //error("TODO!");
-    //return nullptr;
 }
 
 std::string IfExpr::GetValue() {
@@ -216,12 +209,14 @@ Val *IfExpr::GenCode(Scope *scope) {
 
     func->getBasicBlockList().push_back(else_bb);
     builder->SetInsertPoint(else_bb);
-    for(auto node : *else_branch)
+    for(auto &node : *else_branch)
         node->GenCode(scope);
     builder->CreateBr(merge);
 
     func->getBasicBlockList().push_back(merge);
     builder->SetInsertPoint(merge);
+
+    error("TODO if expr");
     return nullptr;
 }
 
@@ -230,11 +225,11 @@ std::string ForExpr::GetValue() {
 }
 
 Val *ForExpr::GenCode(Scope *scope) {
-    auto header = llvm::BasicBlock::Create(*ctx, "", builder->GetInsertBlock()->getParent());
+    //auto header = llvm::BasicBlock::Create(*ctx, "", builder->GetInsertBlock()->getParent());
 
 
-    auto body = llvm::BasicBlock::Create(*ctx);
-    auto end = llvm::BasicBlock::Create(*ctx);
+    //auto body = llvm::BasicBlock::Create(*ctx);
+    //auto end = llvm::BasicBlock::Create(*ctx);
 
     error("TODO! for_expr");
     return NULL;
@@ -254,7 +249,10 @@ Val *CallExpr::GenCode(Scope *scope) {
 
     std::vector<Val *> arg_values;
     for(auto &arg : this->args) {
-        arg_values.push_back(arg->GenCode(scope));
+        auto val = arg->GenCode(scope);
+        if(arg->type == ASTType::Id || arg->type == ASTType::MemberExpr)
+            val = LoadOrIgnore(val);
+        arg_values.push_back(val);
     }
 
     return builder->CreateCall(callee, arg_values);
@@ -266,11 +264,11 @@ std::string StructDef::GetValue() {
 
 Val *StructDef::GenCode(Scope *scope) {
     std::vector<llvm::Type *> data_fields;
-    std::vector<std::tuple<std::string, llvm::Type *>> struct_member;
+    std::vector<std::string> struct_member;
     for(auto &field : this->fields) {
         auto type = scope->GetType(field.data_type);
         data_fields.push_back(type);
-        struct_member.push_back({field.id, type});
+        struct_member.push_back(field.id);
     }
 
     llvm::StructType *struct_type = llvm::StructType::create(
@@ -299,7 +297,6 @@ std::string StringLiteral::GetValue() {
 }
 
 Val *StringLiteral::GenCode(Scope *scope) {
-    Log() << value << "\n";
     auto global = builder->CreateGlobalStringPtr(value);
     return global;
 }
@@ -319,17 +316,10 @@ std::string ReturnExpr::GetValue() {
 }
 
 Val *ReturnExpr::GenCode(Scope *scope) {
-    /*auto val = value->GenCode(scope);
-    auto type = val->getType();
-    if(type->isPointerTy()) {
-        type = static_cast<llvm::PointerType *>(type)->getContainedType(0);
-        auto load = builder->CreateLoad(type, val);
-        return builder->CreateRet(load);
-    }
-
+    auto val = value->GenCode(scope);
+    if(value->type == ASTType::Id || value->type == ASTType::MemberExpr)
+        val = LoadOrIgnore(val);
     return builder->CreateRet(val);
-    */
-    return builder->CreateRet(LoadOrIgnore(value->GenCode(scope)));
 }
 
 std::string BinaryExpr::GetValue() {
@@ -342,17 +332,16 @@ Val *BinaryExpr::GenCode(Scope *scope) {
     if(!lhs || !rhs)
         error("Error generating binary expr");
 
-    auto lhs_type = lhs->getType();
-    auto rhs_type = rhs->getType();
-    if(lhs->getType()->isPointerTy() && rhs->getType()->isPointerTy()) {
-        lhs_type = static_cast<llvm::PointerType *>(lhs->getType())->getContainedType(0);
-        rhs_type = static_cast<llvm::PointerType *>(rhs->getType())->getContainedType(0);
+    if(this->lhs->type == ASTType::Id
+    || this->lhs->type == ASTType::MemberExpr
+    || this->rhs->type == ASTType::Id
+    || this->rhs->type == ASTType::MemberExpr
+    ) {
+        lhs = LoadOrIgnore(lhs);
+        rhs = LoadOrIgnore(rhs);
     }
 
-    lhs = builder->CreateLoad(lhs_type, lhs);
-    rhs = builder->CreateLoad(rhs_type, rhs);
-
-    //expand this tp account for type conversion etc.
+    //expand this to account for type conversion etc.
     if(op == "+") return builder->CreateAdd(lhs, rhs);
     if(op == "-") return builder->CreateSub(lhs, rhs);
     if(op == "*") return builder->CreateMul(lhs, rhs);

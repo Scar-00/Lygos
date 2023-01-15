@@ -42,7 +42,7 @@ llvm::AllocaInst *Scope::LookupVar(std::string id) {
     return scope->vars.at(id);
 }
 
-void Scope::AddType(std::string id, llvm::StructType *type, std::vector<std::tuple<std::string, llvm::Type *>> struct_member) {
+void Scope::AddType(std::string id, llvm::StructType *type, std::vector<std::string> struct_member) {
     auto scope = this->Resolve(id.c_str());
     if(scope->struct_types.contains(id))
         error("Cannot redeclare '%s'", id.c_str());
@@ -58,10 +58,13 @@ llvm::Type *Scope::GetType(std::string &type) {
     std::exit(1);
 }
 
-std::vector<std::tuple<std::string, llvm::Type *>> &Scope::GetStruct(std::string id) {
-    Scope *scope = this->Resolve(id.c_str());
-    if(scope->struct_types.contains(id)) return scope->struct_fields.at(id);
-    error("Unknown type '%s'", id.c_str());
+std::vector<std::string> &Scope::GetStruct(std::string type) {
+    Scope *scope = this->Resolve(type.c_str());
+    if(scope->struct_fields.contains(type)) {
+        return scope->struct_fields.at(type);
+    }
+
+    error("Unknown type '%s'", type.c_str());
     std::exit(1);
 }
 

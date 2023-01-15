@@ -98,15 +98,14 @@ int main() {
 
     ast->GenCode({});
 
-    /*
     llvm::legacy::PassManager pass_manager;
 
+    pass_manager.add(llvm::createPromoteMemoryToRegisterPass());
     pass_manager.add(llvm::createReassociatePass());
     pass_manager.add(llvm::createNewGVNPass());
     pass_manager.add(llvm::createCFGSimplificationPass());
 
     pass_manager.run(*mod);
-    */
 
     llvm::verifyModule(*mod, &llvm::errs());
 

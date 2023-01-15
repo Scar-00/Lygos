@@ -14,6 +14,7 @@ public:
 private:
     Token& At() { return tokens[index]; }
     Token& Eat() { auto& token = tokens.at(index); index++; return token; }
+    AST *ParseGlobals();
     AST *ParseStmt();
     Field ParseFieldDecl();
     AST *ParseStructDecl();

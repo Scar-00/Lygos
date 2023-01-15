@@ -13,22 +13,29 @@
 #include "lexer.h"
 
 #define LOG(tok) std::cout << #tok << " -> " << tok.value << std::endl
+#define PEEK(offset) this->tokens[this->index + offset]
 
 AST *Parser::BuildAst() {
     Program *program = new Program();
     while (At().type != TokenType::Eof) {
-        program->body.push_back(ParseStmt());
+        program->body.push_back(ParseGlobals());
     }
     return program;
 }
 
-AST *Parser::ParseStmt() {
+AST *Parser::ParseGlobals() {
     switch (At().type) {
         case TokenType::KwStruct: return ParseStructDecl();
         case TokenType::KwFn: return ParseFunc();
-        default:
-            return ParseExpr();
+        default: return ParseStmt();
     }
+}
+
+AST *Parser::ParseStmt() {
+    auto node =  ParseExpr();
+    if(Eat().type != TokenType::Semi)
+        error("Expected ';' at the end of expression");
+    return node;
 }
 
 Field Parser::ParseFieldDecl() {
@@ -69,8 +76,6 @@ AST *Parser::ParseStructDecl() {
     if(Eat().type != TokenType::Semi)
         error("Expected ';' at the end of struct decl");
 
-    //insert type into local types
-
     return new StructDef{struct_id.value, fields};
 }
 
@@ -101,7 +106,7 @@ AST *Parser::ParseFunc() {
             break;
 
         if(At().type != TokenType::Comma)
-            error("Expected ';'");
+            error("Expected ';' at the end of function decl");
         else Eat();
     }
     Eat();
@@ -112,7 +117,6 @@ AST *Parser::ParseFunc() {
         ret_type = Eat().value;
     }
 
-    //add function def here -> ignore body and check for semi
     if(At().type == TokenType::Semi) {
         Eat();
         return new FunctionDecl(id.value, ret_type, args);
@@ -123,7 +127,7 @@ AST *Parser::ParseFunc() {
 
     std::vector<AST *> body;
     while (At().type != TokenType::CurlyRight) {
-        body.push_back(ParseExpr());
+        body.push_back(ParseStmt());
     }
     Eat();
 
@@ -132,12 +136,7 @@ AST *Parser::ParseFunc() {
 
 AST *Parser::ParseRetExr() {
     Eat();
-    auto val = ParseExpr();
-    if(At().type != TokenType::Semi)
-        error("Expected ';' after return expr, found '%s'", At().value.c_str());
-    else Eat();
-
-    return new ReturnExpr{val};
+    return new ReturnExpr{ParseExpr()};
 }
 
 AST *Parser::ParseVarDecl() {
@@ -162,7 +161,7 @@ AST *Parser::ParseVarDecl() {
     if(type.type == TokenType::TypeDef) {
         has_type = true;
         data_type = type.value;
-        type = Eat();
+        type = At();
     }
 
     switch (type.type) {
@@ -176,9 +175,6 @@ AST *Parser::ParseVarDecl() {
         }
         case TokenType::Equals: {
             auto decl = new VarDecl{token.value, std::make_shared<AST*>(ParseExpr()), is_const, data_type}; //TODO figure out data type
-            if(Eat().type != TokenType::Semi) {
-                error("Expected ';' after variable declaration");
-            }
             return decl;
         }
         default:
@@ -215,12 +211,6 @@ AST *Parser::ParseAssignmentExpr() {
         Eat();
 
         AST *rhs = ParseAssignmentExpr();
-        auto type = At().type;
-
-        if(type == TokenType::Semi || type == TokenType::Equals)
-            Eat();
-        else
-            error("Exprected ';' at the end of expression");
 
         return new AssignmentExpr{lhs, rhs, "Unknown"}; //TODO figure out data type
     }
@@ -249,7 +239,6 @@ AST *Parser::ParseMultExpr() {
 }
 
 AST *Parser::ParseCallExpr() {
-    //auto type = At().type;
     auto callee = ParseMemberExpr();
 
     if(At().type == TokenType::ParanLeft) {
@@ -261,7 +250,7 @@ AST *Parser::ParseCallExpr() {
                 break;
 
             if(Eat().type != TokenType::Comma)
-                error("Expected ';'");
+                error("Expected ','");
         }
         Eat();
 
@@ -325,7 +314,7 @@ AST *Parser::ParsePrimaryExpr() {
 
             std::vector<AST*> then_branch;
             while (At().type != TokenType::CurlyRight) {
-                then_branch.push_back(ParseExpr());
+                then_branch.push_back(ParseStmt());
             }
             Eat();
 
@@ -338,7 +327,7 @@ AST *Parser::ParsePrimaryExpr() {
 
                 else_branch = std::make_shared<std::vector<AST*>>();
                 while (At().type != TokenType::CurlyRight) {
-                    else_branch->push_back(ParseExpr());
+                    else_branch->push_back(ParseStmt());
                 }
                 Eat();
             }
@@ -368,8 +357,8 @@ AST *Parser::ParsePrimaryExpr() {
             return new ForExpr(var, iter, body);
         }
         default:
-            printf("Unknown Token found [%s]\n", token.value.c_str());
-            std::fflush(stdout);
+            Log() << PEEK(1).value << " " << PEEK(2).value << "\n";
+            error("Unknown Token found [%s]\n", token.value.c_str());
             std::exit(1);
     }
 }

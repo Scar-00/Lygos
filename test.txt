@@ -1,18 +1,23 @@
 fn print_int(i: i32) -> i32;
 
-fn foo(i: i32) -> i32;
-
-fn test(i: i32, j: i32) -> i32 {
-    return i / j;
-}
+struct Foo {
+    x: i32;
+    y: i32;
+};
 
 struct Human {
     age: i32;
+    height: i32;
+    foo: Foo;
 };
 
-fn main() -> i32 {
+fn test(i: i32) -> i32 {
     let mut foo: Human;
-    foo.age = 10;
-    let x = printf("%d", foo.age);
-    return foo.age;
+    foo.foo.x = 10;
+    return 0;
+}
+
+fn main() -> i32 {
+    test(0);
+    return 0;
 }
