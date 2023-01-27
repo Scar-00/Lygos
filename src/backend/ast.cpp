@@ -74,7 +74,7 @@ Val *Function::GenCode(Scope *scope) {
         );
     }
 
-    //maybe remove this
+    //maybe remove this ?
     fn->setDSOLocal(true);
     auto bb = llvm::BasicBlock::Create(*ctx, "", fn);
     builder->SetInsertPoint(bb);
@@ -86,8 +86,13 @@ Val *Function::GenCode(Scope *scope) {
         curr_scope.DeclVar(std::get<0>(this->args.at(i)), true, alloca);
     }
 
+    if(return_type != "void")
+        curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
+
     for(auto &node : this->block)
         node->GenCode(&curr_scope);
+
+    curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
     llvm::verifyFunction(*fn);
     return nullptr;
@@ -152,13 +157,13 @@ Val *AssignmentExpr::GenCode(Scope *scope) {
         error("Cannot assign to immutale variable %s", id->GetValue().c_str());
 
     auto id = this->id->GenCode(scope);
-    auto val = this->value->GenCode(scope);
+    //FIXME: does this need to be here ?
+    /*auto val = this->value->GenCode(scope);
     if(this->value->type == ASTType::Id
     || this->value->type == ASTType::MemberExpr) {
         val = LoadOrIgnore(val);
-    }
+    }*/
 
-    //builder->CreateStore(value->GenCode(scope), scope->GetVars().at(id->GetValue()));
     builder->CreateStore(value->GenCode(scope), id);
     return id;
 }
@@ -216,7 +221,7 @@ Val *IfExpr::GenCode(Scope *scope) {
     func->getBasicBlockList().push_back(merge);
     builder->SetInsertPoint(merge);
 
-    error("TODO if expr");
+    //error("TODO if expr");
     return nullptr;
 }
 
@@ -316,10 +321,19 @@ std::string ReturnExpr::GetValue() {
 }
 
 Val *ReturnExpr::GenCode(Scope *scope) {
+    if(this->value == NULL) {
+        return nullptr;
+    }
+
+    if(!scope->GetRet())
+        error("Invalid return type for funtion with return type 'void'");
+
     auto val = value->GenCode(scope);
     if(value->type == ASTType::Id || value->type == ASTType::MemberExpr)
         val = LoadOrIgnore(val);
-    return builder->CreateRet(val);
+    //return builder->CreateStore(val, scope->GetRet());
+    //return builder->CreateRet(val);*/
+    return builder->CreateStore(val, scope->GetRet());
 }
 
 std::string BinaryExpr::GetValue() {

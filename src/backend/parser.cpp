@@ -136,6 +136,9 @@ AST *Parser::ParseFunc() {
 
 AST *Parser::ParseRetExr() {
     Eat();
+    if (At().type == TokenType::Semi) {
+        return new ReturnExpr(NULL);
+    }
     return new ReturnExpr{ParseExpr()};
 }
 

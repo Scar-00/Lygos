@@ -1,7 +1,21 @@
 #pragma once
 
 #include "../types.h"
+#include <ostream>
 #include <vector>
+
+struct Location {
+public:
+    Location(std::string file, size_t line) {}
+    std::string &GetFile() const;
+    size_t &GetLine() const;
+private:
+    std::string file;
+    size_t line;
+    size_t start, end;
+};
+
+std::ostream &operator<<(std::ostream &os, const Location &loc);
 
 class Token {
 public:
@@ -10,6 +24,8 @@ public:
     Token(const char *value, TokenType type): value(value), type(type) {}
     Token(std::string value, TokenType type): value(value), type(type) {}
 };
+
+std::ostream &operator<<(std::ostream &os, const Token &token);
 
 class Lexer {
 public:

@@ -1,8 +1,10 @@
 fn print_int(i: i32) -> i32;
+fn read_char() -> i32;
 
 struct Foo {
     x: i32;
     y: i32;
+    z: i32;
 };
 
 struct Human {
@@ -12,12 +14,20 @@ struct Human {
 };
 
 fn test(i: i32) -> i32 {
-    let mut foo: Human;
-    foo.foo.x = 10;
-    return 0;
+    if i < 10 {
+        print_int(i);
+        return test(i + 1);
+    }else {
+        return 10;
+    };
 }
 
 fn main() -> i32 {
-    test(0);
-    return 0;
+    let char = read_char();
+    printf_ln("%d", char);
+    if char > 100 {
+        return 0;
+    }else {
+        return 1;
+    };
 }

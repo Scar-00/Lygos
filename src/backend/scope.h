@@ -13,6 +13,8 @@ public:
     Scope(Scope *parent = nullptr): parent(parent) {}
     void Print();
     void DeclVar(std::string id, bool cnst, llvm::AllocaInst *value);
+    void SetRet(llvm::Value *value) { ret = value; }
+    llvm:: Value *GetRet() { return ret; }
     llvm::AllocaInst *LookupVar(std::string id);
     std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
     std::set<std::string> &GetConstants() { return constants; }
@@ -27,4 +29,5 @@ private:
     std::unordered_map<std::string, llvm::StructType *> struct_types;
     std::unordered_map<std::string, std::vector<std::string>> struct_fields;
     Scope *parent = nullptr;
+    llvm::Value *ret = nullptr;
 };

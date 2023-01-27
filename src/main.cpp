@@ -15,6 +15,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/Utils/SimplifyCFGOptions.h"
 
 #include <cstddef>
 #include <cstdlib>
@@ -80,7 +81,7 @@ int main() {
     std::string buffer(length, ' ');
     istream.read(&buffer[0], length);
 
-    std::cout << buffer << "\n";
+    //std::cout << buffer << "\n";
 
     Lexer lexer{buffer.c_str()};
     Parser parser{lexer};
@@ -94,18 +95,20 @@ int main() {
         true
     );
 
-    llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf", *mod);
+    llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf_ln", *mod);
 
     ast->GenCode({});
 
     llvm::legacy::PassManager pass_manager;
 
+    pass_manager.add(llvm::createAnnotationRemarksLegacyPass());
     pass_manager.add(llvm::createPromoteMemoryToRegisterPass());
     pass_manager.add(llvm::createReassociatePass());
     pass_manager.add(llvm::createNewGVNPass());
     pass_manager.add(llvm::createCFGSimplificationPass());
+    pass_manager.add(llvm::createSimpleLoopUnrollPass(3));
 
-    pass_manager.run(*mod);
+    //pass_manager.run(*mod);
 
     llvm::verifyModule(*mod, &llvm::errs());
 
@@ -115,7 +118,6 @@ int main() {
     os.flush();
 
     std::system("clang -o tmp/main tmp/main.ll -mllvm -opaque-pointers std/libstd.a -lc");
-
 
     /*
     std::string mod_ir;

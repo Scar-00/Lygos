@@ -2,10 +2,22 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <ostream>
 #include <stdio.h>
 #include <vector>
 
 #include "../util.h"
+
+std::ostream &operator<<(std::ostream &os, const Location &loc) {
+    //os << "Location -> " << loc.GetFile() << ":" << loc.GetLine() << "\n";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Token &token) {
+    os << "Type -> " << (int)token.type << "\n";
+    os << "Value -> " << token.value << "\n";
+    return os;
+}
 
 Lexer::Lexer(const char *program): src(program), curr(program[0]), index(0) {}
 
@@ -60,7 +72,7 @@ Token Lexer::LexId() {
     return {value, TokenType::Id};
 }
 
-//add support for '*', '&' and "mut" for type specifier
+//add support for '*', '&' and "mut"/"const" for type specifier
 Token Lexer::TryParseType() {
     Advance();
     while (std::isspace(curr)) {
