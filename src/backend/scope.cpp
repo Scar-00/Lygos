@@ -1,11 +1,15 @@
 #include "scope.h"
 #include "../util.h"
 #include "../global.h"
+#include "ast.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
+#include <ratio>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
@@ -50,11 +54,15 @@ void Scope::AddType(std::string id, llvm::StructType *type, std::vector<std::str
     this->struct_fields.insert({id, struct_member});
 }
 
-llvm::Type *Scope::GetType(std::string &type) {
-    if(base_types.contains(type)) return resolve_type(type);
-    Scope *scope = this->Resolve(type.c_str());
-    if(scope->struct_types.contains(type)) return scope->struct_types.at(type);
-    error("Unknown type '%s'", type.c_str());
+llvm::Type *Scope::GetType(TypeSpec &type) {
+    if(base_types.contains(type.name)) return type.ptr ? llvm::PointerType::get(resolve_type(type.name), 0) : resolve_type(type.name);
+    Scope *scope = this->Resolve(type.name.c_str());
+    if(scope->struct_types.contains(type.name)) {
+        if(type.ptr)
+            return llvm::PointerType::get(scope->struct_types.at(type.name), 0);
+        return scope->struct_types.at(type.name);
+    }
+    error("Unknown type '%s'", type.name.c_str());
     std::exit(1);
 }
 
@@ -64,7 +72,7 @@ std::vector<std::string> &Scope::GetStruct(std::string type) {
         return scope->struct_fields.at(type);
     }
 
-    error("Unknown type '%s'", type.c_str());
+    error("Unknown struct type '%s'", type.c_str());
     std::exit(1);
 }
 

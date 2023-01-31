@@ -44,15 +44,17 @@ Field Parser::ParseFieldDecl() {
     if(id.type != TokenType::Id)
         error("Expected id in field declaration");
 
-    auto type = this->Eat();
+    //auto type = this->Eat();
 
-    if(type.type != TokenType::TypeDef)
-        error("Field %s requires type", type.value.c_str());
+    if(Eat().type != TokenType::Colon)
+        error("Field %s requires type", PEEK(-1).value.c_str());
+
+    auto type = this->ParseTypeSpec(TypeConstraints::Field);
 
     if(Eat().type != TokenType::Semi)
         error("Expected ';' after field declaration");
 
-    return Field{id.value, type.value};
+    return Field{id.value, type};
 }
 
 AST *Parser::ParseStructDecl() {
@@ -86,7 +88,7 @@ AST *Parser::ParseFunc() {
     if(id.type != TokenType::Id)
         error("Expected 'Identifier' after 'fn' keyword");
 
-    std::vector<std::tuple<std::string, std::string>> args;
+    std::vector<std::tuple<std::string, TypeSpec>> args;
 
     if(Eat().type != TokenType::ParanLeft)
         error("Exprected '('");
@@ -96,11 +98,12 @@ AST *Parser::ParseFunc() {
         if(id.type != TokenType::Id)
             error("Expected identifier, found %s", id.value.c_str());
 
-        auto type = Eat();
-        if(type.type != TokenType::TypeDef)
-            error("Exprected type after function parameter, found %s", type.value.c_str());
+        if(Eat().type != TokenType::Colon)
+            error("Expected type after function parameter, found %s", PEEK(-1).value.c_str());
 
-        args.push_back({id.value, type.value});
+        auto type = this->ParseTypeSpec(TypeConstraints::Var);
+
+        args.push_back({id.value, type});
 
         if(At().type == TokenType::ParanRight)
             break;
@@ -111,10 +114,11 @@ AST *Parser::ParseFunc() {
     }
     Eat();
 
-    std::string ret_type = {"void"};
+    TypeSpec ret_type = {"void", false, false};
 
-    if(At().type == TokenType::FunctionType) {
-        ret_type = Eat().value;
+    if(At().type == TokenType::Arrow) {
+        Eat();
+        ret_type = this->ParseTypeSpec(TypeConstraints::Function);
     }
 
     if(At().type == TokenType::Semi) {
@@ -142,11 +146,15 @@ AST *Parser::ParseRetExr() {
     return new ReturnExpr{ParseExpr()};
 }
 
+AST *Parser::ParseIfExpr() {
+    error("NOT YET IMPL");
+}
+
 AST *Parser::ParseVarDecl() {
     Eat();
     bool is_const = true;
     bool has_type = false;
-    std::string data_type = {};
+    TypeSpec data_type = {};
     Token token = Eat();
     if(token.type == TokenType::KwMut) {
         is_const = false;
@@ -159,15 +167,15 @@ AST *Parser::ParseVarDecl() {
         std::exit(1);
     }
 
-    auto type = Eat();
+    auto operation = Eat();
 
-    if(type.type == TokenType::TypeDef) {
+    if(operation.type == TokenType::Colon) {
         has_type = true;
-        data_type = type.value;
-        type = At();
+        data_type = ParseTypeSpec(TypeConstraints::Var);
+        operation = At();
     }
 
-    switch (type.type) {
+    switch (operation.type) {
         case TokenType::Semi: {
             if (is_const) {
                 printf("Constant value %s needs to be assinged\n", token.value.c_str());
@@ -281,6 +289,17 @@ AST *Parser::ParseMemberExpr() {
 
 //}
 
+//presc
+//
+//Expr
+//Cond
+//AssignmentExpr
+//Additive
+//Mutlipl
+//Call
+//Member
+//Primary
+
 AST *Parser::ParsePrimaryExpr() {
     auto& token = At();
     switch (token.type) {
@@ -364,4 +383,19 @@ AST *Parser::ParsePrimaryExpr() {
             error("Unknown Token found [%s]\n", token.value.c_str());
             std::exit(1);
     }
+}
+
+TypeSpec Parser::ParseTypeSpec(TypeConstraints constr) {
+    TypeSpec spec = {};
+    if(At().type == TokenType::OpMul || At().type == TokenType::Ampercent) {
+        Eat();
+        spec.ptr = true;
+    }
+
+    //check for mut/const here
+    if(At().type != TokenType::Id)
+        error("Expected type, found '%s'", At().value.c_str());
+
+    spec.name = Eat().value;
+    return spec;
 }

@@ -59,21 +59,23 @@ struct Program : public AST {
 };
 
 struct Function : public AST {
-    Function(std::string id, std::vector<AST *> body, std::string return_type, std::vector<std::tuple<std::string, std::string>> params): AST(ASTType::Function), id(id), block(body), return_type(return_type), args(params) {}
+    Function(std::string id, std::vector<AST *> body, TypeSpec return_type, std::vector<std::tuple<std::string, TypeSpec>> params): AST(ASTType::Function), id(id), block(body), return_type(return_type), args(params) {}
     virtual std::string GetValue();
     virtual llvm::Value *GenCode(Scope *scope);
     std::string id;
     std::vector<AST *> block;
-    std::string return_type;
-    std::vector<std::tuple<std::string, std::string>> args;
+    //std::string return_type;
+    TypeSpec return_type;
+    std::vector<std::tuple<std::string, TypeSpec>> args;
 };
 
 struct VarDecl : public AST {
-    std::string data_type;
+    //std::string data_type;
+    TypeSpec data_type;
     bool cnst;
     std::string id;
     std::shared_ptr<AST*> value;
-    VarDecl(std::string id, std::shared_ptr<AST*> value, bool cnst, std::string data_type):
+    VarDecl(std::string id, std::shared_ptr<AST*> value, bool cnst, TypeSpec data_type):
         AST(ASTType::VarDecl), data_type(data_type), cnst(cnst), id(id), value(value) {};
     virtual std::string GetValue();
     virtual llvm::Value *GenCode(Scope *scope);
@@ -81,9 +83,9 @@ struct VarDecl : public AST {
 
 struct FunctionDecl : public AST {
     std::string id;
-    std::string return_type;
-    std::vector<std::tuple<std::string, std::string>> params;
-    FunctionDecl(std::string id, std::string return_type, std::vector<std::tuple<std::string, std::string>> params): AST(ASTType::FunctionDecl), id(id), return_type(return_type), params(params) {}
+    TypeSpec return_type;
+    std::vector<std::tuple<std::string, TypeSpec>> params;
+    FunctionDecl(std::string id, TypeSpec return_type, std::vector<std::tuple<std::string, TypeSpec>> params): AST(ASTType::FunctionDecl), id(id), return_type(return_type), params(params) {}
     virtual std::string GetValue();
     virtual llvm::Value *GenCode(Scope *scope);
 };
@@ -134,9 +136,9 @@ struct CallExpr : public AST {
 };
 
 struct Field {
-    std::string data_type;
+    TypeSpec data_type;
     std::string id;
-    Field(std::string id, std::string data_type): data_type(data_type), id(id) {}
+    Field(std::string id, TypeSpec data_type): data_type(data_type), id(id) {}
 };
 
 struct StructDef : public AST {

@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <iostream>
+#include <string_view>
 #include <system_error>
 
 static std::shared_ptr<llvm::raw_string_ostream> err_os;

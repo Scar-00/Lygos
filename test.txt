@@ -1,33 +1,10 @@
-fn print_int(i: i32) -> i32;
-fn read_char() -> i32;
-
-struct Foo {
-    x: i32;
-    y: i32;
-    z: i32;
+struct Node {
+    next: * i32;
 };
 
-struct Human {
-    age: i32;
-    height: i32;
-    foo: Foo;
-};
+fn printf(format: * i8) -> i32;
 
-fn test(i: i32) -> i32 {
-    if i < 10 {
-        print_int(i);
-        return test(i + 1);
-    }else {
-        return 10;
-    };
-}
-
-fn main() -> i32 {
-    let char = read_char();
-    printf_ln("%d", char);
-    if char > 100 {
-        return 0;
-    }else {
-        return 1;
-    };
+fn main(argc: i32) -> i32 {
+    printf_ln("argc -> %d", argc);
+    return 0;
 }

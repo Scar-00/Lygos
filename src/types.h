@@ -39,8 +39,8 @@ enum class TokenType {
     Colon,
     Ampercent,
     Hash,
-    TypeDef,
-    FunctionType,
+    //TypeDef,
+    //FunctionType,
 
     //operators
     OpPlus,
@@ -109,4 +109,10 @@ static std::set<std::string> base_types = {
     {"f64"},
 
     {"void"},
+};
+
+struct TypeSpec {
+    std::string name;
+    bool mut;
+    bool ptr;
 };

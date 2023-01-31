@@ -5,6 +5,12 @@
 #include "lexer.h"
 #include <vector>
 
+enum class TypeConstraints {
+    Var,
+    Function,
+    Field,
+};
+
 class Parser {
 public:
     Parser(Lexer &lexer): tokens(lexer.GetTokens()), index(0) {
@@ -21,6 +27,7 @@ private:
     AST *ParseVarDecl();
     AST *ParseFunc();
     AST *ParseRetExr();
+    AST *ParseIfExpr();
     AST *ParseExpr();
     AST *ParseCondExpr();
     AST *ParseAssignmentExpr();
@@ -29,6 +36,7 @@ private:
     AST *ParseMemberExpr();
     AST *ParseCallExpr();
     AST *ParsePrimaryExpr();
+    TypeSpec ParseTypeSpec(TypeConstraints constr);
     std::vector<Token> tokens;
     s32 index;
 };

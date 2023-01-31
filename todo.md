@@ -1,14 +1,15 @@
 # IMPORTANT
-* somehow compare types at assignment, decl, ...
-* add function decl
-* fix semicolon check after function call
-* refactor iter and for expr
 * add pointer/reference types and const/mut
-* support va args in functions
+* call Parser::ParseIfExpr() at expression handler instead of in PrimaryExpr 
+* finish types spec refactor!!!! -> handle "deep" pointers (x: ** i32)
+* add '*'/'&' "operator" [-> test.c]
 
-
-
-
+# TODO/FIXME
+* compare types at assignment, decl, ...
+* refactor if/for expr
+* add var-arg as special type
+* fix precendence order of operation
+* determine if expr result of if/for/while are valid values
 
 # Token:
 - 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

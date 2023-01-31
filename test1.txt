@@ -1,0 +1,32 @@
+fn print_int(i: i32) -> i32;
+fn read_char() -> i32;
+
+struct Foo {
+    x: i32;
+    y: i32;
+    z: i32;
+};
+
+struct Bar {
+    foo: Foo;
+};
+
+fn test(i: i32) -> i32 {
+    if i < 10 {
+        print_int(i);
+        return test(i + 1);
+    }else {
+        return 10;
+    };
+}
+
+fn main() -> i32 {
+    let mut bar: Bar;
+    let mut foo: Foo;
+    let x = 100;
+    foo.x = x;
+    foo.y = 200;
+    foo.z = 300;
+    bar.foo = foo;
+    return bar.foo.y;
+}

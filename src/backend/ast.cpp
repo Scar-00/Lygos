@@ -86,7 +86,7 @@ Val *Function::GenCode(Scope *scope) {
         curr_scope.DeclVar(std::get<0>(this->args.at(i)), true, alloca);
     }
 
-    if(return_type != "void")
+    if(return_type.name != "void")
         curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
 
     for(auto &node : this->block)
@@ -157,14 +157,13 @@ Val *AssignmentExpr::GenCode(Scope *scope) {
         error("Cannot assign to immutale variable %s", id->GetValue().c_str());
 
     auto id = this->id->GenCode(scope);
-    //FIXME: does this need to be here ?
-    /*auto val = this->value->GenCode(scope);
+    auto val = this->value->GenCode(scope);
     if(this->value->type == ASTType::Id
     || this->value->type == ASTType::MemberExpr) {
         val = LoadOrIgnore(val);
-    }*/
+    }
 
-    builder->CreateStore(value->GenCode(scope), id);
+    builder->CreateStore(val, id);
     return id;
 }
 
@@ -221,7 +220,6 @@ Val *IfExpr::GenCode(Scope *scope) {
     func->getBasicBlockList().push_back(merge);
     builder->SetInsertPoint(merge);
 
-    //error("TODO if expr");
     return nullptr;
 }
 

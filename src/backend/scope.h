@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include <string>
@@ -7,6 +8,7 @@
 #include <unordered_map>
 #include <llvm/IR/Value.h>
 #include <vector>
+#include "../types.h"
 
 struct Scope {
 public:
@@ -19,7 +21,8 @@ public:
     std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
     std::set<std::string> &GetConstants() { return constants; }
     void AddType(std::string id, llvm::StructType *type, std::vector<std::string> struct_member);
-    llvm::Type *GetType(std::string &type);
+    //llvm::Type *GetType(std::string &type);
+    llvm::Type *GetType(TypeSpec &type);
     std::vector<std::string> &GetStruct(std::string);
 private:
     Scope *Resolve(std::string id);
