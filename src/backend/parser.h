@@ -35,8 +35,9 @@ private:
     AST *ParseMultExpr();
     AST *ParseMemberExpr();
     AST *ParseCallExpr();
+    AST *ParseIndexExpr();
     AST *ParsePrimaryExpr();
-    TypeSpec ParseTypeSpec(TypeConstraints constr);
+    Type::Type *ParseTypeSpec(TypeConstraints constr);
     std::vector<Token> tokens;
     s32 index;
 };

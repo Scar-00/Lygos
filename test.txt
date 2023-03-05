@@ -1,10 +1,33 @@
-struct Node {
-    next: * i32;
+fn malloc(size: i32) -> *i32;
+
+fn print_arr(arr: **i8, length: i32, iter: i32) {
+    if iter < length {
+        printf_ln("%d -> %s", iter, arr[iter]);
+        print_arr(arr, length, iter + 1);
+    }else {
+
+    };
+}
+
+struct Foo {
+    x: i32;
+    y: i32;
 };
 
-fn printf(format: * i8) -> i32;
+fn test() -> Foo {
+    let mut x: Foo;
+    x.x = 100;
+    x.y = 200;
+    return x;
+}
 
-fn main(argc: i32) -> i32 {
-    printf_ln("argc -> %d", argc);
-    return 0;
+fn main(argc: i32, argv: **i8) -> i32 {
+    let mut arr = malloc(4 * 4);
+    arr[0] = 10;
+    arr[1] = 20;
+    arr[2] = 30;
+    arr[3] = 30;
+    let foo = test();
+    print_arr(argv, argc, 0);
+    return foo.y;
 }

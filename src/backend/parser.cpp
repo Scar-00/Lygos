@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <asm-generic/errno.h>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -88,7 +89,7 @@ AST *Parser::ParseFunc() {
     if(id.type != TokenType::Id)
         error("Expected 'Identifier' after 'fn' keyword");
 
-    std::vector<std::tuple<std::string, TypeSpec>> args;
+    std::vector<std::tuple<std::string, Type::Type *>> args;
 
     if(Eat().type != TokenType::ParanLeft)
         error("Exprected '('");
@@ -114,7 +115,7 @@ AST *Parser::ParseFunc() {
     }
     Eat();
 
-    TypeSpec ret_type = {"void", false, false};
+    Type::Type * ret_type = new Type::Path("void");
 
     if(At().type == TokenType::Arrow) {
         Eat();
@@ -153,8 +154,8 @@ AST *Parser::ParseIfExpr() {
 AST *Parser::ParseVarDecl() {
     Eat();
     bool is_const = true;
-    bool has_type = false;
-    TypeSpec data_type = {};
+    //bool has_type = false;
+    Type::Type *data_type = nullptr;
     Token token = Eat();
     if(token.type == TokenType::KwMut) {
         is_const = false;
@@ -170,7 +171,7 @@ AST *Parser::ParseVarDecl() {
     auto operation = Eat();
 
     if(operation.type == TokenType::Colon) {
-        has_type = true;
+        //has_type = true;
         data_type = ParseTypeSpec(TypeConstraints::Var);
         operation = At();
     }
@@ -272,10 +273,12 @@ AST *Parser::ParseCallExpr() {
 }
 
 AST *Parser::ParseMemberExpr() {
-    auto obj = ParsePrimaryExpr();
+    //auto obj = ParsePrimaryExpr();
+    auto obj = ParseIndexExpr();
     while (At().type == TokenType::Dot) {
         Eat();
         auto member = ParsePrimaryExpr();
+        //auto member = ParseExpr();
         if(member->type != ASTType::Id)
             error("Member expression has to be an identifier");
 
@@ -289,6 +292,20 @@ AST *Parser::ParseMemberExpr() {
 
 //}
 
+AST *Parser::ParseIndexExpr() {
+    auto obj = ParsePrimaryExpr();
+    while (At().type == TokenType::BraceLeft) {
+        Eat();
+        //auto index = ParsePrimaryExpr();
+        auto index = ParseExpr();
+        if(Eat().type != TokenType::BraceRight)
+            error("Expected closing bracked, found '%s'", PEEK(-1).value.c_str());
+
+        obj = new AccessExpr(obj, index);
+    }
+    return obj;
+}
+
 //presc
 //
 //Expr
@@ -298,6 +315,7 @@ AST *Parser::ParseMemberExpr() {
 //Mutlipl
 //Call
 //Member
+//Index
 //Primary
 
 AST *Parser::ParsePrimaryExpr() {
@@ -385,17 +403,35 @@ AST *Parser::ParsePrimaryExpr() {
     }
 }
 
-TypeSpec Parser::ParseTypeSpec(TypeConstraints constr) {
-    TypeSpec spec = {};
-    if(At().type == TokenType::OpMul || At().type == TokenType::Ampercent) {
+Type::Type *Parser::ParseTypeSpec(TypeConstraints constr) {
+    Type::Type *spec = nullptr;
+    Type::Type *origin = nullptr;
+    while(At().type == TokenType::OpMul || At().type == TokenType::Ampercent) {
         Eat();
-        spec.ptr = true;
+        bool mut = false;
+        if(At().value == "mut") {
+            Eat();
+            mut = true;
+        }
+
+        if(!spec) {
+            origin = spec = new Type::Pointer(nullptr, mut);
+        }
+        else {
+            auto ptr = new Type::Pointer(nullptr, mut);
+            static_cast<Type::Pointer *>(spec)->SetType(ptr);
+            spec = ptr;
+        }
     }
 
-    //check for mut/const here
     if(At().type != TokenType::Id)
         error("Expected type, found '%s'", At().value.c_str());
 
-    spec.name = Eat().value;
-    return spec;
+    if(!spec) {
+        origin = new Type::Path(Eat().value);
+    }else {
+        static_cast<Type::Pointer *>(spec)->SetType(new Type::Path(Eat().value));
+    }
+
+    return origin;
 }

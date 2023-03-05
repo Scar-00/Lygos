@@ -1,4 +1,5 @@
 #include "util.h"
+#include "backend/ast.h"
 #include "backend/scope.h"
 #include "global.h"
 #include "types.h"
@@ -79,4 +80,10 @@ llvm::Value *LoadOrIgnore(llvm::Value *value) {
         return builder->CreateLoad(TryGetPointerBase(value->getType()), value);
     }
     return value;
+}
+
+bool ShouldLoad(AST *ast) {
+    return ast->type == ASTType::Id
+        || ast->type == ASTType::MemberExpr
+        || ast->type == ASTType::AccessExpr;
 }

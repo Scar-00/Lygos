@@ -21,8 +21,8 @@ public:
     std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
     std::set<std::string> &GetConstants() { return constants; }
     void AddType(std::string id, llvm::StructType *type, std::vector<std::string> struct_member);
-    //llvm::Type *GetType(std::string &type);
-    llvm::Type *GetType(TypeSpec &type);
+    //llvm::Type *GetType(TypeSpec &type);
+    llvm::Type *GetType(Type::Type *type);
     std::vector<std::string> &GetStruct(std::string);
 private:
     Scope *Resolve(std::string id);

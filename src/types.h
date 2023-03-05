@@ -111,8 +111,42 @@ static std::set<std::string> base_types = {
     {"void"},
 };
 
-struct TypeSpec {
+/*struct TypeSpec {
     std::string name;
     bool mut;
     bool ptr;
-};
+};*/
+
+namespace Type {
+    enum Kind {
+        path,
+        ptr,
+    };
+
+    struct Type {
+        Kind kind;
+    };
+
+    struct Path : public Type {
+        public:
+        Path(std::string path): path(path) {
+            this->kind = Kind::path;
+        }
+        std::string &GetPath() { return path; }
+        private:
+        std::string path;
+    };
+
+    struct Pointer : public Type {
+        public:
+        Pointer(Type *type, bool mut): type(type), mut(mut) {
+            this->kind = Kind::ptr;
+        }
+        Type *GetType() { return type; }
+        bool IsMut() { return mut; }
+        void SetType(Type *type) { this->type = type; }
+        private:
+        Type* type;
+        bool mut;
+    };
+}

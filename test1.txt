@@ -1,5 +1,6 @@
 fn print_int(i: i32) -> i32;
 fn read_char() -> i32;
+fn malloc(size: i32) -> *i8;
 
 struct Foo {
     x: i32;
@@ -8,7 +9,7 @@ struct Foo {
 };
 
 struct Bar {
-    foo: Foo;
+    arr: **i32;
 };
 
 fn test(i: i32) -> i32 {
@@ -21,12 +22,6 @@ fn test(i: i32) -> i32 {
 }
 
 fn main() -> i32 {
-    let mut bar: Bar;
-    let mut foo: Foo;
-    let x = 100;
-    foo.x = x;
-    foo.y = 200;
-    foo.z = 300;
-    bar.foo = foo;
-    return bar.foo.y;
+    let mut x: Bar;
+    return 100;
 }

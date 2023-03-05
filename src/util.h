@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "./backend/ast.h"
 #include <llvm/Support/raw_os_ostream.h>
 
 void error(const char *format, ...);
@@ -27,3 +28,5 @@ llvm::Type *TryGetPointerBase(llvm::Type *type);
  *  @return the contained type or itself
  */
 llvm::Value *LoadOrIgnore(llvm::Value *value);
+
+bool ShouldLoad(AST *ast);

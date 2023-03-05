@@ -86,7 +86,7 @@ Val *Function::GenCode(Scope *scope) {
         curr_scope.DeclVar(std::get<0>(this->args.at(i)), true, alloca);
     }
 
-    if(return_type.name != "void")
+    if(return_type->kind == Type::Kind::path && static_cast<Type::Path *>(return_type)->GetPath() != "void")
         curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
 
     for(auto &node : this->block)
@@ -158,8 +158,7 @@ Val *AssignmentExpr::GenCode(Scope *scope) {
 
     auto id = this->id->GenCode(scope);
     auto val = this->value->GenCode(scope);
-    if(this->value->type == ASTType::Id
-    || this->value->type == ASTType::MemberExpr) {
+    if(ShouldLoad(value)) {
         val = LoadOrIgnore(val);
     }
 
@@ -253,7 +252,7 @@ Val *CallExpr::GenCode(Scope *scope) {
     std::vector<Val *> arg_values;
     for(auto &arg : this->args) {
         auto val = arg->GenCode(scope);
-        if(arg->type == ASTType::Id || arg->type == ASTType::MemberExpr)
+        if(ShouldLoad(arg))
             val = LoadOrIgnore(val);
         arg_values.push_back(val);
     }
@@ -261,11 +260,30 @@ Val *CallExpr::GenCode(Scope *scope) {
     return builder->CreateCall(callee, arg_values);
 }
 
+std::string AccessExpr::GetValue() {
+    return obj->GetValue();
+}
+
+Val *AccessExpr::GenCode(Scope *scope) {
+    auto obj = this->obj->GenCode(scope);
+    if(ShouldLoad(this->obj))
+        obj = LoadOrIgnore(obj);
+    auto index = this->index->GenCode(scope);
+
+    if(ShouldLoad(this->index))
+        index = LoadOrIgnore(index);
+    auto gep = builder->CreateGEP(TryGetPointerBase(obj->getType()), obj, {index}, "", true);
+    return gep;
+}
+
 std::string StructDef::GetValue() {
     return {};
 }
 
 Val *StructDef::GenCode(Scope *scope) {
+    //llvm::StructType *struct_type = llvm::StructType::create(*ctx, id);
+    //scope->AddType(id, llvm::StructType *type, std::vector<std::string> struct_member)
+
     std::vector<llvm::Type *> data_fields;
     std::vector<std::string> struct_member;
     for(auto &field : this->fields) {
@@ -280,6 +298,9 @@ Val *StructDef::GenCode(Scope *scope) {
         id,
         false
     );
+
+    auto size = mod->getDataLayout().getTypeSizeInBits(struct_type);
+    Log() << id << " -> " << size / 8 << "\n";
 
     scope->AddType(id, struct_type, struct_member);
     return nullptr;
@@ -310,7 +331,6 @@ std::string Identifier::GetValue() {
 
 Val *Identifier::GenCode(Scope *scope) {
     auto var = scope->LookupVar(value);
-    //return builder->CreateLoad(var->getAllocatedType(), var);
     return var;
 }
 
@@ -327,10 +347,9 @@ Val *ReturnExpr::GenCode(Scope *scope) {
         error("Invalid return type for funtion with return type 'void'");
 
     auto val = value->GenCode(scope);
-    if(value->type == ASTType::Id || value->type == ASTType::MemberExpr)
+    if(ShouldLoad(value))
         val = LoadOrIgnore(val);
-    //return builder->CreateStore(val, scope->GetRet());
-    //return builder->CreateRet(val);*/
+
     return builder->CreateStore(val, scope->GetRet());
 }
 
@@ -344,12 +363,10 @@ Val *BinaryExpr::GenCode(Scope *scope) {
     if(!lhs || !rhs)
         error("Error generating binary expr");
 
-    if(this->lhs->type == ASTType::Id
-    || this->lhs->type == ASTType::MemberExpr
-    || this->rhs->type == ASTType::Id
-    || this->rhs->type == ASTType::MemberExpr
-    ) {
+    if(ShouldLoad(this->lhs)) {
         lhs = LoadOrIgnore(lhs);
+    }
+    if(ShouldLoad(this->rhs)) {
         rhs = LoadOrIgnore(rhs);
     }
 

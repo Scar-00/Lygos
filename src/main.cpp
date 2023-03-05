@@ -18,6 +18,7 @@
 #include "llvm/Transforms/Utils/SimplifyCFGOptions.h"
 
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Transforms/Scalar.h>
@@ -73,6 +74,15 @@ void llvm_init() {
 int main() {
     llvm_init();
 
+    /*Scope s{};
+    Type::Type *path = new Type::Path("i32");
+    Type::Type *ptr = new Type::Pointer(path, false);
+    Type::Type *ptr1 = new Type::Pointer(ptr, false);
+    auto t = s.GetType(ptr1);
+
+    t->print(Log());
+    error("test");*/
+
     std::ifstream istream;
     istream.open("test.txt");
     istream.seekg(0, std::ios::end);
@@ -80,8 +90,6 @@ int main() {
     istream.seekg(0, std::ios::beg);
     std::string buffer(length, ' ');
     istream.read(&buffer[0], length);
-
-    //std::cout << buffer << "\n";
 
     Lexer lexer{buffer.c_str()};
     Parser parser{lexer};
@@ -107,6 +115,7 @@ int main() {
     pass_manager.add(llvm::createNewGVNPass());
     pass_manager.add(llvm::createCFGSimplificationPass());
     pass_manager.add(llvm::createSimpleLoopUnrollPass(3));
+    pass_manager.add(llvm::createPromoteMemoryToRegisterPass());
 
     //pass_manager.run(*mod);
 

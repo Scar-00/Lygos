@@ -54,7 +54,26 @@ void Scope::AddType(std::string id, llvm::StructType *type, std::vector<std::str
     this->struct_fields.insert({id, struct_member});
 }
 
-llvm::Type *Scope::GetType(TypeSpec &type) {
+llvm::Type *Scope::GetType(Type::Type *type) {
+    switch (type->kind) {
+        case Type::Kind::path: {
+            auto path = static_cast<Type::Path *>(type)->GetPath();
+            if(base_types.contains(path)) return resolve_type(path);
+            Scope *scope = this->Resolve(path.c_str());
+            if(scope->struct_types.contains(path)) {
+                return scope->struct_types.at(path);
+            }
+            break;
+        }
+        case Type::Kind::ptr:
+            return llvm::PointerType::get(GetType(static_cast<Type::Pointer *>(type)->GetType()), 0);
+            break;
+    }
+    error("Unknown type '%s'", type->kind);
+    std::exit(1);
+}
+
+/*llvm::Type *Scope::GetType(TypeSpec &type) {
     if(base_types.contains(type.name)) return type.ptr ? llvm::PointerType::get(resolve_type(type.name), 0) : resolve_type(type.name);
     Scope *scope = this->Resolve(type.name.c_str());
     if(scope->struct_types.contains(type.name)) {
@@ -64,7 +83,7 @@ llvm::Type *Scope::GetType(TypeSpec &type) {
     }
     error("Unknown type '%s'", type.name.c_str());
     std::exit(1);
-}
+}*/
 
 std::vector<std::string> &Scope::GetStruct(std::string type) {
     Scope *scope = this->Resolve(type.c_str());
