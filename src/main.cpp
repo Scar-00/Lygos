@@ -71,8 +71,10 @@ void llvm_init() {
     mod->setTargetTriple(target_tripple);
 }
 
-int main() {
+int main(int argc, char **argv) {
     llvm_init();
+
+    std::string file_path = "test1.txt";
 
     /*Scope s{};
     Type::Type *path = new Type::Path("i32");
@@ -84,7 +86,7 @@ int main() {
     error("test");*/
 
     std::ifstream istream;
-    istream.open("test.txt");
+    istream.open(file_path);
     istream.seekg(0, std::ios::end);
     size_t length = istream.tellg();
     istream.seekg(0, std::ios::beg);
@@ -126,6 +128,9 @@ int main() {
     mod->print(os, nullptr);
     os.flush();
 
+    PrintLog();
+    std::cout << "----------------\n" << std::endl;
+
     std::system("clang -o tmp/main tmp/main.ll -mllvm -opaque-pointers std/libstd.a -lc");
 
     /*
@@ -134,7 +139,6 @@ int main() {
     mod->print(ir_stream, nullptr);
     ir_stream.flush();
     */
-    PrintLog();
     return 0;
 }
 

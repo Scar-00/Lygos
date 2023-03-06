@@ -1,16 +1,15 @@
 # IMPORTANT
-* call Parser::ParseIfExpr() at expression handler instead of in PrimaryExpr 
-* finish types spec refactor!!!! -> handle "deep" pointers (x: ** i32)
-* add '*'/'&' "operator" [-> test.c]
+* call Parser::ParseIfExpr() at Parser::ParseStmt() instead of in PrimaryExpr 
+* fix '*'/'&' "operator"  [unary expr]
 * fix '=' after type in var decl
 
 # TODO/FIXME
 * compare types at assignment, decl, ...
-* refactor if/for expr
-* add var-arg as special type
-* fix precendence order of operation
+* refactor for expr [determine functionality]
+* add var-arg as special function type
+* fix order of precedence in operations [maybe]
 * determine if expr result of if/for/while are valid values
-* add type casting
+* add type casting [determein how they look (c-like | rust-like ?)]
 
 # Token:
 - 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

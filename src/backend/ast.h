@@ -29,6 +29,7 @@ enum class ASTType {
     ForExpr,
     CallExpr,
     AccessExpr,
+    UnaryExpr,
 
     //literals
     StructDef,
@@ -140,6 +141,14 @@ struct AccessExpr : public AST {
     virtual llvm::Value *GenCode(Scope *scope);
     AST *obj;
     AST *index;
+};
+
+struct UnaryExpr : public AST {
+    UnaryExpr(AST *obj, std::string op): AST(ASTType::UnaryExpr), obj(obj), op(op) {}
+    virtual std::string GetValue();
+    virtual llvm::Value *GenCode(Scope *scope);
+    AST *obj;
+    std::string op;
 };
 
 struct Field {

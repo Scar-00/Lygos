@@ -35,6 +35,7 @@ private:
     AST *ParseMultExpr();
     AST *ParseMemberExpr();
     AST *ParseCallExpr();
+    AST *ParseUnaryExpr();
     AST *ParseIndexExpr();
     AST *ParsePrimaryExpr();
     Type::Type *ParseTypeSpec(TypeConstraints constr);

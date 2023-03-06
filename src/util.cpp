@@ -26,6 +26,7 @@
 static std::shared_ptr<llvm::raw_string_ostream> err_os;
 
 void error(const char *format, ...) {
+    std::cout << "ERROR: ";
     va_list args;
     va_start(args, format);
     vfprintf(stdout, format, args);

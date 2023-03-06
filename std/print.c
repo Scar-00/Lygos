@@ -17,3 +17,7 @@ int print_int(int val) {
 int read_char() {
     return fgetc(stdin);
 }
+
+void print_deref(int *ptr) {
+    printf("%d\n", *ptr);
+}

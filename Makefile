@@ -22,6 +22,8 @@ OBJ = $(SRC:.cpp=.o)
 STD = $(wildcard std/**/**/*.c) $(wildcard std/**/*.c) $(wildcard std/*.c)
 STD_OBJ = $(SRC:.c=.o)
 
+.PHONY: std
+
 build: $(OBJ)
 	$(CC) -o bin/main $^ $(LDFLAGS)
 

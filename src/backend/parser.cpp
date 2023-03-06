@@ -45,8 +45,6 @@ Field Parser::ParseFieldDecl() {
     if(id.type != TokenType::Id)
         error("Expected id in field declaration");
 
-    //auto type = this->Eat();
-
     if(Eat().type != TokenType::Colon)
         error("Field %s requires type", PEEK(-1).value.c_str());
 
@@ -273,12 +271,11 @@ AST *Parser::ParseCallExpr() {
 }
 
 AST *Parser::ParseMemberExpr() {
-    //auto obj = ParsePrimaryExpr();
-    auto obj = ParseIndexExpr();
+    auto obj = ParseUnaryExpr();
+    //auto obj = ParseIndexExpr();
     while (At().type == TokenType::Dot) {
         Eat();
         auto member = ParsePrimaryExpr();
-        //auto member = ParseExpr();
         if(member->type != ASTType::Id)
             error("Member expression has to be an identifier");
 
@@ -291,6 +288,18 @@ AST *Parser::ParseMemberExpr() {
 //AST *Parser::ParseCallExpr() {
 
 //}
+
+AST *Parser::ParseUnaryExpr() {
+    if(At().type == TokenType::Ampercent
+    || At().type == TokenType::OpMul) {
+        auto op = Eat().value;
+        auto obj = ParseIndexExpr();
+        Log() << "Op -> " << op << "\n";
+        Log() << "obj -> " << obj->GetValue() << "\n";
+        return new UnaryExpr(obj, op);
+    }
+    return ParseIndexExpr();
+}
 
 AST *Parser::ParseIndexExpr() {
     auto obj = ParsePrimaryExpr();
@@ -397,7 +406,7 @@ AST *Parser::ParsePrimaryExpr() {
             return new ForExpr(var, iter, body);
         }
         default:
-            Log() << PEEK(1).value << " " << PEEK(2).value << "\n";
+            //Log() << PEEK(1).value << " " << PEEK(2).value << "\n";
             error("Unknown Token found [%s]\n", token.value.c_str());
             std::exit(1);
     }

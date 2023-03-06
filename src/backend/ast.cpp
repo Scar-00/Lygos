@@ -269,11 +269,23 @@ Val *AccessExpr::GenCode(Scope *scope) {
     if(ShouldLoad(this->obj))
         obj = LoadOrIgnore(obj);
     auto index = this->index->GenCode(scope);
-
     if(ShouldLoad(this->index))
         index = LoadOrIgnore(index);
     auto gep = builder->CreateGEP(TryGetPointerBase(obj->getType()), obj, {index}, "", true);
     return gep;
+}
+
+std::string UnaryExpr::GetValue() {
+    return {};
+}
+
+Val *UnaryExpr::GenCode(Scope *scope) {
+    /*auto obj = this->obj->GenCode(scope);
+    if(this->op == "&") { return obj; }
+    //if(this->op == "*") { return LoadOrIgnore(obj); }
+    error("Unreachable, found '%s'", this->obj->GetValue().c_str());
+    */
+    error("TODO! [UnaryExpr]");
 }
 
 std::string StructDef::GetValue() {

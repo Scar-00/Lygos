@@ -1,27 +1,21 @@
-fn print_int(i: i32) -> i32;
-fn read_char() -> i32;
-fn malloc(size: i32) -> *i8;
+fn malloc(size: i32) -> *i32;
+fn print_deref(ptr: *i32);
 
 struct Foo {
     x: i32;
-    y: i32;
-    z: i32;
 };
 
-struct Bar {
-    arr: **i32;
-};
+fn make_foo() -> Foo {
+    let mut x: Foo;
+    x.x = 200;
+}
 
-fn test(i: i32) -> i32 {
-    if i < 10 {
-        print_int(i);
-        return test(i + 1);
-    }else {
-        return 10;
-    };
+fn test(i: *i32) {
+    print_deref(i);
 }
 
 fn main() -> i32 {
-    let mut x: Bar;
-    return 100;
+    let foo = make_foo();
+    test(&foo.x);
+    return 0;
 }
