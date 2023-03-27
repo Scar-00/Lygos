@@ -79,6 +79,7 @@ enum class TokenType {
     KwIn,
     KwInclude,
     KwImpl,
+    KwType,
 
     Eof,
 };
@@ -97,6 +98,7 @@ static std::map<std::string, TokenType> KeyWords = {
     {"in", TokenType::KwIn},
     {"include", TokenType::KwInclude},
     {"impl", TokenType::KwImpl},
+    {"type", TokenType::KwType},
 };
 
 static std::set<std::string> base_types = {
@@ -115,6 +117,7 @@ static std::set<std::string> base_types = {
     {"f32"},
     {"f64"},
 
+    //empty type
     {"void"},
 };
 
