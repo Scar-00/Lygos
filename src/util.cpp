@@ -26,21 +26,21 @@
 static std::shared_ptr<llvm::raw_string_ostream> err_os;
 
 void error(const char *format, ...) {
+    PrintLog();
     std::cout << "ERROR: ";
     va_list args;
     va_start(args, format);
     vfprintf(stdout, format, args);
     va_end(args);
     std::cout << std::endl;
-    PrintLog();
     std::exit(1);
 }
 
-void print_type(llvm::Type *type) {
+std::string print_type(llvm::Type *type) {
     std::string type_string;
     llvm::raw_string_ostream ros(type_string);
     type->print(ros);
-    std::cout << "Type -> " << ros.str() << std::endl;
+    return type_string;
 }
 
 llvm::Type *resolve_type(std::string &type) {
@@ -86,5 +86,32 @@ llvm::Value *LoadOrIgnore(llvm::Value *value) {
 bool ShouldLoad(AST *ast) {
     return ast->type == ASTType::Id
         || ast->type == ASTType::MemberExpr
-        || ast->type == ASTType::AccessExpr;
+        || ast->type == ASTType::AccessExpr
+        || ast->type == ASTType::UnaryExpr;
+}
+
+std::ostream &operator<<(std::ostream &os, ASTType type) {
+    switch(type) {
+        case ASTType::Program: os << "Program"; break;
+        case ASTType::Function: os << "Function"; break;
+        case ASTType::Closure: os << "Closure"; break;
+        case ASTType::VarDecl: os << "VarDecl"; break;
+        case ASTType::FunctionDecl: os << "FunctionDecl"; break;
+        case ASTType::AssignmentExpr: os << "AssignmentExpr"; break;
+        case ASTType::MemberExpr: os << "MemberExpr"; break;
+        case ASTType::IfExpr: os << "IfExpr"; break;
+        case ASTType::ForExpr: os << "ForExpr"; break;
+        case ASTType::CallExpr: os << "CallExpr"; break;
+        case ASTType::AccessExpr: os << "AccessExpr"; break;
+        case ASTType::UnaryExpr: os << "UnaryExpr"; break;
+        case ASTType::StructDef: os << "StructDef"; break;
+        case ASTType::Impl: os << "Impl"; break;
+        case ASTType::ObjectLiteral: os << "ObjectLiteral"; break;
+        case ASTType::NumberLiteral: os << "NumberLiteral"; break;
+        case ASTType::StringLiteral: os << "StringLiteral"; break;
+        case ASTType::RangeLiteral: os << "RangeLiteral"; break;
+        case ASTType::BinaryExpr: os << "BinaryExpr"; break;
+        case ASTType::Id: os << "Identifier"; break;
+    }
+    return os;
 }

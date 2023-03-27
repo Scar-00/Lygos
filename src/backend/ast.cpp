@@ -9,6 +9,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Type.h"
@@ -76,6 +77,7 @@ Val *Function::GenCode(Scope *scope) {
 
     //maybe remove this ?
     fn->setDSOLocal(true);
+
     auto bb = llvm::BasicBlock::Create(*ctx, "", fn);
     builder->SetInsertPoint(bb);
     auto args = fn->arg_begin();
@@ -86,7 +88,7 @@ Val *Function::GenCode(Scope *scope) {
         curr_scope.DeclVar(std::get<0>(this->args.at(i)), true, alloca);
     }
 
-    if(return_type->kind == Type::Kind::path && static_cast<Type::Path *>(return_type)->GetPath() != "void")
+    if(!(return_type->kind == Type::Kind::path && static_cast<Type::Path *>(return_type)->GetPath() == "void"))
         curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
 
     for(auto &node : this->block)
@@ -95,6 +97,7 @@ Val *Function::GenCode(Scope *scope) {
     curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
     llvm::verifyFunction(*fn);
+    curr_scope.Print();
     return nullptr;
 }
 
@@ -110,6 +113,8 @@ Val *VarDecl::GenCode(Scope *scope) {
         return alloca;
     }
     auto val = (*value)->GenCode(scope);
+    if(ShouldLoad(*this->value) && (*this->value)->type != ASTType::UnaryExpr)
+        val = LoadOrIgnore(val);
 
     auto alloca = builder->CreateAlloca(val->getType(), 0, "");
     builder->CreateStore(val, alloca);
@@ -185,7 +190,6 @@ Val *MemberExpr::GenCode(Scope *scope) {
     }
 
     auto gep = builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, index);
-
     return gep;
 }
 
@@ -212,8 +216,9 @@ Val *IfExpr::GenCode(Scope *scope) {
 
     func->getBasicBlockList().push_back(else_bb);
     builder->SetInsertPoint(else_bb);
-    for(auto &node : *else_branch)
-        node->GenCode(scope);
+    if(this->else_branch)
+        for(auto &node : *else_branch)
+            node->GenCode(scope);
     builder->CreateBr(merge);
 
     func->getBasicBlockList().push_back(merge);
@@ -238,7 +243,7 @@ Val *ForExpr::GenCode(Scope *scope) {
 }
 
 std::string CallExpr::GetValue() {
-    return {};
+    return this->caller->GetValue();
 }
 
 Val *CallExpr::GenCode(Scope *scope) {
@@ -252,11 +257,10 @@ Val *CallExpr::GenCode(Scope *scope) {
     std::vector<Val *> arg_values;
     for(auto &arg : this->args) {
         auto val = arg->GenCode(scope);
-        if(ShouldLoad(arg))
+        if(ShouldLoad(arg) && arg->type != ASTType::UnaryExpr)
             val = LoadOrIgnore(val);
         arg_values.push_back(val);
     }
-
     return builder->CreateCall(callee, arg_values);
 }
 
@@ -271,6 +275,7 @@ Val *AccessExpr::GenCode(Scope *scope) {
     auto index = this->index->GenCode(scope);
     if(ShouldLoad(this->index))
         index = LoadOrIgnore(index);
+
     auto gep = builder->CreateGEP(TryGetPointerBase(obj->getType()), obj, {index}, "", true);
     return gep;
 }
@@ -280,12 +285,23 @@ std::string UnaryExpr::GetValue() {
 }
 
 Val *UnaryExpr::GenCode(Scope *scope) {
-    /*auto obj = this->obj->GenCode(scope);
-    if(this->op == "&") { return obj; }
-    //if(this->op == "*") { return LoadOrIgnore(obj); }
-    error("Unreachable, found '%s'", this->obj->GetValue().c_str());
-    */
-    error("TODO! [UnaryExpr]");
+    auto obj = this->obj->GenCode(scope);
+    if(op == "*")
+        return builder->CreateLoad(TryGetPointerBase(obj->getType()), obj);
+    if(op == "&")
+        return obj;
+
+    error("Unknown Unary operator [%s]", op.c_str());
+    std::exit(1);
+}
+
+std::string ResolutionExpr::GetValue() {
+    return this->obj->GetValue();
+}
+
+Val *ResolutionExpr::GenCode(Scope *scope) {
+    error("Unimplemented, [ResolutionExpr]");
+    return nullptr;
 }
 
 std::string StructDef::GetValue() {
@@ -311,10 +327,22 @@ Val *StructDef::GenCode(Scope *scope) {
         false
     );
 
-    auto size = mod->getDataLayout().getTypeSizeInBits(struct_type);
-    Log() << id << " -> " << size / 8 << "\n";
+    //auto size = mod->getDataLayout().getTypeSizeInBits(struct_type);
+    //Log() << id << " -> " << size / 8 << "\n";
 
     scope->AddType(id, struct_type, struct_member);
+    return nullptr;
+}
+
+std::string Impl::GetValue() {
+    return type;
+}
+
+Val *Impl::GenCode(Scope *scope) {
+    //scope->Print();
+    //error("Unimplemented [Impl CodeGen]");
+    for(const auto &member : this->body)
+        member->GenCode(scope);
     return nullptr;
 }
 

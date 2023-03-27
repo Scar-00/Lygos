@@ -7,15 +7,22 @@ struct Foo {
 
 fn make_foo() -> Foo {
     let mut x: Foo;
-    x.x = 200;
+    x.x = 9;
+    return x;
 }
 
-fn test(i: *i32) {
-    print_deref(i);
+fn take_ref(x: i32) -> *i32 {
+    let y = &x;
+    let p = y;
+    return p;
+}
+
+fn deref(x: *i32) -> i32 {
+    return *x;
 }
 
 fn main() -> i32 {
     let foo = make_foo();
-    test(&foo.x);
-    return 0;
+    let x = deref(&foo.x);
+    return x;
 }

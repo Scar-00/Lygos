@@ -72,50 +72,6 @@ Token Lexer::LexId() {
     return {value, TokenType::Id};
 }
 
-//add support for '*', '&' and "mut"/"const" for type specifier
-/*Token Lexer::TryParseType() {
-    Advance();
-    while (std::isspace(curr)) {
-        Advance();
-    }
-
-    //if(std::isalpha(curr) || std::isdigit(curr)) {
-    if(std::isalpha(curr) || std::isdigit(curr) || curr == '*' || curr == '&') {
-        std::string value;
-        if(curr == '*' || curr == '&') {
-            value.push_back(curr);
-            Advance();
-        }
-        while (std::isspace(curr)) {
-            Advance();
-        }
-        while (std::isalpha(curr) || std::isdigit(curr)) {
-            value.push_back(curr);
-            Advance();
-        }
-        Log() << value;
-        return {value, TokenType::TypeDef};
-    }
-    return {":", TokenType::Colon};
-}
-
-Token Lexer::TryParseFunctionType() {
-    Advance();
-    while (std::isspace(curr)) {
-        Advance();
-    }
-
-    if(std::isalpha(curr) || std::isdigit(curr)) {
-        std::string value;
-        while (std::isalpha(curr) || std::isdigit(curr)) {
-            value.push_back(curr);
-            Advance();
-        }
-        return {value, TokenType::FunctionType};
-    }
-    return {"->", TokenType::Arrow};
-}*/
-
 Token Lexer::NextToken() {
     while (curr != '\0') {
         while (std::isspace(curr)) {
@@ -126,11 +82,16 @@ Token Lexer::NextToken() {
             case '.': return AdvanceToken({".", TokenType::Dot});
             case ',': return AdvanceToken({",", TokenType::Comma});
             case ';': return AdvanceToken({";", TokenType::Semi});
-            case ':': return AdvanceToken({":", TokenType::Colon});//TryParseType();
+            case ':': {
+                switch (src[index + 1]) {
+                    case ':': Advance(); return AdvanceToken({"::", TokenType::OpScope});
+                    default: return AdvanceToken({":", TokenType::Colon});
+                }
+            }
             case '+': return AdvanceToken({"+", TokenType::OpPlus});
             case '-': {
                 switch (src[index + 1]) {
-                    case '>': Advance(); return AdvanceToken({"->", TokenType::Arrow});/*Advance(); return TryParseFunctionType()*/;
+                    case '>': Advance(); return AdvanceToken({"->", TokenType::Arrow});;
                     default: return AdvanceToken({"-", TokenType::OpMinus});
                 }
             }
@@ -147,6 +108,8 @@ Token Lexer::NextToken() {
             case '>': return AdvanceToken({">", TokenType::OpGr});
             case '&': return AdvanceToken({"&", TokenType::Ampercent});
             case '#': return AdvanceToken({"#", TokenType::Hash});
+            case '|': return AdvanceToken({"|", TokenType::Pipe});
+            case '!': return AdvanceToken({"!", TokenType::Bang});
             case '=': {
                 switch (src[index + 1]) {
                     case '=': Advance(); return AdvanceToken({"==", TokenType::OpEqEq});
@@ -156,7 +119,7 @@ Token Lexer::NextToken() {
             case '\"': Advance(); return LexString();
             case '\0': return {"", TokenType::Eof};
             default:
-                if (std::isdigit(curr))
+                if(std::isdigit(curr))
                     return LexNumber();
                 if(std::isalpha(curr))
                     return LexId();

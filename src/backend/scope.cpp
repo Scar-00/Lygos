@@ -3,7 +3,9 @@
 #include "../global.h"
 #include "ast.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include <cerrno>
 #include <cstddef>
@@ -29,11 +31,11 @@ void Scope::Print() {
     std::cout << "Scope [\n";
     std::cout << "-types:\n";
     for(auto const &pair : struct_types) {
-        std::cout << "\t"; print_type(pair.second);
+        std::cout << "\t" << print_type(pair.second) << "\n";
     }
     std::cout << "-vars:\n";
     for(auto const &pair : vars) {
-        std::cout << "\t{" << pair.first << " : " << pair.second->getName().data() << "},\n";
+        std::cout << "\t{" << pair.first << " : " << print_type(pair.second->getType()) << "},\n";
     }
     std::cout << "]" << std::endl;
 }
@@ -68,22 +70,29 @@ llvm::Type *Scope::GetType(Type::Type *type) {
         case Type::Kind::ptr:
             return llvm::PointerType::get(GetType(static_cast<Type::Pointer *>(type)->GetType()), 0);
             break;
+        case Type::Kind::arr: {
+            auto arr_type = static_cast<Type::Array *>(type);
+            //error("TODO!, [Arr Type]");
+            return llvm::ArrayType::get(GetType(arr_type->GetType()), arr_type->ElemCount());
+            }break;
+        case Type::Kind::function: {
+                auto fn_type = (Type::FuncPtr *)type;
+                std::vector<llvm::Type *> params;
+                for(auto &par : fn_type->GetParams()) {
+                    params.push_back(GetType(par));
+                }
+                auto type = llvm::FunctionType::get(
+                    GetType(fn_type->GetRetType()),
+                    params,
+                    false
+                );
+                error("Unimplemented [FuncPtr]");
+                return llvm::PointerType::get(type, 0);
+            }break;
     }
-    error("Unknown type '%s'", type->kind);
+    error("Unknown type [%d]", type->kind);
     std::exit(1);
 }
-
-/*llvm::Type *Scope::GetType(TypeSpec &type) {
-    if(base_types.contains(type.name)) return type.ptr ? llvm::PointerType::get(resolve_type(type.name), 0) : resolve_type(type.name);
-    Scope *scope = this->Resolve(type.name.c_str());
-    if(scope->struct_types.contains(type.name)) {
-        if(type.ptr)
-            return llvm::PointerType::get(scope->struct_types.at(type.name), 0);
-        return scope->struct_types.at(type.name);
-    }
-    error("Unknown type '%s'", type.name.c_str());
-    std::exit(1);
-}*/
 
 std::vector<std::string> &Scope::GetStruct(std::string type) {
     Scope *scope = this->Resolve(type.c_str());
@@ -100,7 +109,7 @@ Scope *Scope::Resolve(std::string var) {
         return this;
 
     if(!parent)
-        error("Cannot resolve variable '%s'. Variable does not exist in current Context", var.c_str());
+        error("Cannot resolve variable '%s'. Variable does not exist in the current Context", var.c_str());
 
     return parent->Resolve(var);
 }

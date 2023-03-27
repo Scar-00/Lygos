@@ -21,6 +21,7 @@ private:
     Token& At() { return tokens[index]; }
     Token& Eat() { auto& token = tokens.at(index); index++; return token; }
     AST *ParseGlobals();
+    AST *ParseImpl();
     AST *ParseStmt();
     Field ParseFieldDecl();
     AST *ParseStructDecl();
@@ -28,12 +29,14 @@ private:
     AST *ParseFunc();
     AST *ParseRetExr();
     AST *ParseIfExpr();
+    AST *ParseForExpr();
     AST *ParseExpr();
     AST *ParseCondExpr();
     AST *ParseAssignmentExpr();
     AST *ParseAdditiveExpr();
     AST *ParseMultExpr();
     AST *ParseMemberExpr();
+    AST *ParseResolutionExpr();
     AST *ParseCallExpr();
     AST *ParseUnaryExpr();
     AST *ParseIndexExpr();

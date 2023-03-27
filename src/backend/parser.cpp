@@ -1,5 +1,6 @@
 #include "parser.h"
 #include <asm-generic/errno.h>
+#include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -28,14 +29,48 @@ AST *Parser::ParseGlobals() {
     switch (At().type) {
         case TokenType::KwStruct: return ParseStructDecl();
         case TokenType::KwFn: return ParseFunc();
+        case TokenType::KwImpl: return ParseImpl();
         default: return ParseStmt();
     }
 }
 
+AST *Parser::ParseImpl() {
+    Eat();
+
+    auto id = Eat();
+
+    if(id.type != TokenType::Id)
+        error("Expected 'identifier' after 'impl', found [%s]", id.value.c_str());
+
+    if(Eat().type != TokenType::CurlyLeft)
+        error("Expected '{', found [%s]", PEEK(-1).value.c_str());
+
+    std::vector<AST *> nodes;
+    while (At().type != TokenType::CurlyRight) {
+        nodes.push_back(ParseFunc());
+    }
+    if(Eat().type != TokenType::CurlyRight)
+        error("Expected '}', found [%s]", PEEK(-1).value.c_str());
+
+    return new Impl(id.value, nodes);
+}
+
 AST *Parser::ParseStmt() {
-    auto node =  ParseExpr();
-    if(Eat().type != TokenType::Semi)
-        error("Expected ';' at the end of expression");
+    AST *node = NULL;
+    switch(At().type) {
+    case TokenType::KwIf:
+        node = ParseIfExpr();
+        break;
+    case TokenType::KwFor:
+        node = ParseForExpr();
+        break;
+    default:
+        node = ParseExpr();
+        if(Eat().type != TokenType::Semi)
+            error("Expected ';' at the end of expression, found [%s]", PEEK(-1).value.c_str());
+        break;
+    }
+    assert(node != NULL && "Can never return NULL from ParseStmt");
     return node;
 }
 
@@ -146,7 +181,48 @@ AST *Parser::ParseRetExr() {
 }
 
 AST *Parser::ParseIfExpr() {
+    Eat();
+    auto cond = ParseExpr();
+
+    if(Eat().type != TokenType::CurlyLeft)
+        error("Expected '{' after 'if' stmt, found [%d]", PEEK(-1).value.c_str());
+
+    std::vector<AST *> then_branch;
+    while (At().type != TokenType::CurlyRight) {
+        then_branch.push_back(ParseStmt());
+    }
+    Eat();
+
+    std::shared_ptr<std::vector<AST *>> else_branch = NULL;
+    if(At().type == TokenType::KwElse) {
+        Eat();
+        if(Eat().type != TokenType::CurlyLeft)
+            error("Exprected '{' after else stmt, found [%s]", PEEK(-1).value.c_str());
+
+        else_branch = std::make_unique<std::vector<AST *>>();
+        while(At().type != TokenType::CurlyRight) {
+            else_branch->push_back(ParseStmt());
+        }
+        Eat();
+    }
+    return new IfExpr(cond, then_branch, else_branch);
+}
+
+AST *Parser::ParseForExpr() {
+    Eat();
+    auto var = ParseExpr();
+    //change this [can be any lvalue]
+    if(var->type != ASTType::Id)
+        error("Expected expression after 'for', found [%s]", PEEK(-1).value.c_str());
+    if(Eat().type != TokenType::KwIn)
+        error("Expected 'in' after expression, found [%s]", PEEK(-1).value.c_str());
+
+    auto iter = ParseExpr();
+
+    std::vector<AST *> body;
+
     error("NOT YET IMPL");
+    return new ForExpr(var, iter, body);
 }
 
 AST *Parser::ParseVarDecl() {
@@ -271,10 +347,10 @@ AST *Parser::ParseCallExpr() {
 }
 
 AST *Parser::ParseMemberExpr() {
-    auto obj = ParseUnaryExpr();
-    //auto obj = ParseIndexExpr();
+    auto obj = ParseResolutionExpr();
     while (At().type == TokenType::Dot) {
         Eat();
+        //auto member = ParseExpr();
         auto member = ParsePrimaryExpr();
         if(member->type != ASTType::Id)
             error("Member expression has to be an identifier");
@@ -285,17 +361,23 @@ AST *Parser::ParseMemberExpr() {
     return obj;
 }
 
-//AST *Parser::ParseCallExpr() {
-
-//}
+AST *Parser::ParseResolutionExpr() {
+    auto obj = ParseUnaryExpr();
+    while (At().type == TokenType::OpScope) {
+        Eat();
+        auto member = ParseExpr();
+        //std::cout << member->GetValue() << '\n';
+        //std::cout << member->type << "\n";
+        obj = new ResolutionExpr(obj, member);
+    }
+    return obj;
+}
 
 AST *Parser::ParseUnaryExpr() {
     if(At().type == TokenType::Ampercent
     || At().type == TokenType::OpMul) {
         auto op = Eat().value;
         auto obj = ParseIndexExpr();
-        Log() << "Op -> " << op << "\n";
-        Log() << "obj -> " << obj->GetValue() << "\n";
         return new UnaryExpr(obj, op);
     }
     return ParseIndexExpr();
@@ -353,58 +435,6 @@ AST *Parser::ParsePrimaryExpr() {
             }
             return value;
         }
-        case TokenType::KwIf: {
-            Eat();
-
-            auto cond = ParseExpr();
-
-            if(Eat().type != TokenType::CurlyLeft)
-                error("Expected '{' after cond");
-
-            std::vector<AST*> then_branch;
-            while (At().type != TokenType::CurlyRight) {
-                then_branch.push_back(ParseStmt());
-            }
-            Eat();
-
-            std::shared_ptr<std::vector<AST*>> else_branch = NULL;
-            if(At().type == TokenType::KwElse) {
-                Eat();
-
-                if(Eat().type != TokenType::CurlyLeft)
-                    error("TODO!");
-
-                else_branch = std::make_shared<std::vector<AST*>>();
-                while (At().type != TokenType::CurlyRight) {
-                    else_branch->push_back(ParseStmt());
-                }
-                Eat();
-            }
-
-            return new IfExpr{cond, then_branch, else_branch};
-        }
-        case TokenType::KwFor: {
-            Eat();
-            auto var = ParseExpr();
-            if(var->type != ASTType::Id)
-                error("Expected Identifier after for keyword, found '%s'", var->GetValue().c_str());
-
-            auto in = Eat();
-            if(in.type != TokenType::KwIn)
-                error("Expected 'in' keyword after iterator variable, found '%s'", in.value.c_str());
-
-            auto iter = ParseExpr();
-            if(iter->type != ASTType::RangeLiteral)
-                error("Expected range literal, found '%s'", iter->GetValue().c_str());
-
-            error("test");
-
-            std::vector<AST *> body;
-
-
-            error("TODO! parse for expr");
-            return new ForExpr(var, iter, body);
-        }
         default:
             //Log() << PEEK(1).value << " " << PEEK(2).value << "\n";
             error("Unknown Token found [%s]\n", token.value.c_str());
@@ -415,6 +445,7 @@ AST *Parser::ParsePrimaryExpr() {
 Type::Type *Parser::ParseTypeSpec(TypeConstraints constr) {
     Type::Type *spec = nullptr;
     Type::Type *origin = nullptr;
+    //handle pointers;
     while(At().type == TokenType::OpMul || At().type == TokenType::Ampercent) {
         Eat();
         bool mut = false;
@@ -431,6 +462,51 @@ Type::Type *Parser::ParseTypeSpec(TypeConstraints constr) {
             static_cast<Type::Pointer *>(spec)->SetType(ptr);
             spec = ptr;
         }
+    }
+
+    //handle static arrays;
+    if(At().type == TokenType::BraceLeft) {
+        Eat();
+        auto type = ParseTypeSpec(TypeConstraints::Var);
+
+        if(Eat().type != TokenType::Semi)
+            error("expected ';' after type declaration, found [%s]", PEEK(-1).value.c_str());
+
+        if(At().type != TokenType::Integer)
+            error("expected constatnt value, found [%s]", At().value.c_str());
+
+        auto count = std::atoi(Eat().value.c_str());
+
+        if(Eat().type != TokenType::BraceRight)
+            error("expected closing brace ']', found [%s]", PEEK(-1).value.c_str());
+
+        return new Type::Array(type, count);
+    }
+
+    //handle function pointers
+    if(At().type == TokenType::KwFn) {
+        Eat();
+        if(Eat().type != TokenType::ParanLeft)
+            error("Expected '(' after keyword 'fn', found [%s]", PEEK(-1).value.c_str());
+
+        std::vector<Type::Type *> params;
+        while (At().type != TokenType::ParanRight) {
+            params.push_back(ParseTypeSpec(TypeConstraints::Function));
+            if(At().type == TokenType::ParanRight)
+                break;
+            if(Eat().type != TokenType::Comma)
+                error("Function params have to be comma seperated, found [%s]", PEEK(-1).value.c_str());
+        }
+        Eat();
+
+        Type::Type *ret_type = new Type::Path("void");
+
+        if(At().type == TokenType::Arrow) {
+            Eat();
+            ret_type = ParseTypeSpec(TypeConstraints::Function);
+        }
+
+        return new Type::FuncPtr(params, ret_type);
     }
 
     if(At().type != TokenType::Id)

@@ -15,21 +15,11 @@ struct Foo {
     y: i32;
 };
 
-fn test2(i: *i32) {
-    print_deref(i);
-}
-
-fn test1() {
-    let x = 200;
-    let y = &x;
-    print_deref(y);
-}
-
-fn test() -> Foo {
-    let mut x: Foo;
-    x.x = 100;
-    x.y = 200;
-    return x;
+fn foo_init(x: i32, y: i32) {
+    let mut foo: Foo;
+    foo.x = x;
+    foo.y = y;
+    return foo;
 }
 
 fn main(argc: i32, argv: **i8) -> i32 {
@@ -38,8 +28,10 @@ fn main(argc: i32, argv: **i8) -> i32 {
     arr[1] = 20;
     arr[2] = 30;
     arr[3] = 30;
-    let foo = test();
-    test2(&foo.x);
-    print_arr(argv, argc, 0);
-    return foo.y;
+    if arr[0] < 11 {
+        printf_ln("Less then 11");
+    }else {
+        printf_ln("More then 11");
+    }
+    return 0;
 }

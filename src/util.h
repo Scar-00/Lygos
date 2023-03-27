@@ -2,12 +2,13 @@
 #include "types.h"
 #include "./backend/ast.h"
 #include <llvm/Support/raw_os_ostream.h>
+#include <ostream>
 
 void error(const char *format, ...);
 llvm::raw_string_ostream &Log();
 void PrintLog();
 
-void print_type(llvm::Type *type);
+std::string print_type(llvm::Type *type);
 
 llvm::Type *resolve_type(std::string &type);
 
@@ -30,3 +31,5 @@ llvm::Type *TryGetPointerBase(llvm::Type *type);
 llvm::Value *LoadOrIgnore(llvm::Value *value);
 
 bool ShouldLoad(AST *ast);
+
+std::ostream &operator<<(std::ostream &os, ASTType type);

@@ -4,6 +4,7 @@
 #include "llvm/IR/Value.h"
 #include <float.h>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -19,6 +20,7 @@ enum class ASTType {
     //statements
     Program,
     Function,
+    Closure,
     VarDecl,
     FunctionDecl,
 
@@ -30,9 +32,11 @@ enum class ASTType {
     CallExpr,
     AccessExpr,
     UnaryExpr,
+    ResolutionExpr,
 
     //literals
     StructDef,
+    Impl,
     ObjectLiteral,
     NumberLiteral,
     StringLiteral,
@@ -68,6 +72,11 @@ struct Function : public AST {
     std::vector<AST *> block;
     Type::Type *return_type;
     std::vector<std::tuple<std::string, Type::Type *>> args;
+};
+
+struct Closure : public AST {
+    std::vector<std::string> args;
+    Closure(): AST(ASTType::Closure) {}
 };
 
 struct VarDecl : public AST {
@@ -151,6 +160,14 @@ struct UnaryExpr : public AST {
     std::string op;
 };
 
+struct ResolutionExpr : public AST {
+    AST *obj;
+    AST *member;
+    ResolutionExpr(AST *obj, AST *member): AST(ASTType::ResolutionExpr), obj(obj), member(member) {}
+    virtual std::string GetValue();
+    virtual llvm::Value *GenCode(Scope *scope);
+};
+
 struct Field {
     Type::Type *data_type;
     std::string id;
@@ -161,6 +178,14 @@ struct StructDef : public AST {
     std::string id;
     std::vector<Field> fields;
     StructDef(std::string id, std::vector<Field> fields): AST(ASTType::StructDef), id(id), fields(fields) {}
+    virtual std::string GetValue();
+    virtual llvm::Value *GenCode(Scope *scope);
+};
+
+struct Impl : public AST {
+    Impl(std::string type, std::vector<AST *> body): AST(ASTType::Impl), body(body), type(type) {}
+    std::vector<AST *> body;
+    std::string type;
     virtual std::string GetValue();
     virtual llvm::Value *GenCode(Scope *scope);
 };

@@ -74,7 +74,7 @@ void llvm_init() {
 int main(int argc, char **argv) {
     llvm_init();
 
-    std::string file_path = "test1.txt";
+    std::string file_path = "test2.txt";
 
     /*Scope s{};
     Type::Type *path = new Type::Path("i32");

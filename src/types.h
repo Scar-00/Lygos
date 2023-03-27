@@ -1,12 +1,15 @@
 #pragma once
 
 #include "global.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
 #include <set>
 #include <string>
 #include <map>
 #include <llvm/IR/Type.h>
 #include <unordered_map>
+#include <llvm/IR/DerivedTypes.h>
+#include <vector>
 
 //singed types
 typedef double              f64;
@@ -28,30 +31,32 @@ enum class TokenType {
     Integer,
     Float,
     Id,
-    Range,
+    Range, // 1..10
 
     //general
-    Equals,
-    Arrow,
-    Dot,
-    Comma,
-    Semi,
-    Colon,
-    Ampercent,
-    Hash,
-    //TypeDef,
-    //FunctionType,
+    Equals, // =
+    Arrow, // ->
+    Dot, // .
+    Comma, //,
+    Semi, // ;
+    Colon, // :
+    Ampercent, // &
+    Hash, // #
+    Pipe, // |
+    Bang, // !
 
     //operators
-    OpPlus,
-    OpMinus,
-    OpMul,
-    OpDiv,
-    OpMod,
+    OpPlus, // +
+    OpMinus, // -
+    OpMul, // *
+    OpDiv, // /
+    OpMod, // %
 
-    OpEqEq,
-    OpLe,
-    OpGr,
+    OpEqEq, // ==
+    OpLe, // <
+    OpGr, // >
+
+    OpScope, // ::
 
     BraceLeft,
     BraceRight,
@@ -73,6 +78,7 @@ enum class TokenType {
     KwRet,
     KwIn,
     KwInclude,
+    KwImpl,
 
     Eof,
 };
@@ -90,6 +96,7 @@ static std::map<std::string, TokenType> KeyWords = {
     {"return", TokenType::KwRet},
     {"in", TokenType::KwIn},
     {"include", TokenType::KwInclude},
+    {"impl", TokenType::KwImpl},
 };
 
 static std::set<std::string> base_types = {
@@ -111,16 +118,26 @@ static std::set<std::string> base_types = {
     {"void"},
 };
 
-/*struct TypeSpec {
+namespace llc {
+struct Function {
     std::string name;
-    bool mut;
-    bool ptr;
-};*/
+    bool stat;
+    llvm::Function *llvm_function;
+};
+
+struct StructType {
+    std::string name;
+    llvm::StructType *llvm_type;
+    std::unordered_map<std::string, Function> functions;
+};
+}
 
 namespace Type {
     enum Kind {
         path,
         ptr,
+        arr,
+        function,
     };
 
     struct Type {
@@ -148,5 +165,27 @@ namespace Type {
         private:
         Type* type;
         bool mut;
+    };
+
+    struct Array : public Type {
+        public:
+        Array(Type *type, u32 count): type(type), elems(count) {
+            this->kind = Kind::arr;
+        }
+        Type *GetType() { return type; }
+        u32 ElemCount() { return elems; }
+        private:
+        Type *type;
+        u32 elems;
+    };
+
+    struct FuncPtr : public Type {
+        public:
+            FuncPtr(std::vector<Type *> params, Type *ret_type): params(params), return_type(ret_type) {this->kind = Kind::function;}
+            std::vector<Type *> &GetParams() { return params; }
+            Type *GetRetType() { return return_type; }
+        private:
+            std::vector<Type *> params;
+            Type *return_type;
     };
 }
