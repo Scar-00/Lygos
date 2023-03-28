@@ -33,6 +33,7 @@ enum class ASTType {
     AccessExpr,
     UnaryExpr,
     ResolutionExpr,
+    CastExpr,
 
     //literals
     StructDef,
@@ -164,6 +165,14 @@ struct ResolutionExpr : public AST {
     AST *obj;
     AST *member;
     ResolutionExpr(AST *obj, AST *member): AST(ASTType::ResolutionExpr), obj(obj), member(member) {}
+    virtual std::string GetValue();
+    virtual llvm::Value *GenCode(Scope *scope);
+};
+
+struct CastExpr : public AST {
+    Type::Type *target_type;
+    AST *obj;
+    CastExpr(AST *obj, Type::Type *target_type): target_type(target_type), obj(obj) {}
     virtual std::string GetValue();
     virtual llvm::Value *GenCode(Scope *scope);
 };

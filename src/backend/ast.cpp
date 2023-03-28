@@ -30,6 +30,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using Val = llvm::Value;
@@ -300,8 +301,25 @@ std::string ResolutionExpr::GetValue() {
 }
 
 Val *ResolutionExpr::GenCode(Scope *scope) {
-    error("Unimplemented, [ResolutionExpr]");
-    return nullptr;
+    auto fn = (CallExpr *)this->member;
+    std::string fn_name = this->obj->GetValue() + "_" + fn->caller->GetValue();
+    ((Identifier*)fn->caller)->value = fn_name;
+    return fn->GenCode(scope);
+}
+
+std::string CastExpr::GetValue() {
+    return obj->GetValue();
+}
+
+Val *CastExpr::GenCode(Scope *scope) {
+    auto val = this->obj->GenCode(scope);
+    if(ShouldLoad(this->obj))
+        val = LoadOrIgnore(val);
+
+    auto dest_type = scope->GetType(this->target_type);
+    auto src_type = val->getType();
+    auto op = GetCastOp(src_type, dest_type);
+    return builder->CreateCast(op, val, dest_type);
 }
 
 std::string StructDef::GetValue() {
@@ -329,8 +347,7 @@ Val *StructDef::GenCode(Scope *scope) {
 
     //auto size = mod->getDataLayout().getTypeSizeInBits(struct_type);
     //Log() << id << " -> " << size / 8 << "\n";
-
-    scope->AddType(id, struct_type, struct_member);
+    scope->AddType(id, {id, struct_type, struct_member, {}});
     return nullptr;
 }
 
@@ -339,10 +356,11 @@ std::string Impl::GetValue() {
 }
 
 Val *Impl::GenCode(Scope *scope) {
-    //scope->Print();
-    //error("Unimplemented [Impl CodeGen]");
-    for(const auto &member : this->body)
+    for(const auto &member : this->body) {
+        auto fn = (Function *)member;
+        fn->id = this->type + "_" + fn->id;
         member->GenCode(scope);
+    }
     return nullptr;
 }
 
@@ -353,7 +371,7 @@ std::string NumberLiteral::GetValue() {
 Val *NumberLiteral::GenCode(Scope *scope) {
     //rewrite this to support more types
     if(data_type == "Integer") return llvm::ConstantInt::get(*ctx, llvm::APInt(32, std::atoi(value.c_str())));
-    return llvm::ConstantFP::get(*ctx, llvm::APFloat(std::atof(value.c_str())));
+    return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*ctx), std::atof(value.c_str()));
 }
 
 std::string StringLiteral::GetValue() {

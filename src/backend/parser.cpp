@@ -260,7 +260,8 @@ AST *Parser::ParseVarDecl() {
             return new VarDecl{token.value, nullptr, false, data_type};
         }
         case TokenType::Equals: {
-            auto decl = new VarDecl{token.value, std::make_shared<AST*>(ParseExpr()), is_const, data_type}; //TODO figure out data type
+            auto decl = new VarDecl{token.value, std::make_shared<AST*>(ParseExpr()), is_const, data_type};
+            //TODO figure out data type
             return decl;
         }
         default:
@@ -354,7 +355,6 @@ AST *Parser::ParseMemberExpr() {
         auto member = ParsePrimaryExpr();
         if(member->type != ASTType::Id)
             error("Member expression has to be an identifier");
-
         obj = new MemberExpr{obj, member};
     }
 
@@ -362,22 +362,34 @@ AST *Parser::ParseMemberExpr() {
 }
 
 AST *Parser::ParseResolutionExpr() {
-    auto obj = ParseUnaryExpr();
+    auto obj = ParseCastExpr();
     while (At().type == TokenType::OpScope) {
         Eat();
         auto member = ParseExpr();
-        //std::cout << member->GetValue() << '\n';
-        //std::cout << member->type << "\n";
         obj = new ResolutionExpr(obj, member);
     }
     return obj;
+}
+
+AST *Parser::ParseCastExpr() {
+    if(At().type == TokenType::ParanLeft) {
+        Eat();
+        auto type = ParseTypeSpec(TypeConstraints::Var);
+        if(Eat().type != TokenType::ParanRight)
+            error("Expected ')', found [%s]", PEEK(-1).value.c_str());
+
+        auto obj = ParseExpr();
+        return new CastExpr(obj, type);
+    }
+    return ParseUnaryExpr();
 }
 
 AST *Parser::ParseUnaryExpr() {
     if(At().type == TokenType::Ampercent
     || At().type == TokenType::OpMul) {
         auto op = Eat().value;
-        auto obj = ParseIndexExpr();
+        auto obj = ParseExpr();
+        //auto obj = ParseIndexExpr();
         return new UnaryExpr(obj, op);
     }
     return ParseIndexExpr();

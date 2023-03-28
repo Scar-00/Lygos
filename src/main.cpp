@@ -105,6 +105,9 @@ int main(int argc, char **argv) {
         true
     );
 
+    //type->canLosslesslyBitCastTo(type);
+    //builder->CreateCast
+
     llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf_ln", *mod);
 
     ast->GenCode({});

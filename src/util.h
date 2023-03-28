@@ -1,8 +1,12 @@
 #pragma once
 #include "types.h"
 #include "./backend/ast.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Type.h"
+#include <algorithm>
 #include <llvm/Support/raw_os_ostream.h>
 #include <ostream>
+#include <vector>
 
 void error(const char *format, ...);
 llvm::raw_string_ostream &Log();
@@ -33,3 +37,10 @@ llvm::Value *LoadOrIgnore(llvm::Value *value);
 bool ShouldLoad(AST *ast);
 
 std::ostream &operator<<(std::ostream &os, ASTType type);
+
+template<typename T>
+bool VecContains(std::vector<T> vec, T &item) {
+    return std::find(vec.begin(), vec.end(), item) != vec.end();
+}
+
+llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest);

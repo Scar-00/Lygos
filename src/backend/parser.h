@@ -38,6 +38,7 @@ private:
     AST *ParseMemberExpr();
     AST *ParseResolutionExpr();
     AST *ParseCallExpr();
+    AST *ParseCastExpr();
     AST *ParseUnaryExpr();
     AST *ParseIndexExpr();
     AST *ParsePrimaryExpr();

@@ -20,8 +20,8 @@ public:
     llvm::AllocaInst *LookupVar(std::string id);
     std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
     std::set<std::string> &GetConstants() { return constants; }
-    void AddType(std::string id, llvm::StructType *type, std::vector<std::string> struct_member);
-    //llvm::Type *GetType(TypeSpec &type);
+    void AddType(std::string id, llc::StructType struct_type);
+    void TypeAddFunction(std::string type, llc::Function func);
     llvm::Type *GetType(Type::Type *type);
     std::vector<std::string> &GetStruct(std::string);
 private:
@@ -29,8 +29,7 @@ private:
     Scope *Resolve(const char *type);
     std::unordered_map<std::string, llvm::AllocaInst *> vars;
     std::set<std::string> constants;
-    std::unordered_map<std::string, llvm::StructType *> struct_types;
-    std::unordered_map<std::string, std::vector<std::string>> struct_fields;
+    std::unordered_map<std::string, llc::StructType> struct_types;
     Scope *parent = nullptr;
     llvm::Value *ret = nullptr;
 };

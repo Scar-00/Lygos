@@ -4,6 +4,7 @@
 #include "global.h"
 #include "types.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
@@ -86,8 +87,8 @@ llvm::Value *LoadOrIgnore(llvm::Value *value) {
 bool ShouldLoad(AST *ast) {
     return ast->type == ASTType::Id
         || ast->type == ASTType::MemberExpr
-        || ast->type == ASTType::AccessExpr
-        || ast->type == ASTType::UnaryExpr;
+        || ast->type == ASTType::AccessExpr;
+        //|| ast->type == ASTType::UnaryExpr;
 }
 
 std::ostream &operator<<(std::ostream &os, ASTType type) {
@@ -112,6 +113,25 @@ std::ostream &operator<<(std::ostream &os, ASTType type) {
         case ASTType::RangeLiteral: os << "RangeLiteral"; break;
         case ASTType::BinaryExpr: os << "BinaryExpr"; break;
         case ASTType::Id: os << "Identifier"; break;
+        case ASTType::ResolutionExpr: os << "ResolutionExpr"; break;
+        case ASTType::CastExpr: os << "CastExpr"; break;
     }
     return os;
+}
+
+llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest) {
+    using CastOps = llvm::Instruction::CastOps;
+    if(src->isIntegerTy() && dest->isIntegerTy()) {
+        if(src->getIntegerBitWidth() > dest->getIntegerBitWidth()) return CastOps::Trunc;
+        return CastOps::SExt;
+    }
+    if(src->isPointerTy() && dest->isPointerTy()) return CastOps::BitCast;
+    if(src->isFloatingPointTy() && dest->isFloatingPointTy()) {
+        if(src->isFloatTy() && dest->isDoubleTy()) return CastOps::FPExt;
+    }
+    if(src->isIntegerTy()) {
+        if(dest->isFloatTy()) return CastOps::SIToFP;
+    }
+    error("Cannot cast '%s' to '%s'", print_type(src).c_str(), print_type(dest).c_str());
+    std::exit(1);
 }

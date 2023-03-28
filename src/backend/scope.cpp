@@ -31,7 +31,7 @@ void Scope::Print() {
     std::cout << "Scope [\n";
     std::cout << "-types:\n";
     for(auto const &pair : struct_types) {
-        std::cout << "\t" << print_type(pair.second) << "\n";
+        std::cout << "\t" << print_type(pair.second.llvm_type) << "\n";
     }
     std::cout << "-vars:\n";
     for(auto const &pair : vars) {
@@ -48,12 +48,22 @@ llvm::AllocaInst *Scope::LookupVar(std::string id) {
     return scope->vars.at(id);
 }
 
-void Scope::AddType(std::string id, llvm::StructType *type, std::vector<std::string> struct_member) {
+void Scope::AddType(std::string id, llc::StructType struct_type) {
     auto scope = this->Resolve(id.c_str());
     if(scope->struct_types.contains(id))
         error("Cannot redeclare '%s'", id.c_str());
-    this->struct_types.insert({id, type});
-    this->struct_fields.insert({id, struct_member});
+    this->struct_types.insert({id, struct_type});
+}
+
+void Scope::TypeAddFunction(std::string type, llc::Function func) {
+    auto scope = this->Resolve(type.c_str());
+    if(!scope->struct_types.contains(type))
+        error("Unknown Type '%s'", type.c_str());
+
+    if(VecContains(scope->struct_types.at(type).functions, func))
+        error("Cannot redeclare function '%s' for type '%s'", func.name.c_str(), type.c_str());
+
+    this->struct_types.at(type).functions.push_back(func);
 }
 
 llvm::Type *Scope::GetType(Type::Type *type) {
@@ -63,7 +73,7 @@ llvm::Type *Scope::GetType(Type::Type *type) {
             if(base_types.contains(path)) return resolve_type(path);
             Scope *scope = this->Resolve(path.c_str());
             if(scope->struct_types.contains(path)) {
-                return scope->struct_types.at(path);
+                return scope->struct_types.at(path).llvm_type;
             }
             break;
         }
@@ -96,8 +106,8 @@ llvm::Type *Scope::GetType(Type::Type *type) {
 
 std::vector<std::string> &Scope::GetStruct(std::string type) {
     Scope *scope = this->Resolve(type.c_str());
-    if(scope->struct_fields.contains(type)) {
-        return scope->struct_fields.at(type);
+    if(scope->struct_types.contains(type)) {
+        return scope->struct_types.at(type).fields;
     }
 
     error("Unknown struct type '%s'", type.c_str());

@@ -8,6 +8,7 @@
 #include <map>
 #include <llvm/IR/Type.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <llvm/IR/DerivedTypes.h>
 #include <vector>
 
@@ -123,15 +124,16 @@ static std::set<std::string> base_types = {
 
 namespace llc {
 struct Function {
+    bool operator==(const Function &other) { return name == other.name; }
     std::string name;
-    bool stat;
     llvm::Function *llvm_function;
 };
 
 struct StructType {
     std::string name;
     llvm::StructType *llvm_type;
-    std::unordered_map<std::string, Function> functions;
+    std::vector<std::string> fields;
+    std::vector<Function> functions;
 };
 }
 
