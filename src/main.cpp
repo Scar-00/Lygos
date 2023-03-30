@@ -1,8 +1,10 @@
 #include "backend/ast.h"
+#include "backend/pregen.h"
 #include "backend/scope.h"
 #include "global.h"
 #include "./backend/lexer.h"
 #include "./backend/parser.h"
+#include "./backend/pregen.h"
 #include "types.h"
 #include "util.h"
 #include "llvm/ADT/Optional.h"
@@ -41,7 +43,7 @@ std::shared_ptr<llvm::LLVMContext> ctx;
 std::shared_ptr<llvm::Module> mod;
 std::shared_ptr<llvm::IRBuilder<>> builder;
 
-void llvm_init() {
+void llvm_init(std::string mod_name) {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -62,7 +64,7 @@ void llvm_init() {
     auto target_machine = target->createTargetMachine(target_tripple, cpu, features, opt, rm);
 
     ctx = std::make_shared<llvm::LLVMContext>();
-    mod = std::make_shared<llvm::Module>("test_mod", *ctx);
+    mod = std::make_shared<llvm::Module>(mod_name.c_str(), *ctx);
     builder = std::make_shared<llvm::IRBuilder<>>(*ctx);
 
     ctx->setOpaquePointers(false);
@@ -72,9 +74,8 @@ void llvm_init() {
 }
 
 int main(int argc, char **argv) {
-    llvm_init();
-
-    std::string file_path = "test2.txt";
+    std::string file_path = "test3.txt";
+    llvm_init(file_path);
 
     /*Scope s{};
     Type::Type *path = new Type::Path("i32");
@@ -109,6 +110,7 @@ int main(int argc, char **argv) {
     //builder->CreateCast
 
     llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf_ln", *mod);
+
 
     ast->GenCode({});
 

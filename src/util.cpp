@@ -45,10 +45,14 @@ std::string print_type(llvm::Type *type) {
 }
 
 llvm::Type *resolve_type(std::string &type) {
-    if(type == "i8" || type == "u8") return llvm::Type::getInt8Ty(*ctx);
-    if(type == "i16" || type == "u16") return llvm::Type::getInt16Ty(*ctx);
-    if(type == "i32" || type == "u32") return llvm::Type::getInt32Ty(*ctx);
-    if(type == "i64" || type == "u64") return llvm::Type::getInt64Ty(*ctx);
+    if(type == "i8") return llvm::Type::getInt8Ty(*ctx);
+    if(type == "i16") return llvm::Type::getInt16Ty(*ctx);
+    if(type == "i32") return llvm::Type::getInt32Ty(*ctx);
+    if(type == "i64") return llvm::Type::getInt64Ty(*ctx);
+    if(type == "u8") return llvm::Type::getIntNTy(*ctx, 8);
+    if(type == "u16") return llvm::Type::getIntNTy(*ctx, 16);
+    if(type == "u32") return llvm::Type::getIntNTy(*ctx, 32);
+    if(type == "u64") return llvm::Type::getIntNTy(*ctx, 64);
     if(type == "f32") return llvm::Type::getFloatTy(*ctx);
     if(type == "f64") return llvm::Type::getDoubleTy(*ctx);
     if(type == "void") return llvm::Type::getVoidTy(*ctx);
@@ -115,6 +119,7 @@ std::ostream &operator<<(std::ostream &os, ASTType type) {
         case ASTType::Id: os << "Identifier"; break;
         case ASTType::ResolutionExpr: os << "ResolutionExpr"; break;
         case ASTType::CastExpr: os << "CastExpr"; break;
+        case ASTType::ReturnExpr: os << "ReturnExpr"; break;
     }
     return os;
 }
@@ -132,6 +137,16 @@ llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest) {
     if(src->isIntegerTy()) {
         if(dest->isFloatTy()) return CastOps::SIToFP;
     }
-    error("Cannot cast '%s' to '%s'", print_type(src).c_str(), print_type(dest).c_str());
+    error("Cannot convert '%s' to '%s'", print_type(src).c_str(), print_type(dest).c_str());
     std::exit(1);
+}
+
+//static void IsImplicityCastable(llvm::Type *src);
+
+bool IsCastable(llvm::Type *src, llvm::Type *dest) {
+    if(src->isPointerTy() && dest->isPointerTy()) return true;
+    if(src->isIntegerTy() && dest->isIntegerTy()) return true;
+    if(src->isFloatingPointTy() && dest->isFloatingPointTy()) return true;
+    if(src->isIntegerTy() && dest->isFloatingPointTy()) return true;
+    return false;
 }

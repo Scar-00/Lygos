@@ -44,3 +44,5 @@ bool VecContains(std::vector<T> vec, T &item) {
 }
 
 llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest);
+
+bool IsCastable(llvm::Type *src, llvm::Type *dest);

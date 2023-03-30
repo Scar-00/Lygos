@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include "../util.h"
@@ -98,7 +99,7 @@ Val *Function::GenCode(Scope *scope) {
     curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
     llvm::verifyFunction(*fn);
-    curr_scope.Print();
+    //curr_scope.Print();
     return nullptr;
 }
 
@@ -113,9 +114,18 @@ Val *VarDecl::GenCode(Scope *scope) {
         scope->DeclVar(id, cnst, alloca);
         return alloca;
     }
+
     auto val = (*value)->GenCode(scope);
     if(ShouldLoad(*this->value) && (*this->value)->type != ASTType::UnaryExpr)
         val = LoadOrIgnore(val);
+
+    if(this->data_type) {
+        auto llvm_type = scope->GetType(data_type);
+        Log() << static_cast<llvm::IntegerType *>(llvm_type)->getSignBit() << "\n";
+        val = builder->CreateCast(GetCastOp(val->getType(), llvm_type), val, llvm_type);
+    }
+
+    //std::numeric_limits<int64_t>::max() < (1LL << intType->getBitWidth()
 
     auto alloca = builder->CreateAlloca(val->getType(), 0, "");
     builder->CreateStore(val, alloca);

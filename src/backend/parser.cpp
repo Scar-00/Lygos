@@ -247,7 +247,7 @@ AST *Parser::ParseVarDecl() {
     if(operation.type == TokenType::Colon) {
         //has_type = true;
         data_type = ParseTypeSpec(TypeConstraints::Var);
-        operation = At();
+        operation = Eat();
     }
 
     switch (operation.type) {
@@ -260,6 +260,8 @@ AST *Parser::ParseVarDecl() {
             return new VarDecl{token.value, nullptr, false, data_type};
         }
         case TokenType::Equals: {
+            //std::cout << At() << "\n";
+            //error("DEBUG");
             auto decl = new VarDecl{token.value, std::make_shared<AST*>(ParseExpr()), is_const, data_type};
             //TODO figure out data type
             return decl;

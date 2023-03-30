@@ -34,6 +34,7 @@ enum class ASTType {
     UnaryExpr,
     ResolutionExpr,
     CastExpr,
+    ReturnExpr,
 
     //literals
     StructDef,
@@ -172,7 +173,7 @@ struct ResolutionExpr : public AST {
 struct CastExpr : public AST {
     Type::Type *target_type;
     AST *obj;
-    CastExpr(AST *obj, Type::Type *target_type): target_type(target_type), obj(obj) {}
+    CastExpr(AST *obj, Type::Type *target_type): AST(ASTType::CallExpr), target_type(target_type), obj(obj) {}
     virtual std::string GetValue();
     virtual llvm::Value *GenCode(Scope *scope);
 };
@@ -225,7 +226,7 @@ struct Identifier : public AST {
 };
 
 struct ReturnExpr : public AST {
-    ReturnExpr(AST *value): value(value) {}
+    ReturnExpr(AST *value): AST(ASTType::ReturnExpr), value(value) {}
     virtual std::string GetValue();
     virtual llvm::Value *GenCode(Scope *scope);
     AST *value;
