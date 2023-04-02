@@ -25,10 +25,10 @@ STD_OBJ = $(SRC:.c=.o)
 .PHONY: std
 
 build: $(OBJ)
-	$(CC) -o bin/main $^ $(LDFLAGS)
+	$(CC) -o bin/lygosc $^ $(LDFLAGS)
 
 run: build
-	bin/main
+	bin/lygosc
 
 data: build
 	sed -e '1 s/./[ '\\\n'{/' -e '$$ s/,$$/'\\\n'] /' $(DATA) > compile_commands.json
@@ -43,4 +43,4 @@ lib: $(OBJ)
 	$(CC) -o $@ -c $< -MJ $@.json $(CFLAGS)
 
 clean:
-	rm -rf $(OBJ) bin/main.exe
+	rm -rf $(OBJ) bin/lygosc
