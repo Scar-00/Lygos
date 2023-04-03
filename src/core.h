@@ -4,8 +4,8 @@
 //lygos headers
 #include "containers.h"
 #include "types.h"
-#include "error/log.h"
 #include "error/error.h"
+#include "util/io.h"
 
 //llvm headers
 #include "llvm.h"

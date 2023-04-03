@@ -1,14 +1,16 @@
 #ifndef _LYGOS_IO_H_
 #define _LYGOS_IO_H_
 
-#include "../core.h"
-
 #include <string>
 #include <filesystem>
 
 namespace lygos {
     namespace IO {
-        Result<std::string, Error::IOError> ReadFile(std::filesystem::path path);
+        std::string ReadFile(std::filesystem::path path);
+
+        bool EmitObj(std::filesystem::path path);
+        bool EmitExec(std::filesystem::path path);
+        bool EmitAsm(std::filesystem::path path);
     }
 }
 

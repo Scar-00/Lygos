@@ -1,9 +1,9 @@
 #include "lexer.h"
+#include "../error/log.h"
 
 namespace lygos {
     std::ostream &operator<<(std::ostream &os, const Token &token) {
-        os << "Type -> " << (int)token.type << "\n";
-        os << "Value -> " << token.value << "\n";
+        os << STRINGIFY(token.type) << ": " << token.value;
         return os;
     }
 
@@ -113,7 +113,7 @@ namespace lygos {
                     if(std::isalpha(curr))
                         return LexId();
 
-                Log::Logger::Abort(fmt::format("found unknown char `{}`", curr));
+                Log::Logger::Abort(fmt::format("found unknown char `{}`", (int)curr));
             }
         }
         return {"", TokenType::Eof, 0};

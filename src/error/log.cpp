@@ -1,5 +1,9 @@
 #include "log.h"
 
+#include <iostream>
+#include "../ast/ast.h"
+#include "../lex/lexer.h"
+
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
 #define RED     "\033[31m"      /* Red */
@@ -26,7 +30,55 @@ namespace lygos {
 
         Logger::~Logger() {}
 
+        void Logger::Init() {
+            if(logger)
+                return;
+            logger = new Logger();
+        }
+
+        void Logger::Destroy() {
+            if(!logger)
+                return;
+            delete logger;
+        }
+
+        bool Logger::WasErrorReported() {
+            return logger->ostream.tellp() != std::streampos(0);
+        }
+
+        void Logger::Flush() {
+            std::cout << logger->ostream.str() << std::endl;
+            logger->ostream.str("");
+            logger->ostream.clear();
+        }
+
+        void Logger::Warn(Token &token, std::string format) {
+            auto &stream = logger->ostream;
+            stream << RED << "error: " << RESET << format << "\n";
+            stream << CYAN << "--> " << RESET << mod->getSourceFileName() << ":" << token.loc.GetLine() << "\n";
+            stream << CYAN << "|\n" << RESET;
+            stream << CYAN << "|\t" << RESET << "found: " << token.value << "\n";
+            stream << CYAN << "|\n\n" << RESET;
+            Flush();
+            std::exit(1);
+        }
+
+        void Logger::Warn(AST::AST *node, std::string format) {
+            auto &stream = logger->ostream;
+            stream << RED << "error: " << RESET << format << "\n";
+            Flush();
+            std::exit(1);
+        }
+
+        void Logger::Warn(std::string format) {
+            logger->ostream << RED << "error: " << RESET << format << "\n";
+            Flush();
+            std::exit(1);
+        }
+
         void Logger::Abort(std::string format) {
+            logger->ostream << "error: " << format << "\n";
+            Flush();
             std::exit(1);
         }
     }

@@ -9,6 +9,7 @@ fn test() {
     x = 10;
 }
 
-fn main() -> i32 {
+fn main(argc: i32, argv: **i8) -> i32 {
+    printf_ln("hello world from lygos");
     return 0;
 }

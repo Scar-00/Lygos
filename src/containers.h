@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <algorithm>
 
 namespace lygos {
     struct None_t{};
@@ -20,8 +22,8 @@ namespace lygos {
     public:
         Option(None): some(false) {}
         Option(Some<T> some): some(true), value(some.value) {}
-        Option& operator=(None) { some = false; return *this; }
-        Option& operator=(Some<T> in) { some = true; value = in.value; return *this; }
+        Option &operator=(None) { some = false; return *this; }
+        Option &operator=(Some<T> in) { some = true; value = in.value; return *this; }
 
         bool IsSome() { return some; }
         bool IsNone() { return !some; }
@@ -43,9 +45,10 @@ namespace lygos {
     struct Result {
     public:
         Result(Ok<T> ok): ok(true) {value.ok = ok.value;}
-        //Result& operator=(Ok<T> ok) { return Result(ok); }
+        Result &operator=(Ok<T> ok) { ok = true; value.ok = ok.value; return *this; }
         Result(E err): ok(false) {value.err = err;}
-        //Result& operator=(E err) { return Result(err); }
+        Result &operator=(E err) { ok = false; value.err = err; return *this; }
+        Result &operator=(const Result other) { return other; }
 
         bool IsOk() { return ok; }
         bool IsErr() { return !ok; }
@@ -59,6 +62,11 @@ namespace lygos {
             E err;
         }value;
     };
+
+    template<typename T>
+    bool VecContains(std::vector<T> vec, T &item) {
+        return std::find(vec.begin(), vec.end(), item) != vec.end();
+    }
 }
 
 template<typename T>

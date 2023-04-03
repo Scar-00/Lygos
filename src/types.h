@@ -10,6 +10,8 @@
 #include <vector>
 
 namespace lygos {
+    #define STRINGIFY(type) #type
+
     //singed types
     typedef double              f64;
     typedef float               f32;
@@ -119,6 +121,31 @@ namespace lygos {
         //empty type
         {"void"},
     };
+
+    std::string PrintType(llvm::Type *type);
+    llvm::Type *ResolveType(std::string &type);
+
+    /*! @brief
+    *  Checks if the llvm::Type* is a pointer. If it is a pointer it
+    *  returns the contained type, otherwise it just returns the type
+    *
+    *  @param[in] type The type you want to try and convert.
+    *  @return the contained type or itself
+     */
+    llvm::Type *TryGetPointerBase(llvm::Type *type);
+
+    /*! @brief
+    *  Checks if the llvm::Type* is a pointer. If it is a pointer it
+    *  returns the contained type, otherwise it just returns the type
+    *
+    *  @param[in] value The type you want to try and convert.
+    *  @return the contained type or itself
+    */
+    llvm::Value *LoadOrIgnore(llvm::Value *value);
+    llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest);
+    bool IsCastable(llvm::Type *src, llvm::Type *dest);
+    bool IsFunctionType(llvm::Type *type);
+    std::string &MangleName(std::string &name);
 
     struct Function {
         bool operator==(const Function &other) { return name == other.name; }
