@@ -1,6 +1,8 @@
 #include "access.h"
 #include "call.h"
 #include "literals.h"
+#include "../error/log.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace lygos {
     namespace AST {
@@ -33,13 +35,24 @@ namespace lygos {
 
         Val *AccessExpr::GenCode(Scope *scope) {
             auto obj = this->obj->GenCode(scope);
-            if(ShouldLoad(this->obj))
+            if(!IsArrayType(obj->getType()))
                 obj = LoadOrIgnore(obj);
+
             auto index = this->index->GenCode(scope);
             if(ShouldLoad(this->index))
                 index = LoadOrIgnore(index);
 
-            auto gep = builder->CreateGEP(TryGetPointerBase(obj->getType()), obj, {index}, "", true);
+            auto *zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0);
+
+            llvm::ArrayRef<Val *> idx_list = {zero, index};
+            if(!IsArrayType(obj->getType()))
+                idx_list = idx_list.drop_front();
+
+            std::cout << "arr? -> " << IsArrayType(obj->getType()) << "\n";
+            std::cout << PrintType(obj->getType()) << "\n";
+            auto gep = builder->CreateGEP(TryGetPointerBase(obj->getType()), obj, idx_list, "", true);
+            //auto load = builder->CreateLoad(TryGetPointerBase(gep->getType()), gep);
+            //std::cout << PrintValue(gep) << "\n";
             return gep;
         }
 

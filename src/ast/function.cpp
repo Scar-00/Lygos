@@ -21,7 +21,7 @@ namespace lygos {
                 auto fn_type = llvm::FunctionType::get(
                     curr_scope.GetType(this->return_type),
                     args_type,
-                    false
+                    is_var_arg
                 );
 
                 fn = llvm::Function::Create(

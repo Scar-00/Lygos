@@ -28,6 +28,8 @@ namespace lygos {
                 auto val = arg->GenCode(scope);
                 if(ShouldLoad(arg) && arg->type != ASTType::UnaryExpr)
                     val = LoadOrIgnore(val);
+
+                //add implicit casting
                 arg_values.push_back(val);
             }
             return builder->CreateCall(callee, arg_values);

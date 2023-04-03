@@ -123,6 +123,7 @@ namespace lygos {
     };
 
     std::string PrintType(llvm::Type *type);
+    std::string PrintValue(llvm::Value *val);
     llvm::Type *ResolveType(std::string &type);
 
     /*! @brief
@@ -145,6 +146,7 @@ namespace lygos {
     llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest);
     bool IsCastable(llvm::Type *src, llvm::Type *dest);
     bool IsFunctionType(llvm::Type *type);
+    bool IsArrayType(llvm::Type *type);
     std::string &MangleName(std::string &name);
 
     struct Function {

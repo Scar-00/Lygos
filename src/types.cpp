@@ -9,6 +9,13 @@ namespace lygos {
         return type_string;
     }
 
+    std::string PrintValue(llvm::Value *val) {
+        std::string val_string;
+        llvm::raw_string_ostream ros(val_string);
+        val->print(ros, true);
+        return val_string;
+    }
+
     llvm::Type *ResolveType(std::string &type) {
         if(type == "i8") return llvm::Type::getInt8Ty(*ctx);
         if(type == "i16") return llvm::Type::getInt16Ty(*ctx);
@@ -72,6 +79,12 @@ namespace lygos {
         }
 
         return type->isFunctionTy();
+    }
+
+    bool IsArrayType(llvm::Type *type) {
+        if(type->isPointerTy())
+            return IsArrayType(TryGetPointerBase(type));
+        return type->isArrayTy();
     }
 
     std::string &MangleName(std::string &name) {

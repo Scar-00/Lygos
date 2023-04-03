@@ -1,7 +1,7 @@
 CC = clang++
 #CC = cl
 
-CFLAGS = -std=c++20 -O0 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing -Wno-newline-eof -Wno-deprecated-declarations -Wno-unused-parameter -DDLL_BUILD
+CFLAGS = -std=c++20 -O0 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing -Wno-newline-eof -Wno-deprecated-declarations -Wno-unused-parameter
 CFLAGS += -I../D/LLVM
 
 #LDFLAGS = -lrt -ldl -lpthread -lm -ltinfo
@@ -28,7 +28,7 @@ build: $(OBJ)
 	$(CC) -o bin/lygosc $^ $(LDFLAGS)
 
 run: build
-	bin/lygosc -c test3.txt -o tmp/test3.o
+	bin/lygosc test3.txt -o tmp/test3.o -e llvm-ir
 
 data: build
 	sed -e '1 s/./[ '\\\n'{/' -e '$$ s/,$$/'\\\n'] /' $(DATA) > compile_commands.json

@@ -113,6 +113,7 @@ namespace lygos {
                 Log::Logger::Warn(PEEK(-1), "expected identifier after keyword `fn`");
 
             std::vector<std::tuple<std::string, Type::Type *>> args;
+            bool is_var_arg = false;
 
             if(Eat().type != TokenType::ParanLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `(`");
@@ -147,7 +148,7 @@ namespace lygos {
 
             if(At().type == TokenType::Semi) {
                 Eat();
-                return new AST::FunctionDecl(id.value, ret_type, args);
+                return new AST::FunctionDecl(id.value, is_var_arg, ret_type, args);
             }
 
             if(Eat().type != TokenType::CurlyLeft)
@@ -159,7 +160,7 @@ namespace lygos {
             }
             Eat();
 
-            return new AST::Function(id.value, body, ret_type, args);
+            return new AST::Function(id.value, is_var_arg, body, ret_type, args);
         }
 
         AST::AST *Parser::ParseRetExr() {
@@ -235,19 +236,19 @@ namespace lygos {
             if(operation.type == TokenType::Colon) {
                 data_type = ParseTypeSpec();
                 operation = At();
+                if(operation.type == TokenType::Equals)
+                    Eat();
             }
+
             switch (operation.type) {
                 case TokenType::Semi: {
                     if (is_const)
                         Log::Logger::Warn(token, fmt::format("constant value {} needs to be assigned", token.value));
                     return new AST::VarDecl{token.value, nullptr, false, data_type};
                 }
-                //FIXME: FIX THIS SHIT!!! WHY IS IT NOT WORKING ??? :(((((
                 case TokenType::Equals: {
-                    Eat();
-                    //std::cout << At() << "\n";
-                    //error("DEBUG");
-                    auto decl = new AST::VarDecl{token.value, std::make_shared<AST::AST*>(ParseExpr()), is_const, data_type};
+                    AST::AST *test = ParseExpr();
+                    auto decl = new AST::VarDecl{token.value, std::make_shared<AST::AST*>(test), is_const, data_type};
                     return decl;
                 }
                 default:
@@ -283,7 +284,8 @@ namespace lygos {
             if(At().type == TokenType::Equals) {
                 Eat();
 
-                AST::AST *rhs = ParseAssignmentExpr();
+                //AssignmentExpr
+                AST::AST *rhs = ParseExpr();
 
                 return new AST::AssignmentExpr{lhs, rhs, "Unknown"}; //TODO figure out data type
             }
@@ -382,7 +384,7 @@ namespace lygos {
 
         AST::AST *Parser::ParseIndexExpr() {
             auto obj = ParsePrimaryExpr();
-            while (At().type == TokenType::BraceLeft) {
+            while(At().type == TokenType::BraceLeft) {
                 Eat();
                 //auto index = ParsePrimaryExpr();
                 auto index = ParseExpr();

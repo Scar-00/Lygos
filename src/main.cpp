@@ -3,6 +3,7 @@
 #include "cli/options.h"
 #include "lex/lexer.h"
 #include "parser/parser.h"
+#include "util/io.h"
 
 namespace lygos {
     llvm::LLVMContext *ctx;
@@ -69,39 +70,21 @@ int main(int argc, char **argv) {
     );
 
     llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf_ln", *lygos::mod);
-    llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf", *lygos::mod);
 
     root->GenCode({});
 
-    llvm::legacy::PassManager pass_manager;
-    /*pass_manager.add(llvm::createAnnotationRemarksLegacyPass());
-    pass_manager.add(llvm::createPromoteMemoryToRegisterPass());
-    pass_manager.add(llvm::createReassociatePass());
-    pass_manager.add(llvm::createNewGVNPass());
-    pass_manager.add(llvm::createCFGSimplificationPass());
-    pass_manager.add(llvm::createSimpleLoopUnrollPass(3));
-    pass_manager.add(llvm::createPromoteMemoryToRegisterPass());*/
-
     llvm::verifyModule(*lygos::mod, &llvm::errs());
 
-    Path output_file = cli_options.OutputFile().UnwrapOrDefault("out.o");
-
-    auto file_type = llvm::CGFT_ObjectFile;
-
-    std::error_code e;
-    llvm::raw_fd_ostream os{output_file.string(), e};
-    if(lygos::target_machine->addPassesToEmitFile(pass_manager, os, nullptr, file_type)) {
-        lygos::Log::Logger::Abort("cannot emit object file");
-        return 1;
+    Path output_file = cli_options.OutputFile().UnwrapOrDefault(input_file.replace_extension(".o").string());
+    if(cli_options.EmitExe()) {
+        lygos::IO::EmitExec(output_file);
+    }else {
+        lygos::IO::EmitObj(output_file);
     }
-    pass_manager.run(*lygos::mod);
-    os.flush();
 
-    auto src = output_file.string();
-    auto out = output_file.replace_extension("").string();
-    auto cmd = fmt::format("clang -o {} {} std/libstd.a -lc", out, src);
-
-    std::system(cmd.c_str());
+    if(cli_options.EmitIr()) {
+        lygos::IO::EmitIr(output_file);
+    }
 
     return 0;
 }

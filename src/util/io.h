@@ -8,6 +8,7 @@ namespace lygos {
     namespace IO {
         std::string ReadFile(std::filesystem::path path);
 
+        bool EmitIr(std::filesystem::path path);
         bool EmitObj(std::filesystem::path path);
         bool EmitExec(std::filesystem::path path);
         bool EmitAsm(std::filesystem::path path);

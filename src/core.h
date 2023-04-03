@@ -24,6 +24,7 @@ namespace lygos {
     extern llvm::LLVMContext *ctx;
     extern llvm::Module *mod;
     extern llvm::IRBuilder<> *builder;
+    extern llvm::TargetMachine *target_machine;
 }
 
 #endif // _LYGOS_CORE_H_
