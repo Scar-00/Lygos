@@ -39,6 +39,7 @@ namespace lygos {
             AST::AST *ParseIfExpr();
             AST::AST *ParseForExpr();
             AST::AST *ParseExpr();
+            AST::AST *ParseParanExpr();
             AST::AST *ParseCondExpr();
             AST::AST *ParseAssignmentExpr();
             AST::AST *ParseAdditiveExpr();

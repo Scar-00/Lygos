@@ -2,15 +2,20 @@ fn malloc(size: u64) -> *i8;
 
 struct Foo {
     x: i32;
+    y: i32;
 };
 
-fn main() -> i32 {
-    let mut x: [i32; 10];
-    x[1] = 100;
-    let y = x[1];
-    let mut arr: *i32 = malloc((u64)16);
-    arr[0] = 10;
-    arr[1] = 20;
-    let z = arr[1];
-    return arr[1];
+fn test(foo: *Foo) {
+    let x = (*foo).y;
+    let y: i16 = 10;
+}
+
+fn add(x: i32, y: i32) -> i32 {
+    return x + y;
+}
+
+fn main(argc: i32, argv: **i8) -> i32 {
+    let x = argc == argc * (5 + 5);
+    printf_ln("%d", x);
+    return 0;
 }

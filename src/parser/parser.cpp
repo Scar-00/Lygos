@@ -261,25 +261,36 @@ namespace lygos {
             switch (At().type) {
                 case TokenType::KwLet: return ParseVarDecl();
                 case TokenType::KwRet: return ParseRetExr();
-                default: return ParseCondExpr();
+                default: return ParseAssignmentExpr();
             }
         }
 
+        AST::AST *Parser::ParseParanExpr() {
+            if(At().type == TokenType::ParanLeft) {
+                Eat();
+                auto node = ParseExpr();
+                if(Eat().type != TokenType::ParanRight)
+                    Log::Logger::Warn(PEEK(-1), "expected closing paran `)`");
+                return node;
+            }
+            return ParseCastExpr();
+        }
+
         AST::AST *Parser::ParseCondExpr() {
-            auto lhs = ParseAssignmentExpr();
+            auto lhs = ParseAdditiveExpr();
 
             if(At().type == TokenType::OpEqEq
             || At().type == TokenType::OpLe
             || At().type == TokenType::OpGr) {
                 auto op = Eat().value;
-                auto rhs = ParseAssignmentExpr();
+                auto rhs = ParseAdditiveExpr();
                 return new AST::BinaryExpr{lhs, rhs, op};
             }
             return lhs;
         }
 
         AST::AST *Parser::ParseAssignmentExpr() {
-            AST::AST *lhs = ParseAdditiveExpr();
+            AST::AST *lhs = ParseCallExpr();
 
             if(At().type == TokenType::Equals) {
                 Eat();
@@ -304,10 +315,10 @@ namespace lygos {
         }
 
         AST::AST *Parser::ParseMultExpr() {
-            AST::AST *lhs = ParseCallExpr();
+            AST::AST *lhs = ParseParanExpr();
             while (At().type == TokenType::OpMul || At().type == TokenType::OpDiv || At().type == TokenType::OpMod) {
                 auto op = Eat().value;
-                AST::AST *rhs = ParseCallExpr();
+                AST::AST *rhs = ParseParanExpr();
                 lhs = new AST::BinaryExpr(lhs, rhs, op);
             }
             return lhs;
@@ -349,7 +360,7 @@ namespace lygos {
         }
 
         AST::AST *Parser::ParseResolutionExpr() {
-            auto obj = ParseCastExpr();
+            auto obj = ParseIndexExpr();
             while (At().type == TokenType::OpScope) {
                 Eat();
                 auto member = ParseExpr();
@@ -363,12 +374,12 @@ namespace lygos {
                 Eat();
                 auto type = ParseTypeSpec();
                 if(Eat().type != TokenType::ParanRight)
-                    Log::Logger::Warn(PEEK(-1), "expected `(`");
+                    Log::Logger::Warn(PEEK(-1), "expected closing paran `)`");
 
                 auto obj = ParseExpr();
                 return new AST::CastExpr(obj, type);
             }
-            return ParseUnaryExpr();
+            return ParsePrimaryExpr();
         }
 
         AST::AST *Parser::ParseUnaryExpr() {
@@ -379,11 +390,11 @@ namespace lygos {
                 //auto obj = ParseIndexExpr();
                 return new AST::UnaryExpr(obj, op);
             }
-            return ParseIndexExpr();
+            return ParseCondExpr();
         }
 
         AST::AST *Parser::ParseIndexExpr() {
-            auto obj = ParsePrimaryExpr();
+            auto obj = ParseUnaryExpr();
             while(At().type == TokenType::BraceLeft) {
                 Eat();
                 //auto index = ParsePrimaryExpr();
@@ -425,8 +436,10 @@ namespace lygos {
                 }
                 case TokenType::ParanLeft: {
                     Eat();
+                    std::cout << At() << "\n";
                     AST::AST *value = ParseExpr();
-                    auto &token = Eat();
+                    auto &token = At();
+                    std::cout << token << std::endl;
                     if(token.type != TokenType::ParanRight)
                         Log::Logger::Warn(token, "unknown token");
                     return value;
