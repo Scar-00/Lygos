@@ -35,7 +35,7 @@ namespace lygos {
             AST::AST *ParseStructDecl();
             AST::AST *ParseVarDecl();
             AST::AST *ParseFunc();
-            AST::AST *ParseRetExr();
+            AST::AST *ParseRetExpr();
             AST::AST *ParseIfExpr();
             AST::AST *ParseForExpr();
             AST::AST *ParseExpr();

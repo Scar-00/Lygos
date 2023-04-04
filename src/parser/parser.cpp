@@ -163,7 +163,7 @@ namespace lygos {
             return new AST::Function(id.value, is_var_arg, body, ret_type, args);
         }
 
-        AST::AST *Parser::ParseRetExr() {
+        AST::AST *Parser::ParseRetExpr() {
             Eat();
             if (At().type == TokenType::Semi) {
                 return new AST::ReturnExpr(NULL);
@@ -174,7 +174,7 @@ namespace lygos {
         AST::AST *Parser::ParseIfExpr() {
             Eat();
             auto cond = ParseExpr();
-
+            std::cout << cond->type << "\n";
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
 
@@ -248,7 +248,7 @@ namespace lygos {
                 }
                 case TokenType::Equals: {
                     AST::AST *test = ParseExpr();
-                    auto decl = new AST::VarDecl{token.value, std::make_shared<AST::AST*>(test), is_const, data_type};
+                    auto decl = new AST::VarDecl{token.value, test, is_const, data_type};
                     return decl;
                 }
                 default:
@@ -260,8 +260,8 @@ namespace lygos {
         AST::AST *Parser::ParseExpr() {
             switch (At().type) {
                 case TokenType::KwLet: return ParseVarDecl();
-                case TokenType::KwRet: return ParseRetExr();
-                default: return ParseAssignmentExpr();
+                case TokenType::KwRet: return ParseRetExpr();
+                default: return ParseCondExpr();
             }
         }
 
@@ -315,10 +315,10 @@ namespace lygos {
         }
 
         AST::AST *Parser::ParseMultExpr() {
-            AST::AST *lhs = ParseParanExpr();
+            AST::AST *lhs = ParseAssignmentExpr();
             while (At().type == TokenType::OpMul || At().type == TokenType::OpDiv || At().type == TokenType::OpMod) {
                 auto op = Eat().value;
-                AST::AST *rhs = ParseParanExpr();
+                AST::AST *rhs = ParseAssignmentExpr();
                 lhs = new AST::BinaryExpr(lhs, rhs, op);
             }
             return lhs;
@@ -390,7 +390,7 @@ namespace lygos {
                 //auto obj = ParseIndexExpr();
                 return new AST::UnaryExpr(obj, op);
             }
-            return ParseCondExpr();
+            return ParseParanExpr();
         }
 
         AST::AST *Parser::ParseIndexExpr() {

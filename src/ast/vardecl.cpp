@@ -4,7 +4,7 @@ namespace lygos {
     namespace AST {
         using Val = llvm::Value;
         std::string VarDecl::GetValue() {
-            return {};
+            return id;
         }
 
         Val *VarDecl::GenCode(Scope *scope) {
@@ -15,8 +15,8 @@ namespace lygos {
                 return alloca;
             }
 
-            auto val = (*value)->GenCode(scope);
-            if(ShouldLoad(*this->value) && (*this->value)->type != ASTType::UnaryExpr)
+            auto val = value->GenCode(scope);
+            if(ShouldLoad(this->value) && this->value->type != ASTType::UnaryExpr)
                 val = LoadOrIgnore(val);
 
             //convert value to declated type if possible

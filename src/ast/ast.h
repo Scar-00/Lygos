@@ -49,6 +49,7 @@ namespace lygos {
 
         bool ShouldLoad(AST *ast);
         std::ostream &operator<<(std::ostream &os, ASTType type);
+        std::ostringstream Print(AST *node, u32 depth = 0);
     }
 }
 

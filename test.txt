@@ -7,7 +7,7 @@ fn print_arr(arr: **i8, length: i32, iter: i32) {
         print_arr(arr, length, iter + 1);
     }else {
 
-    };
+    }
 }
 
 struct Foo {

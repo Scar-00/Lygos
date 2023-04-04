@@ -5,7 +5,7 @@ namespace lygos {
         using Val = llvm::Value;
 
         std::string Program::GetValue() {
-            return {};
+            return mod->getName().str();
         }
 
         Val *Program::GenCode(Scope *scope) {

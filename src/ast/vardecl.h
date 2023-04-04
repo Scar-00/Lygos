@@ -9,8 +9,8 @@ namespace lygos {
             Type::Type *data_type;
             bool cnst;
             std::string id;
-            std::shared_ptr<AST*> value;
-            VarDecl(std::string id, std::shared_ptr<AST*> value, bool cnst, Type::Type *data_type): AST(ASTType::VarDecl), data_type(data_type), cnst(cnst), id(id), value(value) {};
+            AST* value;
+            VarDecl(std::string id, AST* value, bool cnst, Type::Type *data_type): AST(ASTType::VarDecl), data_type(data_type), cnst(cnst), id(id), value(value) {};
             virtual std::string GetValue();
             virtual llvm::Value *GenCode(Scope *scope);
         };

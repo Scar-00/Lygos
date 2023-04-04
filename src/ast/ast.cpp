@@ -1,5 +1,10 @@
 #include "ast.h"
 #include "../error/log.h"
+#include "binary.h"
+#include "function.h"
+#include "mod.h"
+#include "vardecl.h"
+#include <sstream>
 
 namespace lygos {
     namespace AST {
@@ -37,6 +42,56 @@ namespace lygos {
                 case ASTType::ReturnExpr: os << "ReturnExpr"; break;
             }
             return os;
+        }
+
+        static void indent(std::ostream &os, s32 depth) {
+            for(s32 i = 0; i < depth; i++) {
+                os << "\t";
+            }
+        }
+
+        std::ostringstream Print(AST *node, u32 depth) {
+            if(!node)
+                return {};
+            std::ostringstream ss;
+            indent(ss, depth);
+            ss << "[" << node->type << "]";
+            switch (node->type) {
+                case ASTType::Program: {
+                    ss << ": " << node->GetValue() << '\n';
+                    for(const auto &n : ((Program *)node)->body)
+                        ss << Print(n, depth + 1).str();
+                } break;
+                case ASTType::Function: {
+                    ss << ": " << node->GetValue() << "\n";
+                    for(const auto &n : static_cast<Function *>(node)->block)
+                        ss << Print(n, depth + 1).str();
+                } break;
+                case ASTType::VarDecl: {
+                    ss << "\n";
+                    indent(ss, depth);
+                    ss << "var: " << node->GetValue();
+                    AST *value = static_cast<VarDecl *>(node)->value;
+                    if(value)
+                        ss << " = \n" << Print(value, depth + 1).str();
+                    else
+                        ss << "\n";
+                } break;
+                case ASTType::BinaryExpr: {
+                    auto binop = (BinaryExpr *)node;
+                    ss << ": " << binop->op;
+                    ss << "\n";
+                    auto lhs = Print(binop->lhs, depth + 1).str();
+                    ss << lhs;
+                    auto rhs = Print(binop->rhs, depth + 1).str();
+                    ss << rhs;
+                } break;
+                case ASTType::NumberLiteral: {
+                    ss << ": " << node->GetValue() << "\n";
+                } break;
+                default: ss << "\n"; break;
+            }
+            return ss;
         }
     }
 }

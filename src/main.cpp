@@ -1,3 +1,4 @@
+#include "ast/ast.h"
 #include "core.h"
 #include "error/log.h"
 #include "cli/options.h"
@@ -72,6 +73,7 @@ int main(int argc, char **argv) {
     llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf_ln", *lygos::mod);
 
     root->GenCode({});
+    std::cout << lygos::AST::Print(root).str() << std::endl;
 
     llvm::verifyModule(*lygos::mod, &llvm::errs());
 

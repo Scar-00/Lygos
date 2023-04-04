@@ -10,11 +10,17 @@
 * deref '->' operator and '(*x).x'
 * rewrite return instructions (return block)
 * fix escape sequences
+* rethink parser (this is not it)
 
 #AST building
 - Expr <--------|
-   \            |
-- Assignment ---|
+- Cond <------| | [respect precedence]
+   \ ---------| |
+- Additive <--| |
+   \ ---------| |
+- Mutlipl <---| |
+   \ ---------| |
+- Assignment ---| [these are all of equal precedence]
    \            |
 - Call ---------|
    \            |
@@ -26,12 +32,6 @@
    \            |
 - Unary --------|
    \            |
-- Cond <------| | 
-   \----------| |
-- Additive <--| |
-   \----------| |
-- Mutlipl <---| |
-   \----------| |
 - Paran --------|
    \            |
 - Cast ---------|

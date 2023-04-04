@@ -15,7 +15,7 @@ fn add(x: i32, y: i32) -> i32 {
 }
 
 fn main(argc: i32, argv: **i8) -> i32 {
-    let x = argc == argc * (5 + 5);
-    printf_ln("%d", x);
+    let mut arr: [i32; 10];
+    let x = 10 * arr[0] + 10;
     return 0;
 }
