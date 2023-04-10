@@ -1,7 +1,6 @@
 #include "log.h"
 
 #include <iostream>
-#include "../ast/ast.h"
 #include "../lex/lexer.h"
 
 #define RESET   "\033[0m"
@@ -59,13 +58,6 @@ namespace lygos {
             stream << CYAN << "|\n" << RESET;
             stream << CYAN << "|\t" << RESET << "found: " << token.value << "\n";
             stream << CYAN << "|\n\n" << RESET;
-            Flush();
-            std::exit(1);
-        }
-
-        void Logger::Warn(AST::AST *node, std::string format) {
-            auto &stream = logger->ostream;
-            stream << RED << "error: " << RESET << format << "\n";
             Flush();
             std::exit(1);
         }

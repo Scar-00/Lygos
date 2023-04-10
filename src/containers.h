@@ -2,9 +2,11 @@
 #define _LYGOS_CONTAINERS_H_
 
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <vector>
 #include <algorithm>
+#include "types.h"
 
 namespace lygos {
     struct None_t{};
@@ -66,6 +68,11 @@ namespace lygos {
     template<typename T>
     bool VecContains(std::vector<T> vec, T &item) {
         return std::find(vec.begin(), vec.end(), item) != vec.end();
+    }
+
+    template<typename T>
+    void VecInsertAt(std::vector<T> &vec, u32 index, std::vector<T> &elems) {
+        vec.insert(vec.begin() + index, std::make_move_iterator(elems.begin()), std::make_move_iterator(elems.end()));
     }
 }
 

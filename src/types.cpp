@@ -1,5 +1,5 @@
 #include "types.h"
-#include "error/log.h"
+#include "core.h"
 
 namespace lygos {
     std::string PrintType(llvm::Type *type) {
@@ -53,6 +53,7 @@ namespace lygos {
             return CastOps::SExt;
         }
         if(src->isPointerTy() && dest->isPointerTy()) return CastOps::BitCast;
+        if(src->isPointerTy() && dest->isIntegerTy()) return CastOps::PtrToInt;
         if(src->isFloatingPointTy() && dest->isFloatingPointTy()) {
             if(src->isFloatTy() && dest->isDoubleTy()) return CastOps::FPExt;
         }
@@ -90,5 +91,21 @@ namespace lygos {
     std::string &MangleName(std::string &name) {
 
         return name;
+    }
+
+    bool Type::Type::Matches(Type *other) {
+        if(kind == Kind::ptr)
+            return ((Pointer *)this)->GetType()->Matches(other);
+
+        if(other->kind == Kind::ptr) {
+            return Matches(((Pointer *)other)->GetType());
+        }
+
+        if((kind == Kind::path && other->kind == Kind::trait)
+        || (kind == Kind::trait && other->kind == Kind::path)) {
+            return ((Path *)kind)->GetPath() == ((Trait *)kind)->GetName();
+        }
+
+        return kind == other->kind;
     }
 }

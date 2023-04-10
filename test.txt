@@ -15,7 +15,7 @@ struct Foo {
     y: i32;
 };
 
-fn foo_init(x: i32, y: i32) {
+fn foo_init(x: i32, y: i32) -> Foo {
     let mut foo: Foo;
     foo.x = x;
     foo.y = y;

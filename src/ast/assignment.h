@@ -6,12 +6,16 @@
 namespace lygos {
     namespace AST {
         struct AssignmentExpr : public AST {
-            std::string data_type;
-            AST *id;
-            AST *value;
-            AssignmentExpr(AST *id, AST *value, std::string data_type): AST(ASTType::AssignmentExpr), data_type(data_type), id(id), value(value) {}
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
+            public:
+                AssignmentExpr(Ref<AST> assignee, Ref<AST> value);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                Ref<AST> assignee;
+                Ref<AST> value;
         };
     }
 }

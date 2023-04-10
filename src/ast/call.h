@@ -2,22 +2,34 @@
 #define _LYGOS_AST_CALL_H_
 
 #include "ast.h"
+#include <vector>
 
 namespace lygos {
     namespace AST {
         struct CallExpr : public AST {
-            CallExpr(AST *caller, std::vector<AST *> args): AST(ASTType::CallExpr), caller(caller), args(args) {}
-            AST *caller;
-            std::vector<AST *> args;
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
+            public:
+                CallExpr(Ref<AST> caller, std::vector<Ref<AST>> args);
+                Ref<AST> &GetCaller() { return caller; }
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                Ref<AST> caller;
+                std::vector<Ref<AST>> args;
         };
 
         struct ReturnExpr : public AST {
-            ReturnExpr(AST *value): AST(ASTType::ReturnExpr), value(value) {}
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
-            AST *value;
+            public:
+                ReturnExpr(Ref<AST> value);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                Ref<AST> value;
         };
     }
 }

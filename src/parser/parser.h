@@ -14,6 +14,7 @@
 #include "../ast/scope.h"
 #include "../ast/struct.h"
 #include "../ast/vardecl.h"
+#include "../ast/initializer.h"
 
 #include "../lex/lexer.h"
 
@@ -48,6 +49,7 @@ namespace lygos {
             AST::AST *ParseResolutionExpr();
             AST::AST *ParseCallExpr();
             AST::AST *ParseCastExpr();
+            AST::AST *ParseInitializerExpr();
             AST::AST *ParseUnaryExpr();
             AST::AST *ParseIndexExpr();
             AST::AST *ParsePrimaryExpr();

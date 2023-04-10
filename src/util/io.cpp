@@ -1,6 +1,8 @@
 #include "io.h"
 #include "../error/log.h"
 
+#include "../core.h"
+
 #include <sstream>
 #include <fstream>
 #include <string>

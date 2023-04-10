@@ -1,31 +1,33 @@
 #include "assignment.h"
-#include "../error/log.h"
 
 namespace lygos {
     namespace AST {
-        using Val = llvm::Value;
-        std::string AssignmentExpr::GetValue() {
-            return {};
+        AssignmentExpr::AssignmentExpr(Ref<AST> assignee, Ref<AST> value):
+            AST(ASTType::AssignmentExpr), assignee(assignee), value(value) {
+
         }
 
-        Val *AssignmentExpr::GenCode(Scope *scope) {
-            //change this to scope->LookupVar ?
-            if(!scope->GetVars().contains(id->GetValue()))
-                Log::Logger::Warn(fmt::format("cannot assign to `{}`", id->GetValue()));
+        std::string AssignmentExpr::GetValue() {
+            return assignee->GetValue();
+        }
 
-            if(scope->GetConstants().contains(id->GetValue()))
-                Log::Logger::Warn(fmt::format("cannot assign to immutable variable `{}`", id->GetValue()));
+        llvm::Value *AssignmentExpr::GenCode(Scope *scope) {
+            auto var = assignee->GenCode(scope);
+            auto val = value->GenCode(scope);
 
-            auto id = this->id->GenCode(scope);
-            auto val = this->value->GenCode(scope);
-            if(ShouldLoad(value)) {
+            if(ShouldLoad(value.get()))
                 val = LoadOrIgnore(val);
-            }
 
-            //check for castablility
+            builder->CreateStore(val, var);
+            return var;
+        }
 
-            builder->CreateStore(val, id);
-            return id;
+        void AssignmentExpr::Lower() {
+
+        }
+
+        void AssignmentExpr::Sanatize() {
+
         }
     }
 }

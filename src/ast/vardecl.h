@@ -6,13 +6,18 @@
 namespace lygos {
     namespace AST {
         struct VarDecl : public AST {
-            Type::Type *data_type;
-            bool cnst;
-            std::string id;
-            AST* value;
-            VarDecl(std::string id, AST* value, bool cnst, Type::Type *data_type): AST(ASTType::VarDecl), data_type(data_type), cnst(cnst), id(id), value(value) {};
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
+            public:
+                VarDecl(std::string id, bool cnst, Ref<Type::Type> type, Ref<AST> value);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                std::string id;
+                bool cnst;
+                Ref<Type::Type> type;
+                Ref<AST> value;
         };
     }
 }

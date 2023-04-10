@@ -1,38 +1,43 @@
 #include "function.h"
-#include "../types.h"
+#include "llvm/IR/Verifier.h"
+#include <vector>
 
 namespace lygos {
     namespace AST {
-        using Val = llvm::Value;
-        std::string Function::GetValue() {
-            return id;
+        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type):
+            AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(body.size() != 0) {
+
         }
 
-        Val *Function::GenCode(Scope *scope) {
+        void Function::Insert(std::vector<Ref<AST>> &elems) {
+            VecInsertAt(body, instr_index, elems);
+            instr_index += elems.size();
+        }
+
+        llvm::Value *Function::GenCode(Scope *scope) {
             Scope curr_scope{scope};
 
-            auto fn = mod->getFunction(id);
-            if(fn == NULL) {
-                std::vector<llvm::Type *> args_type;
-                for(auto &arg : this->args) {
-                    args_type.push_back(curr_scope.GetType(std::get<1>(arg)));
-                }
+            auto fn = mod->getFunction(name);
+            if(!fn) {
+                std::vector<llvm::Type *> arg_types;
+                for(const auto &[name, type] : args)
+                    arg_types.push_back(curr_scope.GetType(type));
 
                 auto fn_type = llvm::FunctionType::get(
-                    curr_scope.GetType(this->return_type),
-                    args_type,
+                    curr_scope.GetType(ret_type.get()),
+                    arg_types,
                     is_var_arg
                 );
 
                 fn = llvm::Function::Create(
                     fn_type,
-                    llvm::Function::LinkageTypes::ExternalLinkage,
-                    id,
+                    llvm::Function::LinkageTypes::CommonLinkage,
+                    name,
                     *mod
                 );
             }
 
-            //maybe remove this ?
+            //maybe remove
             fn->setDSOLocal(true);
 
             auto bb = llvm::BasicBlock::Create(*ctx, "", fn);
@@ -42,47 +47,32 @@ namespace lygos {
                 auto arg = &*args + i;
                 auto alloca = builder->CreateAlloca(arg->getType());
                 builder->CreateStore(arg, alloca);
-                curr_scope.DeclVar(std::get<0>(this->args.at(i)), true, alloca);
+                curr_scope.DeclVar(std::get<0>(this->args.at(i)), false, alloca);
             }
 
-            if(!(return_type->kind == Type::Kind::path && static_cast<Type::Path *>(return_type)->GetPath() == "void"))
+            if(!(ret_type->kind == Type::Kind::path && ((Type::Path *)ret_type.get())->GetPath() == "void"))
                 curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
 
-            for(auto &node : this->block)
+            for(const auto &node : body)
                 node->GenCode(&curr_scope);
 
             curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
-            llvm::verifyFunction(*fn);
-            //curr_scope.Print();
-            return nullptr;
-        }
-
-        std::string FunctionDecl::GetValue() {
-            return id;
-        }
-
-        Val *FunctionDecl::GenCode(Scope *scope) {
-            std::vector<llvm::Type *> args_type;
-            for(auto &arg : this->params) {
-                args_type.push_back(scope->GetType(std::get<1>(arg)));
-            }
-
-            auto fn_type = llvm::FunctionType::get(
-                scope->GetType(this->return_type),
-                args_type,
-                false
-            );
-
-            auto fn = llvm::Function::Create(
-                fn_type,
-                llvm::Function::LinkageTypes::ExternalLinkage,
-                id,
-                *mod
-            );
-
             llvm::verifyFunction(*fn, &llvm::errs());
+
             return nullptr;
+        }
+
+        void Function::Lower() {
+            for(const auto &item : body) {
+                IncrInstr();
+                item->Lower();
+            }
+        }
+
+        void Function::Sanatize() {
+            LYGOS_ASSERT(name != "" && "Unnamed Function");
+            LYGOS_ASSERT(ret_type != NULL && "Function needs to have a return type");
         }
     }
 }

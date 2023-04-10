@@ -2,33 +2,68 @@
 
 namespace lygos {
     namespace AST {
-        using Val = llvm::Value;
-        std::string NumberLiteral::GetValue() {
-            return value;
+        Identifier::Identifier(std::string id):
+            AST(ASTType::Id), id(id) {
+
         }
 
-        Val *NumberLiteral::GenCode(Scope *scope) {
-            //rewrite this to support more types
-            if(data_type == "Integer") return llvm::ConstantInt::get(*ctx, llvm::APInt(32, std::atoi(value.c_str())));
-            return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*ctx), std::atof(value.c_str()));
+        std::string Identifier::GetValue() {
+            return id;
+        }
+
+        llvm::Value *Identifier::GenCode(Scope *scope) {
+            return scope->LookupVar(id);
+        }
+
+        void Identifier::Lower() {
+
+        }
+
+        void Identifier::Sanatize() {
+
+        }
+
+        StringLiteral::StringLiteral(std::string value):
+            AST(ASTType::StringLiteral), value(value) {
+
         }
 
         std::string StringLiteral::GetValue() {
             return value;
         }
 
-        Val *StringLiteral::GenCode(Scope *scope) {
-            auto global = builder->CreateGlobalStringPtr(value);
-            return global;
+        llvm::Value *StringLiteral::GenCode(Scope *scope) {
+            return builder->CreateGlobalStringPtr(value);
         }
 
-        std::string Identifier::GetValue() {
+        void StringLiteral::Lower() {
+
+        }
+
+        void StringLiteral::Sanatize() {
+
+        }
+
+        NumberLiteral::NumberLiteral(std::string value, std::string type):
+            AST(ASTType::NumberLiteral), value(value), type(type) {
+
+        }
+
+        std::string NumberLiteral::GetValue() {
             return value;
         }
 
-        Val *Identifier::GenCode(Scope *scope) {
-            auto var = scope->LookupVar(value);
-            return var;
+        llvm::Value *NumberLiteral::GenCode(Scope *scope) {
+            if(type == "Integer") return llvm::ConstantInt::get(*ctx, llvm::APInt(32, std::atoi(value.c_str())));
+            return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*ctx), std::atof(value.c_str()));
+        }
+
+        void NumberLiteral::Lower() {
+
+        }
+
+        void NumberLiteral::Sanatize() {
+
         }
     }
 }

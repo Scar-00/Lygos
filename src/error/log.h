@@ -4,10 +4,8 @@
 #include <string>
 #include <sstream>
 
-#include "../ast/ast.h"
-#include "../lex/lexer.h"
-
 namespace lygos {
+    class Token;
     namespace Log {
         class Logger {
         public:
@@ -16,7 +14,6 @@ namespace lygos {
             static void Flush();
             static bool WasErrorReported();
             static void Warn(Token &token, std::string format);
-            static void Warn(AST::AST *node, std::string format);
             static void Warn(std::string format);
             static void Abort(std::string format);
         private:

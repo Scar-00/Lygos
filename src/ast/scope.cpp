@@ -1,7 +1,11 @@
 #include "scope.h"
 
 #include "../error/log.h"
+
+#include "function.h"
+
 #include <fmt/format.h>
+
 
 namespace lygos {
     namespace AST {
@@ -37,20 +41,21 @@ namespace lygos {
             return scope->vars.at(id);
         }
 
-        void Scope::AddType(std::string id, StructType struct_type) {
+
+        void Scope::AddType(std::string id, Type::StructType struct_type) {
             auto scope = this->Resolve(id.c_str());
             if(scope->struct_types.contains(id))
                 Log::Logger::Warn(fmt::format("cannot redeclare `%s`", id));
-            this->struct_types.insert({id, struct_type});
+            this->struct_types.insert_or_assign(id, struct_type);
         }
 
-        void Scope::TypeAddFunction(std::string type, Function func) {
+        void Scope::TypeAddFunction(std::string type, Type::Function func) {
             auto scope = this->Resolve(type.c_str());
             if(!scope->struct_types.contains(type))
                 Log::Logger::Warn(fmt::format("unknown type `{}`", type));
 
             if(VecContains(scope->struct_types.at(type).functions, func))
-                Log::Logger::Warn(fmt::format("cannot redeclare function `{}` in type `{}`", func.name, type));
+                Log::Logger::Warn(fmt::format("cannot redeclare function `{}` in type `{}`", "", type));
 
             this->struct_types.at(type).functions.push_back(func);
         }
@@ -88,15 +93,18 @@ namespace lygos {
                     return llvm::PointerType::get(type, 0);
                     //return type;
                 }break;
+                case Type::Kind::trait: {
+
+                } break;
             }
             Log::Logger::Warn(fmt::format("unknwon type `{}`", STRINGIFY(type->kind)));
             std::exit(1);
         }
 
-        std::vector<std::string> &Scope::GetStruct(std::string type) {
+        Type::StructType &Scope::GetStruct(std::string type) {
             Scope *scope = this->Resolve(type.c_str());
             if(scope->struct_types.contains(type)) {
-                return scope->struct_types.at(type).fields;
+                return scope->struct_types.at(type);
             }
 
             Log::Logger::Warn(fmt::format("unknwon struct type `{}`", type));
@@ -121,6 +129,15 @@ namespace lygos {
                 return this;
 
             return parent->Resolve(type);
+        }
+
+        Ref<Mod> Scope::GetMod() {
+            if(mod)
+                return mod;
+
+            LYGOS_ASSERT(parent && "mod and parent cannot be NULL");
+
+            return parent->GetMod();
         }
     }
 }

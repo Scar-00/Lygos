@@ -2,15 +2,29 @@
 #define _LYGOS_AST_MOD_H_
 
 #include "ast.h"
+#include <vector>
 
 namespace lygos {
     namespace AST {
-        struct Program : public AST {
-            std::vector<AST*> body;
-            Program(): AST() {}
-            Program(const Program&) = default;
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
+        struct Function;
+        struct Mod : public AST {
+            public:
+                Mod(): AST(ASTType::Mod) {}
+                std::vector<Ref<AST>> &Body() { return body; }
+                void IncrInstr() { instr_index++; }
+                void Insert(std::vector<Ref<AST>> &elems);
+                void SetCurrentFunction(Ref<Function> &func);
+                Function *GetCurrentFunction();
+            public:
+                std::string GetValue() override { return name; }
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                std::string name;
+                std::vector<Ref<AST>> body;
+                u32 instr_index = 0;
+                Function *current_func = nullptr;
         };
     }
 }

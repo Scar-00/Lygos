@@ -3,16 +3,16 @@
 
 #include "../core.h"
 #include "scope.h"
+#include <memory>
 
 namespace lygos {
-    namespace AST {
+        namespace AST {
         enum class ASTType {
             //statements
-            Program,
+            Mod,
             Function,
             Closure,
             VarDecl,
-            FunctionDecl,
 
             //expr
             AssignmentExpr,
@@ -29,10 +29,9 @@ namespace lygos {
             //literals
             StructDef,
             Impl,
-            ObjectLiteral,
             NumberLiteral,
             StringLiteral,
-            RangeLiteral,
+            InitializerList,
             BinaryExpr,
             Id,
         };
@@ -40,11 +39,13 @@ namespace lygos {
         class AST {
         public:
             ASTType type;
-            AST(): type(ASTType::Program) {};
+            AST(): type(ASTType::Mod) {};
             AST(ASTType type): type(type) {};
             virtual ~AST() {}
             virtual std::string GetValue() { return "NONE"; }
-            virtual llvm::Value *GenCode(Scope *scope) { return nullptr; }
+            virtual llvm::Value *GenCode(Scope *scope);
+            virtual void Lower();
+            virtual void Sanatize();
         };
 
         bool ShouldLoad(AST *ast);

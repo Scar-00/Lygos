@@ -1,12 +1,13 @@
 #include "parser.h"
 #include "../error/log.h"
+#include <vector>
 
 namespace lygos {
     namespace Parser {
         #define PEEK(offset) this->tokens[this->index + offset]
 
         AST::AST *Parser::BuildAst() {
-            AST::Program *program = new AST::Program();
+            AST::Program *program = AST::Program();
             while (At().type != TokenType::Eof) {
                 program->body.push_back(ParseGlobals());
             }
@@ -352,7 +353,7 @@ namespace lygos {
                 //auto member = ParseExpr();
                 auto member = ParsePrimaryExpr();
                 if(member->type != AST::ASTType::Id)
-                    Log::Logger::Warn(member, "member expression has to be an identifier"); //VERRRRRY temporary probably :)
+                    Log::Logger::Warn("member expression has to be an identifier"); //VERRRRRY temporary probably :)
                 obj = new AST::MemberExpr{obj, member};
             }
 
@@ -369,7 +370,25 @@ namespace lygos {
             return obj;
         }
 
-       AST::AST *Parser::ParseCastExpr() {
+        AST::AST *Parser::ParseInitializerExpr() {
+            if(At().type == TokenType::BraceLeft) {
+                Eat();
+                std::vector<std::tuple<std::string, AST::AST *>> values;
+                while(At().type != TokenType::BraceRight) {
+                    values.push_back({"", ParseExpr()});
+                    if(At().type == TokenType::BraceRight)
+                        break;
+
+                    if(Eat().type != TokenType::Comma)
+                        Log::Logger::Warn(PEEK(-1), "initializer list values need to be comma `,` seperated");
+                }
+                Eat();
+                return new AST::InitializerList(values, AST::InitializerList::Kind::Anonymus);
+            }
+            return ParseParanExpr();
+        }
+
+        AST::AST *Parser::ParseCastExpr() {
             if(At().type == TokenType::ParanLeft) {
                 Eat();
                 auto type = ParseTypeSpec();
@@ -390,7 +409,7 @@ namespace lygos {
                 //auto obj = ParseIndexExpr();
                 return new AST::UnaryExpr(obj, op);
             }
-            return ParseParanExpr();
+            return ParseInitializerExpr();
         }
 
         AST::AST *Parser::ParseIndexExpr() {

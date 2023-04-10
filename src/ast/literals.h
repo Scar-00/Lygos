@@ -5,28 +5,42 @@
 
 namespace lygos {
     namespace AST {
-        struct NumberLiteral : public AST {
-            std::string value;
-            std::string data_type;
-            NumberLiteral(std::string value, std::string data_type): AST(ASTType::NumberLiteral), value(value), data_type(data_type) {}
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
+        struct Identifier : public AST {
+            public:
+                Identifier(std::string id);
+                std::string &GetId() { return id; }
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                std::string id;
         };
 
         struct StringLiteral : public AST {
-            std::string value;
-            std::string data_type;
-            StringLiteral(std::string value, std::string data_type): AST(ASTType::StringLiteral), value(value), data_type(data_type) {}
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
+            public:
+                StringLiteral(std::string value);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                std::string value;
         };
 
-        struct Identifier : public AST {
-            std::string value;
-            std::string data_type;
-            Identifier(std::string value, std::string data_type): AST(ASTType::Id), value(value), data_type(data_type) {}
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
+        struct NumberLiteral : public AST {
+            public:
+                NumberLiteral(std::string value, std::string type);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                std::string value;
+                std::string type;
         };
     }
 }

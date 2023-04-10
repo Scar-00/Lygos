@@ -1,4 +1,3 @@
-#include "ast/ast.h"
 #include "core.h"
 #include "error/log.h"
 #include "cli/options.h"
@@ -11,6 +10,7 @@ namespace lygos {
     llvm::Module *mod;
     llvm::IRBuilder<> *builder;
     llvm::TargetMachine *target_machine;
+    Ref<AST::Mod> ast_root = nullptr;
 
     void init_llvm(std::string mod_name) {
         llvm::InitializeAllTargetInfos();
@@ -62,6 +62,8 @@ int main(int argc, char **argv) {
     lygos::Parser::Parser parser(lexer);
     auto root = parser.BuildAst();
 
+    std::cout << lygos::AST::Print(root).str() << std::endl;
+
     auto type = llvm::FunctionType::get(
         llvm::Type::getInt32Ty(*lygos::ctx),
         {
@@ -72,10 +74,11 @@ int main(int argc, char **argv) {
 
     llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf_ln", *lygos::mod);
 
-    root->GenCode({});
-    std::cout << lygos::AST::Print(root).str() << std::endl;
+    //root->GenCode({});
 
     llvm::verifyModule(*lygos::mod, &llvm::errs());
+
+    return 0;
 
     Path output_file = cli_options.OutputFile().UnwrapOrDefault(input_file.replace_extension(".o").string());
     if(cli_options.EmitExe()) {

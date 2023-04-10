@@ -1,21 +1,19 @@
 fn malloc(size: u64) -> *i8;
 
-struct Foo {
-    x: i32;
-    y: i32;
+struct Human {
+    name: *i8;
+    age: i32;
 };
 
-fn test(foo: *Foo) {
-    let x = (*foo).y;
-    let y: i16 = 10;
-}
-
-fn add(x: i32, y: i32) -> i32 {
-    return x + y;
+impl Human {
+    fn new(name: *i8, age: i32) -> Human {
+        let mut self: Human = [name, age];
+        return self;
+    }
 }
 
 fn main(argc: i32, argv: **i8) -> i32 {
-    let mut arr: [i32; 10];
-    let x = 10 * arr[0] + 10;
+    let max = Human::new("Max", 18);
+    printf_ln("%s -> %d", max.name, max.age);
     return 0;
 }

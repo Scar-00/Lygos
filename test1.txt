@@ -18,7 +18,9 @@ fn take_ref(x: i32) -> *i32 {
 }
 
 fn deref(x: *i32) -> i32 {
-    return *x;
+    let mut y: i32;
+    y = *x;
+    return y;
 }
 
 fn main() -> i32 {

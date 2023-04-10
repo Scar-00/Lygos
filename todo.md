@@ -1,6 +1,5 @@
 # IMPORTANT
-* fix prescedence (how to the ast is build up -> which instrcutions are executed first)
-* **Traverse AST pre code gen to get better type information/inferance**
+* **Traverse AST pre code gen(lower it) to get better type information/inferance**
 
 # TODO/FIXME
 * compare types at assignment, decl, ...
@@ -11,6 +10,7 @@
 * rewrite return instructions (return block)
 * fix escape sequences
 * rethink parser (this is not it)
+* fix deref
 
 #AST building
 - Expr <--------|
@@ -31,6 +31,8 @@
 - Index --------|
    \            |
 - Unary --------|
+   \            |
+- Initializer --|
    \            |
 - Paran --------|
    \            |

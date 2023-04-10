@@ -2,33 +2,35 @@
 #define _LYGOS_AST_FUNCTION_H_
 
 #include "ast.h"
+#include <bits/utility.h>
+#include <vector>
 
 namespace lygos {
     namespace AST {
+        struct Impl;
         struct Function : public AST {
-            Function(std::string id, bool is_var_arg, std::vector<AST *> body, Type::Type *return_type, std::vector<std::tuple<std::string, Type::Type *>> params): AST(ASTType::Function), id(id), is_var_arg(is_var_arg), block(body), return_type(return_type), args(params) {}
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
-            std::string id;
-            bool is_var_arg;
-            std::vector<AST *> block;
-            Type::Type *return_type;
-            std::vector<std::tuple<std::string, Type::Type *>> args;
-        };
-
-        struct FunctionDecl : public AST {
-            std::string id;
-            bool is_var_arg;
-            Type::Type *return_type;
-            std::vector<std::tuple<std::string, Type::Type *>> params;
-            FunctionDecl(std::string id, bool is_var_arg, Type::Type *return_type, std::vector<std::tuple<std::string, Type::Type *>> params): AST(ASTType::FunctionDecl), id(id), is_var_arg(is_var_arg), return_type(return_type), params(params) {}
-            virtual std::string GetValue();
-            virtual llvm::Value *GenCode(Scope *scope);
-        };
-
-        struct Closure : public AST {
-            std::vector<std::string> args;
-            Closure(): AST(ASTType::Closure) {}
+            using Arg = std::tuple<std::string, Type::Type *>;
+            public:
+                Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type);
+                void IncrInstr() { instr_index++; }
+                std::vector<Ref<AST>> &Body() { return body; }
+                void Insert(std::vector<Ref<AST>> &elems);
+                std::string &GetName() { return name; }
+            public:
+                std::string GetValue() override{ return name; }
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower() override;
+                void Sanatize() override;
+            private:
+                std::string name;
+                std::string mangeled_name;
+                Ref<Impl> obj;
+                std::vector<Arg> args;
+                std::vector<Ref<AST>> body;
+                Ref<Type::Type> ret_type;
+                bool is_definition;
+                bool is_var_arg = false;
+                u32 instr_index = 0;
         };
     }
 }

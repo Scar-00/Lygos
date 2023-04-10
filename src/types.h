@@ -147,31 +147,33 @@ namespace lygos {
     bool IsCastable(llvm::Type *src, llvm::Type *dest);
     bool IsFunctionType(llvm::Type *type);
     bool IsArrayType(llvm::Type *type);
-    std::string &MangleName(std::string &name);
-
-    struct Function {
-        bool operator==(const Function &other) { return name == other.name; }
-        std::string name;
-        llvm::Function *llvm_function;
-    };
-
-    struct StructType {
-        std::string name;
-        llvm::StructType *llvm_type;
-        std::vector<std::string> fields;
-        std::vector<Function> functions;
-    };
+    std::string &MangleName(std::string &name, std::string &obj, std::string &spec);
 
     namespace Type {
+        struct Function {
+            bool operator==(const Function &other) { return name == other.name; }
+            std::string name;
+            llvm::Function *llvm_function;
+        };
+
+        struct StructType {
+            std::string name;
+            llvm::StructType *llvm_type;
+            std::vector<std::string> fields;
+            std::vector<Function> functions;
+        };
+
         enum Kind {
             path,
             ptr,
             arr,
             function,
+            trait,
         };
 
         struct Type {
             Kind kind;
+            bool Matches(Type *other);
         };
 
         struct Path : public Type {
@@ -217,6 +219,14 @@ namespace lygos {
         private:
             std::vector<Type *> params;
             Type *return_type;
+        };
+
+        struct Trait : public Type {
+            public:
+                Trait(std::string name): name(name) {this->kind = Kind::trait;}
+                std::string &GetName() { return name; }
+            private:
+                std::string name;
         };
     }
 }
