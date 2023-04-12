@@ -32,8 +32,8 @@ namespace lygos {
     using Ref = std::shared_ptr<T>;
 
     template<typename T, class ..._Types>
-    Ref<T> MakeRef(_Types args) {
-
+    Ref<T> MakeRef(_Types... args) {
+        return std::make_shared<T>(args...);
     }
 
     template<typename T>
@@ -42,7 +42,7 @@ namespace lygos {
     namespace AST {
         struct Mod;
     }
-    extern Ref<AST::Mod> ast_root;
+    extern AST::Mod *ast_root;
 }
 
 #ifdef LYGOS_DEBUG

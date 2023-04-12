@@ -14,7 +14,8 @@ LDFLAGS += -lz
 #LDFLAGS += -lzstd.so
 LDFLAGS += -ltinfo
 LDFLAGS += -lxml2
-LDFLAGS += /usr/lib/libzstd.so.1.5.2
+#LDFLAGS += /usr/lib/libzstd.so.1.5.2
+LDFLAGS += -lzstd
 
 SRC = $(wildcard src/**/**/*.cpp) $(wildcard src/**/*.cpp) $(wildcard src/*.cpp)
 DATA = $(wildcard src/**/**/*.o.json) $(wildcard src/**/*.o.json) $(wildcard src/*.o.json)

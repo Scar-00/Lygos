@@ -22,8 +22,9 @@ namespace lygos {
             return var;
         }
 
-        void AssignmentExpr::Lower() {
-
+        void AssignmentExpr::Lower(AST *parent) {
+            assignee->Lower(this);
+            value->Lower(this);
         }
 
         void AssignmentExpr::Sanatize() {

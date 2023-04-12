@@ -13,7 +13,7 @@ namespace lygos {
         }
 
         llvm::Value *StructDef::GenCode(Scope *scope) {
-            scope->AddType(id, {});
+            //scope->AddType(id, {});
             std::vector<llvm::Type *> field_types;
             std::vector<std::string> struct_fields;
             for(const auto &field : fields) {
@@ -33,7 +33,7 @@ namespace lygos {
             return nullptr;
         }
 
-        void StructDef::Lower() {
+        void StructDef::Lower(AST *parent) {
 
         }
 

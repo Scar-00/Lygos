@@ -9,16 +9,16 @@ namespace lygos {
         struct Function;
         struct Mod : public AST {
             public:
-                Mod(): AST(ASTType::Mod) {}
+                Mod();
                 std::vector<Ref<AST>> &Body() { return body; }
                 void IncrInstr() { instr_index++; }
                 void Insert(std::vector<Ref<AST>> &elems);
-                void SetCurrentFunction(Ref<Function> &func);
+                void SetCurrentFunction(Function *func);
                 Function *GetCurrentFunction();
             public:
-                std::string GetValue() override { return name; }
+                std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 std::string name;

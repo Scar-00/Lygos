@@ -93,12 +93,12 @@ namespace lygos {
         return name;
     }
 
-    bool Type::Type::Matches(Type *other) {
+    bool Type::Type::Matches(Ref<Type> other) {
         if(kind == Kind::ptr)
             return ((Pointer *)this)->GetType()->Matches(other);
 
         if(other->kind == Kind::ptr) {
-            return Matches(((Pointer *)other)->GetType());
+            return Matches(((Pointer *)other.get())->GetType());
         }
 
         if((kind == Kind::path && other->kind == Kind::trait)

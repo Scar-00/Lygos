@@ -17,7 +17,7 @@ namespace lygos {
                 Log::Logger::Warn(fmt::format("unknown function `{}`", caller->GetValue()));
             }
 
-            if(callee->isVarArg() && callee->arg_size() != args.size())
+            if(!callee->isVarArg() && callee->arg_size() != args.size())
                 Log::Logger::Warn(fmt::format("expected `{}` args but only `{}` were supplied", callee->arg_size(), args.size()));
 
             std::vector<llvm::Value *> arg_values;
@@ -32,7 +32,7 @@ namespace lygos {
             return builder->CreateCall(callee, arg_values);
         }
 
-        void CallExpr::Lower() {
+        void CallExpr::Lower(AST *parent) {
 
         }
 
@@ -63,7 +63,7 @@ namespace lygos {
             return builder->CreateStore(val, scope->GetRet());
         }
 
-        void ReturnExpr::Lower() {
+        void ReturnExpr::Lower(AST *parent) {
 
         }
 

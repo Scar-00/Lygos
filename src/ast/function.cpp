@@ -1,15 +1,16 @@
 #include "function.h"
-#include "llvm/IR/Verifier.h"
-#include <vector>
+#include "ast.h"
+#include "mod.h"
 
 namespace lygos {
     namespace AST {
-        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type):
-            AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(body.size() != 0) {
+        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def):
+            AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(is_def) {
 
         }
 
         void Function::Insert(std::vector<Ref<AST>> &elems) {
+            //this is brocken
             VecInsertAt(body, instr_index, elems);
             instr_index += elems.size();
         }
@@ -21,7 +22,7 @@ namespace lygos {
             if(!fn) {
                 std::vector<llvm::Type *> arg_types;
                 for(const auto &[name, type] : args)
-                    arg_types.push_back(curr_scope.GetType(type));
+                    arg_types.push_back(curr_scope.GetType(type.get()));
 
                 auto fn_type = llvm::FunctionType::get(
                     curr_scope.GetType(ret_type.get()),
@@ -31,11 +32,14 @@ namespace lygos {
 
                 fn = llvm::Function::Create(
                     fn_type,
-                    llvm::Function::LinkageTypes::CommonLinkage,
+                    llvm::Function::LinkageTypes::ExternalLinkage,
                     name,
                     *mod
                 );
             }
+
+            if(!is_definition)
+                return nullptr;
 
             //maybe remove
             fn->setDSOLocal(true);
@@ -63,10 +67,11 @@ namespace lygos {
             return nullptr;
         }
 
-        void Function::Lower() {
+        void Function::Lower(AST *parent) {
+            ast_root->SetCurrentFunction(this);
             for(const auto &item : body) {
                 IncrInstr();
-                item->Lower();
+                item->Lower(this);
             }
         }
 

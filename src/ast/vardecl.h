@@ -8,10 +8,13 @@ namespace lygos {
         struct VarDecl : public AST {
             public:
                 VarDecl(std::string id, bool cnst, Ref<Type::Type> type, Ref<AST> value);
+                std::string &Id() { return id; }
+                Ref<AST> &Value() { return value; }
+                Ref<Type::Type> &Type() { return type; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 std::string id;

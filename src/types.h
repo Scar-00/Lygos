@@ -3,6 +3,8 @@
 
 #include "llvm.h"
 
+template<typename T>
+using Ref = std::shared_ptr<T>;
 
 #include <map>
 #include <set>
@@ -173,7 +175,7 @@ namespace lygos {
 
         struct Type {
             Kind kind;
-            bool Matches(Type *other);
+            bool Matches(Ref<Type> other);
         };
 
         struct Path : public Type {
@@ -188,37 +190,37 @@ namespace lygos {
 
         struct Pointer : public Type {
         public:
-            Pointer(Type *type, bool mut): type(type), mut(mut) {
+            Pointer(Ref<Type> type, bool mut): type(type), mut(mut) {
                 this->kind = Kind::ptr;
             }
-            Type *GetType() { return type; }
+            Ref<Type> GetType() { return type; }
             bool IsMut() { return mut; }
-            void SetType(Type *type) { this->type = type; }
+            void SetType(Ref<Type> type) { this->type = type; }
         private:
-            Type* type;
+            Ref<Type> type;
             bool mut;
         };
 
         struct Array : public Type {
         public:
-            Array(Type *type, u32 count): type(type), elems(count) {
+            Array(Ref<Type> type, u32 count): type(type), elems(count) {
                 this->kind = Kind::arr;
             }
-            Type *GetType() { return type; }
+            Ref<Type> GetType() { return type; }
             u32 ElemCount() { return elems; }
         private:
-            Type *type;
+            Ref<Type> type;
             u32 elems;
         };
 
         struct FuncPtr : public Type {
         public:
-            FuncPtr(std::vector<Type *> params, Type *ret_type): params(params), return_type(ret_type) {this->kind = Kind::function;}
-            std::vector<Type *> &GetParams() { return params; }
-            Type *GetRetType() { return return_type; }
+            FuncPtr(std::vector<Ref<Type>> params, Ref<Type> ret_type): params(params), return_type(ret_type) {this->kind = Kind::function;}
+            std::vector<Ref<Type>> &GetParams() { return params; }
+            Ref<Type> GetRetType() { return return_type; }
         private:
-            std::vector<Type *> params;
-            Type *return_type;
+            std::vector<Ref<Type>> params;
+            Ref<Type> return_type;
         };
 
         struct Trait : public Type {

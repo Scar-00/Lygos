@@ -39,13 +39,13 @@ namespace lygos {
         class AST {
         public:
             ASTType type;
-            AST(): type(ASTType::Mod) {};
-            AST(ASTType type): type(type) {};
+            AST(): type(ASTType::Mod) {}
+            AST(ASTType type): type(type) {}
             virtual ~AST() {}
             virtual std::string GetValue() { return "NONE"; }
-            virtual llvm::Value *GenCode(Scope *scope);
-            virtual void Lower();
-            virtual void Sanatize();
+            virtual llvm::Value *GenCode(Scope *scope) { return nullptr; }
+            virtual void Lower(AST *parent) {}
+            virtual void Sanatize() {}
         };
 
         bool ShouldLoad(AST *ast);

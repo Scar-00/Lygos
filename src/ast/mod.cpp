@@ -1,26 +1,41 @@
 #include "mod.h"
-#include "ast.h"
-#include <cstddef>
 
 namespace lygos {
     namespace AST {
+        Mod::Mod(): AST(ASTType::Mod) {
+
+        }
+
         void Mod::Insert(std::vector<Ref<AST>> &elems) {
             VecInsertAt(body, instr_index - 1, elems);
             instr_index += elems.size();
         }
 
-        void Mod::SetCurrentFunction(Ref<Function> &func) {
-            current_func = func.get();
+        void Mod::SetCurrentFunction(Function *func) {
+            current_func = func;
         }
 
         Function *Mod::GetCurrentFunction() {
             return current_func;
         }
 
-        void Mod::Lower() {
+        std::string Mod::GetValue() {
+            return name;
+        }
+
+        llvm::Value *Mod::GenCode(Scope *scope) {
+            Scope global{};
             for(const auto &item : body) {
                 IncrInstr();
-                item->Lower();
+                item->GenCode(&global);
+            }
+            return nullptr;
+        }
+
+        void Mod::Lower(AST *parent) {
+            for(const auto &item : body) {
+                IncrInstr();
+                item->Lower(this);
             }
         }
 

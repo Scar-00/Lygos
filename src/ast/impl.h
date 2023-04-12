@@ -8,10 +8,11 @@ namespace lygos {
         struct Impl : public AST {
             public:
                 Impl(std::string type, std::vector<Ref<AST>> body);
+                std::vector<Ref<AST>> &Body() { return body; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 std::string type;

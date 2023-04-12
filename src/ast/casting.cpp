@@ -23,7 +23,7 @@ namespace lygos {
             std::exit(1);
         }
 
-        void UnaryExpr::Lower() {
+        void UnaryExpr::Lower(AST *parent) {
 
         }
 
@@ -50,7 +50,7 @@ namespace lygos {
             return builder->CreateCast(GetCastOp(src_type, dest_type), obj, dest_type);
         }
 
-        void CastExpr::Lower() {
+        void CastExpr::Lower(AST *parent) {
 
         }
 

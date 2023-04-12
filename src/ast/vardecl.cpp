@@ -32,8 +32,9 @@ namespace lygos {
             return alloca;
         }
 
-        void VarDecl::Lower() {
-
+        void VarDecl::Lower(AST *parent) {
+            if(value != nullptr)
+                this->value->Lower(this);
         }
 
         void VarDecl::Sanatize() {

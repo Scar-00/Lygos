@@ -1,4 +1,5 @@
 #include "literals.h"
+#include <regex>
 
 namespace lygos {
     namespace AST {
@@ -15,7 +16,7 @@ namespace lygos {
             return scope->LookupVar(id);
         }
 
-        void Identifier::Lower() {
+        void Identifier::Lower(AST *parent) {
 
         }
 
@@ -33,10 +34,12 @@ namespace lygos {
         }
 
         llvm::Value *StringLiteral::GenCode(Scope *scope) {
-            return builder->CreateGlobalStringPtr(value);
+            auto reg = std::regex("\\\\n");
+            auto unescaped = std::regex_replace(value, reg, "\n");
+            return builder->CreateGlobalStringPtr(unescaped);
         }
 
-        void StringLiteral::Lower() {
+        void StringLiteral::Lower(AST *parent) {
 
         }
 
@@ -46,7 +49,6 @@ namespace lygos {
 
         NumberLiteral::NumberLiteral(std::string value, std::string type):
             AST(ASTType::NumberLiteral), value(value), type(type) {
-
         }
 
         std::string NumberLiteral::GetValue() {
@@ -58,7 +60,7 @@ namespace lygos {
             return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*ctx), std::atof(value.c_str()));
         }
 
-        void NumberLiteral::Lower() {
+        void NumberLiteral::Lower(AST *parent) {
 
         }
 

@@ -2,6 +2,9 @@
 #include "../error/log.h"
 #include "mod.h"
 #include "function.h"
+#include "binary.h"
+#include "impl.h"
+#include "vardecl.h"
 #include <sstream>
 
 namespace lygos {
@@ -28,10 +31,8 @@ namespace lygos {
                 case ASTType::UnaryExpr: os << "UnaryExpr"; break;
                 case ASTType::StructDef: os << "StructDef"; break;
                 case ASTType::Impl: os << "Impl"; break;
-                case ASTType::ObjectLiteral: os << "ObjectLiteral"; break;
                 case ASTType::NumberLiteral: os << "NumberLiteral"; break;
                 case ASTType::StringLiteral: os << "StringLiteral"; break;
-                case ASTType::RangeLiteral: os << "RangeLiteral"; break;
                 case ASTType::BinaryExpr: os << "BinaryExpr"; break;
                 case ASTType::Id: os << "Identifier"; break;
                 case ASTType::ResolutionExpr: os << "ResolutionExpr"; break;
@@ -54,29 +55,28 @@ namespace lygos {
             std::ostringstream ss;
             indent(ss, depth);
             ss << "[" << node->type << "]";
-            ss << "\n"; //tmp
-            /*switch (node->type) {
-                case ASTType::Program: {
+            switch (node->type) {
+                case ASTType::Mod: {
                     ss << ": " << node->GetValue() << '\n';
-                    for(const auto &n : ((Program *)node)->body)
-                        ss << Print(n, depth + 1).str();
+                    for(const auto &n : ((Mod *)node)->Body())
+                        ss << Print(n.get(), depth + 1).str();
                 } break;
                 case ASTType::Function: {
                     ss << ": " << node->GetValue() << "\n";
-                    for(const auto &n : static_cast<Function *>(node)->block)
-                        ss << Print(n, depth + 1).str();
+                    for(const auto &n : static_cast<Function *>(node)->Body())
+                        ss << Print(n.get(), depth + 1).str();
                 } break;
                 case ASTType::VarDecl: {
                     ss << "\n";
                     indent(ss, depth);
                     ss << "var: " << node->GetValue();
-                    AST *value = static_cast<VarDecl *>(node)->value;
+                    auto value = static_cast<VarDecl *>(node)->Value();
                     if(value)
-                        ss << " = \n" << Print(value, depth + 1).str();
+                        ss << " = \n" << Print(value.get(), depth + 1).str();
                     else
                         ss << "\n";
                 } break;
-                case ASTType::BinaryExpr: {
+                /*case ASTType::BinaryExpr: {
                     auto binop = (BinaryExpr *)node;
                     ss << ": " << binop->op;
                     ss << "\n";
@@ -91,14 +91,14 @@ namespace lygos {
                 case ASTType::UnaryExpr: {
                     ss << ": " << static_cast<UnaryExpr *>(node)->op << "\n";
                     ss << Print(static_cast<UnaryExpr *>(node)->obj, depth + 1).str() << "\n";
-                } break;
+                } break;*/
                 case ASTType::Impl: {
                     ss << ": " << node->GetValue() << "\n";
-                    for(const auto &item : ((Impl *)node)->body)
-                        ss << Print(item, depth + 1).str();
+                    for(const auto &item : ((Impl *)node)->Body())
+                        ss << Print(item.get(), depth + 1).str();
                 } break;
                 default: ss << "\n"; break;
-            }*/
+            }
             return ss;
         }
     }

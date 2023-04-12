@@ -7,13 +7,15 @@ struct Human {
 
 impl Human {
     fn new(name: *i8, age: i32) -> Human {
-        let mut self: Human = [name, age];
+        let mut self: Human;
+        self.name = name;
+        self.age = age;
         return self;
     }
 }
 
 fn main(argc: i32, argv: **i8) -> i32 {
     let max = Human::new("Max", 18);
-    printf_ln("%s -> %d", max.name, max.age);
+    printf("%s -> %d\n", max.name, max.age);
     return 0;
 }

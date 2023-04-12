@@ -9,9 +9,9 @@ namespace lygos {
     namespace AST {
         struct Impl;
         struct Function : public AST {
-            using Arg = std::tuple<std::string, Type::Type *>;
+            using Arg = std::tuple<std::string, Ref<Type::Type>>;
             public:
-                Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type);
+                Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def);
                 void IncrInstr() { instr_index++; }
                 std::vector<Ref<AST>> &Body() { return body; }
                 void Insert(std::vector<Ref<AST>> &elems);
@@ -19,7 +19,7 @@ namespace lygos {
             public:
                 std::string GetValue() override{ return name; }
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 std::string name;

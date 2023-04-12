@@ -12,7 +12,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 std::string id;
@@ -24,7 +24,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 std::string value;
@@ -36,7 +36,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 std::string value;

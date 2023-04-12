@@ -6,15 +6,15 @@ namespace lygos {
     namespace Parser {
         #define PEEK(offset) this->tokens[this->index + offset]
 
-        AST::AST *Parser::BuildAst() {
-            AST::Program *program = AST::Program();
+        Ref<AST::AST> Parser::BuildAst() {
+            Ref<AST::Mod> program = MakeRef<AST::Mod>();
             while (At().type != TokenType::Eof) {
-                program->body.push_back(ParseGlobals());
+                program->Body().push_back(ParseGlobals());
             }
             return program;
         }
 
-        AST::AST *Parser::ParseGlobals() {
+        Ref<AST::AST> Parser::ParseGlobals() {
             switch (At().type) {
                 case TokenType::KwStruct: return ParseStructDecl();
                 case TokenType::KwFn: return ParseFunc();
@@ -23,7 +23,7 @@ namespace lygos {
             }
         }
 
-        AST::AST *Parser::ParseImpl() {
+        Ref<AST::AST> Parser::ParseImpl() {
             Eat();
 
             auto id = Eat();
@@ -34,7 +34,7 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{`");
 
-            std::vector<AST::AST *> nodes;
+            std::vector<Ref<AST::AST>> nodes;
             while (At().type != TokenType::CurlyRight) {
                 nodes.push_back(ParseFunc());
             }
@@ -42,11 +42,11 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyRight)
                 Log::Logger::Warn(PEEK(-1), "expected `}`");
 
-            return new AST::Impl(id.value, nodes);
+            return MakeRef<AST::Impl>(id.value, nodes);
         }
 
-        AST::AST *Parser::ParseStmt() {
-            AST::AST *node = NULL;
+        Ref<AST::AST> Parser::ParseStmt() {
+            Ref<AST::AST> node = NULL;
             switch(At().type) {
             case TokenType::KwIf:
                 node = ParseIfExpr();
@@ -65,7 +65,7 @@ namespace lygos {
             return node;
         }
 
-        AST::Field Parser::ParseFieldDecl() {
+        AST::StructDef::Field Parser::ParseFieldDecl() {
             auto id = this->Eat();
 
             if(id.type != TokenType::Id)
@@ -79,10 +79,10 @@ namespace lygos {
             if(Eat().type != TokenType::Semi)
                 Log::Logger::Warn(PEEK(-1), "expected `;` after field declaration");
 
-            return AST::Field{id.value, type};
+            return AST::StructDef::Field{type, id.value};
         }
 
-        AST::AST *Parser::ParseStructDecl() {
+        Ref<AST::AST> Parser::ParseStructDecl() {
             Eat();
 
             auto struct_id = Eat();
@@ -93,7 +93,7 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after struct identifier");
 
-            std::vector<AST::Field> fields;
+            std::vector<AST::StructDef::Field> fields;
 
             while (At().type != TokenType::CurlyRight) {
                 fields.push_back(ParseFieldDecl());
@@ -103,17 +103,17 @@ namespace lygos {
             if(Eat().type != TokenType::Semi)
                 Log::Logger::Warn(PEEK(-1), "expected, `;` after struct declaration");
 
-            return new AST::StructDef{struct_id.value, fields};
+            return MakeRef<AST::StructDef>(struct_id.value, fields);
         }
 
-        AST::AST *Parser::ParseFunc() {
+        Ref<AST::AST> Parser::ParseFunc() {
             Eat();
 
             auto id = Eat();
             if(id.type != TokenType::Id)
                 Log::Logger::Warn(PEEK(-1), "expected identifier after keyword `fn`");
 
-            std::vector<std::tuple<std::string, Type::Type *>> args;
+            std::vector<AST::Function::Arg> args;
             bool is_var_arg = false;
 
             if(Eat().type != TokenType::ParanLeft)
@@ -140,7 +140,7 @@ namespace lygos {
             }
             Eat();
 
-            Type::Type * ret_type = new Type::Path("void");
+            Ref<Type::Type> ret_type = MakeRef<Type::Path>("void");
 
             if(At().type == TokenType::Arrow) {
                 Eat();
@@ -149,60 +149,61 @@ namespace lygos {
 
             if(At().type == TokenType::Semi) {
                 Eat();
-                return new AST::FunctionDecl(id.value, is_var_arg, ret_type, args);
+                return MakeRef<AST::Function>(id.value, nullptr, args, std::vector<Ref<AST::AST>>(), ret_type, false);
             }
 
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after function signature");
 
-            std::vector<AST::AST *> body;
+            std::vector<Ref<AST::AST>> body;
             while (At().type != TokenType::CurlyRight) {
                 body.push_back(ParseStmt());
             }
             Eat();
 
-            return new AST::Function(id.value, is_var_arg, body, ret_type, args);
+            return MakeRef<AST::Function>(id.value, nullptr, args, body, ret_type, true);
         }
 
-        AST::AST *Parser::ParseRetExpr() {
+        Ref<AST::AST> Parser::ParseRetExpr() {
             Eat();
             if (At().type == TokenType::Semi) {
-                return new AST::ReturnExpr(NULL);
+                return MakeRef<AST::ReturnExpr>(nullptr);
             }
-            return new AST::ReturnExpr{ParseExpr()};
+            return MakeRef<AST::ReturnExpr>(ParseExpr());
         }
 
-        AST::AST *Parser::ParseIfExpr() {
-            Eat();
+        Ref<AST::AST> Parser::ParseIfExpr() {
+            return nullptr;
+            /*Eat();
             auto cond = ParseExpr();
-            std::cout << cond->type << "\n";
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
 
-            std::vector<AST::AST *> then_branch;
+            std::vector<Ref<AST::AST>> then_branch;
             while (At().type != TokenType::CurlyRight) {
                 then_branch.push_back(ParseStmt());
             }
             Eat();
 
-            std::shared_ptr<std::vector<AST::AST *>> else_branch = NULL;
+            std::shared_ptr<std::vector<Ref<AST::AST>>> else_branch = NULL;
             if(At().type == TokenType::KwElse) {
                 Eat();
                 if(Eat().type != TokenType::CurlyLeft)
                     Log::Logger::Warn(PEEK(-1), "expected `{` after else statement");
 
-                else_branch = std::make_unique<std::vector<AST::AST *>>();
+                else_branch = std::make_unique<std::vector<Ref<AST::AST>>>();
                 while(At().type != TokenType::CurlyRight) {
                     else_branch->push_back(ParseStmt());
                 }
                 Eat();
             }
-            return new AST::IfExpr(cond, then_branch, else_branch);
+            return MakeRef<AST::IfExpr>(cond, then_branch, else_branch);*/
         }
 
         //TODO!!!!!!!
-        AST::AST *Parser::ParseForExpr() {
-            Eat();
+        Ref<AST::AST> Parser::ParseForExpr() {
+            return nullptr;
+            /*Eat();
             auto var = ParseExpr();
             //change this [can be any lvalue]
             if(var->type != AST::ASTType::Id)
@@ -215,14 +216,14 @@ namespace lygos {
             std::vector<AST::AST *> body;
 
             Log::Logger::Warn("NOT YET IMPL");
-            return new AST::ForExpr(var, iter, body);
+            return new AST::ForExpr(var, iter, body);*/
         }
 
-        AST::AST *Parser::ParseVarDecl() {
+        Ref<AST::AST> Parser::ParseVarDecl() {
             Eat();
             bool is_const = true;
             //bool has_type = false;
-            Type::Type *data_type = nullptr;
+            Ref<Type::Type> data_type = nullptr;
             Token token = Eat();
             if(token.type == TokenType::KwMut) {
                 is_const = false;
@@ -245,11 +246,11 @@ namespace lygos {
                 case TokenType::Semi: {
                     if (is_const)
                         Log::Logger::Warn(token, fmt::format("constant value {} needs to be assigned", token.value));
-                    return new AST::VarDecl{token.value, nullptr, false, data_type};
+                    return MakeRef<AST::VarDecl>(token.value, false, data_type, nullptr);
                 }
                 case TokenType::Equals: {
-                    AST::AST *test = ParseExpr();
-                    auto decl = new AST::VarDecl{token.value, test, is_const, data_type};
+                    Ref<AST::AST> test = ParseExpr();
+                    auto decl = MakeRef<AST::VarDecl>(token.value, is_const, data_type, test);
                     return decl;
                 }
                 default:
@@ -258,7 +259,7 @@ namespace lygos {
             }
         }
 
-        AST::AST *Parser::ParseExpr() {
+        Ref<AST::AST> Parser::ParseExpr() {
             switch (At().type) {
                 case TokenType::KwLet: return ParseVarDecl();
                 case TokenType::KwRet: return ParseRetExpr();
@@ -266,7 +267,7 @@ namespace lygos {
             }
         }
 
-        AST::AST *Parser::ParseParanExpr() {
+        Ref<AST::AST> Parser::ParseParanExpr() {
             if(At().type == TokenType::ParanLeft) {
                 Eat();
                 auto node = ParseExpr();
@@ -277,7 +278,7 @@ namespace lygos {
             return ParseCastExpr();
         }
 
-        AST::AST *Parser::ParseCondExpr() {
+        Ref<AST::AST> Parser::ParseCondExpr() {
             auto lhs = ParseAdditiveExpr();
 
             if(At().type == TokenType::OpEqEq
@@ -285,52 +286,52 @@ namespace lygos {
             || At().type == TokenType::OpGr) {
                 auto op = Eat().value;
                 auto rhs = ParseAdditiveExpr();
-                return new AST::BinaryExpr{lhs, rhs, op};
+                return MakeRef<AST::BinaryExpr>(lhs, rhs, op);
             }
             return lhs;
         }
 
-        AST::AST *Parser::ParseAssignmentExpr() {
-            AST::AST *lhs = ParseCallExpr();
+        Ref<AST::AST> Parser::ParseAssignmentExpr() {
+            Ref<AST::AST> lhs = ParseCallExpr();
 
             if(At().type == TokenType::Equals) {
                 Eat();
 
                 //AssignmentExpr
-                AST::AST *rhs = ParseExpr();
+                Ref<AST::AST> rhs = ParseExpr();
 
-                return new AST::AssignmentExpr{lhs, rhs, "Unknown"}; //TODO figure out data type
+                return MakeRef<AST::AssignmentExpr>(lhs, rhs);
             }
 
             return lhs;
         }
 
-        AST::AST *Parser::ParseAdditiveExpr() {
-            AST::AST *lhs = ParseMultExpr();
+        Ref<AST::AST> Parser::ParseAdditiveExpr() {
+            Ref<AST::AST> lhs = ParseMultExpr();
             while (At().type == TokenType::OpPlus || At().type == TokenType::OpMinus) {
                 auto op = Eat().value;
-                AST::AST *rhs = ParseMultExpr();
-                lhs = new AST::BinaryExpr{lhs, rhs, op};
+                Ref<AST::AST> rhs = ParseMultExpr();
+                lhs = MakeRef<AST::BinaryExpr>(lhs, rhs, op);
             }
             return lhs;
         }
 
-        AST::AST *Parser::ParseMultExpr() {
-            AST::AST *lhs = ParseAssignmentExpr();
+        Ref<AST::AST> Parser::ParseMultExpr() {
+            Ref<AST::AST> lhs = ParseAssignmentExpr();
             while (At().type == TokenType::OpMul || At().type == TokenType::OpDiv || At().type == TokenType::OpMod) {
                 auto op = Eat().value;
-                AST::AST *rhs = ParseAssignmentExpr();
-                lhs = new AST::BinaryExpr(lhs, rhs, op);
+                Ref<AST::AST> rhs = ParseAssignmentExpr();
+                lhs = MakeRef<AST::BinaryExpr>(lhs, rhs, op);
             }
             return lhs;
         }
 
-        AST::AST *Parser::ParseCallExpr() {
+        Ref<AST::AST> Parser::ParseCallExpr() {
             auto callee = ParseMemberExpr();
 
             if(At().type == TokenType::ParanLeft) {
                 Eat();
-                std::vector<AST::AST *> args;
+                std::vector<Ref<AST::AST>> args;
                 while (At().type != TokenType::ParanRight) {
                     args.push_back(ParseExpr());
                     if(At().type == TokenType::ParanRight)
@@ -341,12 +342,12 @@ namespace lygos {
                 }
                 Eat();
 
-                return new AST::CallExpr(callee, args);
+                return MakeRef<AST::CallExpr>(callee, args);
             }
             return callee;
         }
 
-        AST::AST *Parser::ParseMemberExpr() {
+        Ref<AST::AST> Parser::ParseMemberExpr() {
             auto obj = ParseResolutionExpr();
             while (At().type == TokenType::Dot) {
                 Eat();
@@ -354,26 +355,26 @@ namespace lygos {
                 auto member = ParsePrimaryExpr();
                 if(member->type != AST::ASTType::Id)
                     Log::Logger::Warn("member expression has to be an identifier"); //VERRRRRY temporary probably :)
-                obj = new AST::MemberExpr{obj, member};
+                obj = MakeRef<AST::MemberExpr>(obj, member);
             }
 
             return obj;
         }
 
-        AST::AST *Parser::ParseResolutionExpr() {
+        Ref<AST::AST> Parser::ParseResolutionExpr() {
             auto obj = ParseIndexExpr();
             while (At().type == TokenType::OpScope) {
                 Eat();
                 auto member = ParseExpr();
-                obj = new AST::ResolutionExpr(obj, member);
+                obj = MakeRef<AST::ResolutionExpr>(obj, member);
             }
             return obj;
         }
 
-        AST::AST *Parser::ParseInitializerExpr() {
+        Ref<AST::AST> Parser::ParseInitializerExpr() {
             if(At().type == TokenType::BraceLeft) {
                 Eat();
-                std::vector<std::tuple<std::string, AST::AST *>> values;
+                AST::InitializerList::Initializers values;
                 while(At().type != TokenType::BraceRight) {
                     values.push_back({"", ParseExpr()});
                     if(At().type == TokenType::BraceRight)
@@ -383,12 +384,12 @@ namespace lygos {
                         Log::Logger::Warn(PEEK(-1), "initializer list values need to be comma `,` seperated");
                 }
                 Eat();
-                return new AST::InitializerList(values, AST::InitializerList::Kind::Anonymus);
+                return MakeRef<AST::InitializerList>(values, AST::InitializerList::Kind::Anonymus);
             }
             return ParseParanExpr();
         }
 
-        AST::AST *Parser::ParseCastExpr() {
+        Ref<AST::AST> Parser::ParseCastExpr() {
             if(At().type == TokenType::ParanLeft) {
                 Eat();
                 auto type = ParseTypeSpec();
@@ -396,23 +397,23 @@ namespace lygos {
                     Log::Logger::Warn(PEEK(-1), "expected closing paran `)`");
 
                 auto obj = ParseExpr();
-                return new AST::CastExpr(obj, type);
+                return MakeRef<AST::CastExpr>(obj, type);
             }
             return ParsePrimaryExpr();
         }
 
-        AST::AST *Parser::ParseUnaryExpr() {
+        Ref<AST::AST> Parser::ParseUnaryExpr() {
             if(At().type == TokenType::Ampercent
             || At().type == TokenType::OpMul) {
                 auto op = Eat().value;
                 auto obj = ParseExpr();
                 //auto obj = ParseIndexExpr();
-                return new AST::UnaryExpr(obj, op);
+                return MakeRef<AST::UnaryExpr>(obj, op);
             }
             return ParseInitializerExpr();
         }
 
-        AST::AST *Parser::ParseIndexExpr() {
+        Ref<AST::AST> Parser::ParseIndexExpr() {
             auto obj = ParseUnaryExpr();
             while(At().type == TokenType::BraceLeft) {
                 Eat();
@@ -421,47 +422,25 @@ namespace lygos {
                 if(Eat().type != TokenType::BraceRight)
                     Log::Logger::Warn(PEEK(-1), "expected closing bracket `]`");
 
-                obj = new AST::AccessExpr(obj, index);
+                obj = MakeRef<AST::AccessExpr>(obj, index);
             }
             return obj;
         }
 
-//presc
-//
-//Expr
-//Cond
-//AssignmentExpr
-//Additive
-//Mutlipl
-//Call
-//Member
-//Index
-//Primary
-
-        AST::AST *Parser::ParsePrimaryExpr() {
+        Ref<AST::AST> Parser::ParsePrimaryExpr() {
             auto& token = At();
             switch (token.type) {
                 case TokenType::Id: {
-                    return new AST::Identifier{Eat().value, "Unknown"}; //TODO figure out data type
+                    return MakeRef<AST::Identifier>(Eat().value); //TODO figure out data type
                 }
                 case TokenType::Integer: {
-                    return new AST::NumberLiteral{Eat().value, "Integer"};
+                    return MakeRef<AST::NumberLiteral>(Eat().value, "Integer");
                 }
                 case TokenType::Float: {
-                    return new AST::NumberLiteral{Eat().value, "Float"};
+                    return MakeRef<AST::NumberLiteral>(Eat().value, "Float");
                 }
                 case TokenType::String: {
-                    return new AST::StringLiteral{Eat().value, "String"};
-                }
-                case TokenType::ParanLeft: {
-                    Eat();
-                    std::cout << At() << "\n";
-                    AST::AST *value = ParseExpr();
-                    auto &token = At();
-                    std::cout << token << std::endl;
-                    if(token.type != TokenType::ParanRight)
-                        Log::Logger::Warn(token, "unknown token");
-                    return value;
+                    return MakeRef<AST::StringLiteral>(Eat().value);
                 }
                 default:
                     Log::Logger::Warn(Eat(), "unknown token found");
@@ -469,9 +448,9 @@ namespace lygos {
             }
         }
 
-        Type::Type *Parser::ParseTypeSpec() {
-            Type::Type *spec = nullptr;
-            Type::Type *origin = nullptr;
+        Ref<Type::Type> Parser::ParseTypeSpec() {
+            Ref<Type::Type> spec = nullptr;
+            Ref<Type::Type> origin = nullptr;
             //handle pointers;
             while(At().type == TokenType::OpMul || At().type == TokenType::Ampercent) {
                 Eat();
@@ -482,11 +461,11 @@ namespace lygos {
                 }
 
                 if(!spec) {
-                    origin = spec = new Type::Pointer(nullptr, mut);
+                    origin = spec = MakeRef<Type::Pointer>(nullptr, mut);
                 }
                 else {
-                    auto ptr = new Type::Pointer(nullptr, mut);
-                    static_cast<Type::Pointer *>(spec)->SetType(ptr);
+                    auto ptr = MakeRef<Type::Pointer>(nullptr, mut);
+                    static_cast<Type::Pointer *>(spec.get())->SetType(ptr);
                     spec = ptr;
                 }
             }
@@ -507,7 +486,7 @@ namespace lygos {
                 if(Eat().type != TokenType::BraceRight)
                     Log::Logger::Warn(PEEK(-1), "expected closing brace `]`");
 
-                return new Type::Array(type, count);
+                return MakeRef<Type::Array>(type, count);
             }
 
             //handle function pointers
@@ -516,7 +495,7 @@ namespace lygos {
                 if(Eat().type != TokenType::ParanLeft)
                     Log::Logger::Warn(PEEK(-1), "expected `(` after keyword `fn`");
 
-                std::vector<Type::Type *> params;
+                std::vector<Ref<Type::Type>> params;
                 while (At().type != TokenType::ParanRight) {
                     params.push_back(ParseTypeSpec());
                     if(At().type == TokenType::ParanRight)
@@ -526,23 +505,23 @@ namespace lygos {
                 }
                 Eat();
 
-                Type::Type *ret_type = new Type::Path("void");
+                Ref<Type::Type> ret_type = MakeRef<Type::Path>("void");
 
                 if(At().type == TokenType::Arrow) {
                     Eat();
                     ret_type = ParseTypeSpec();
                 }
 
-                return new Type::FuncPtr(params, ret_type);
+                return MakeRef<Type::FuncPtr>(params, ret_type);
             }
 
             if(At().type != TokenType::Id)
                 Log::Logger::Warn(At(), "expected type");
 
             if(!spec) {
-                origin = new Type::Path(Eat().value);
+                origin = MakeRef<Type::Path>(Eat().value);
             }else {
-                static_cast<Type::Pointer *>(spec)->SetType(new Type::Path(Eat().value));
+                static_cast<Type::Pointer *>(spec.get())->SetType(MakeRef<Type::Path>(Eat().value));
             }
 
             return origin;

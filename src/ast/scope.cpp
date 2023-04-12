@@ -46,7 +46,7 @@ namespace lygos {
             auto scope = this->Resolve(id.c_str());
             if(scope->struct_types.contains(id))
                 Log::Logger::Warn(fmt::format("cannot redeclare `%s`", id));
-            this->struct_types.insert_or_assign(id, struct_type);
+            this->struct_types.insert({id, struct_type});
         }
 
         void Scope::TypeAddFunction(std::string type, Type::Function func) {
@@ -71,21 +71,21 @@ namespace lygos {
                     }
                 } break;
                 case Type::Kind::ptr:
-                    return llvm::PointerType::get(GetType(static_cast<Type::Pointer *>(type)->GetType()), 0);
+                    return llvm::PointerType::get(GetType(static_cast<Type::Pointer *>(type)->GetType().get()), 0);
                     break;
                 case Type::Kind::arr: {
                     auto arr_type = static_cast<Type::Array *>(type);
                     //error("TODO!, [Arr Type]");
-                    return llvm::ArrayType::get(GetType(arr_type->GetType()), arr_type->ElemCount());
+                    return llvm::ArrayType::get(GetType(arr_type->GetType().get()), arr_type->ElemCount());
                 } break;
                 case Type::Kind::function: {
                     auto fn_type = (Type::FuncPtr *)type;
                     std::vector<llvm::Type *> params;
                     for(auto &par : fn_type->GetParams()) {
-                        params.push_back(GetType(par));
+                        params.push_back(GetType(par.get()));
                     }
                     auto type = llvm::FunctionType::get(
-                        GetType(fn_type->GetRetType()),
+                        GetType(fn_type->GetRetType().get()),
                         params,
                         false
                     );

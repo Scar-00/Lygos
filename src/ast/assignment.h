@@ -8,10 +8,12 @@ namespace lygos {
         struct AssignmentExpr : public AST {
             public:
                 AssignmentExpr(Ref<AST> assignee, Ref<AST> value);
+                Ref<AST> &Lhs() { return assignee; }
+                Ref<AST> &Rhs() { return value; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 Ref<AST> assignee;

@@ -17,7 +17,7 @@ namespace lygos {
             auto obj = this->obj->GenCode(scope);
 
             size_t index;
-            auto struct_fields = scope->GetStruct(obj->getType()->getStructName().str()).fields;
+            auto struct_fields = scope->GetStruct(static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data()).fields;
             for(size_t i = 0; i < struct_fields.size(); i++)
                 if(struct_fields[i] == member->GetValue())
                     index = i;
@@ -28,7 +28,7 @@ namespace lygos {
             return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, index);
         }
 
-        void MemberExpr::Lower() {
+        void MemberExpr::Lower(AST *parent) {
 
         }
 
@@ -63,7 +63,7 @@ namespace lygos {
             return builder->CreateGEP(TryGetPointerBase(obj->getType()), obj, idx_list, "", true);
         }
 
-        void AccessExpr::Lower() {
+        void AccessExpr::Lower(AST *parent) {
 
         }
 
@@ -87,7 +87,7 @@ namespace lygos {
             return fn->GenCode(scope);
         }
 
-        void ResolutionExpr::Lower() {
+        void ResolutionExpr::Lower(AST *parent) {
 
         }
 

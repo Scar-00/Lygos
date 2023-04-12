@@ -22,8 +22,9 @@ namespace lygos {
             return nullptr;
         }
 
-        void Impl::Lower() {
-
+        void Impl::Lower(AST *parent) {
+            for(const auto &item : body)
+                item->Lower(parent);
         }
 
         void Impl::Sanatize() {

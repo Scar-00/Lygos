@@ -35,7 +35,7 @@ namespace lygos {
             std::exit(1);
         }
 
-        void BinaryExpr::Lower() {
+        void BinaryExpr::Lower(AST *parent) {
 
         }
 

@@ -1,16 +1,19 @@
+#include "ast/ast.h"
+#include "ast/mod.h"
 #include "core.h"
 #include "error/log.h"
 #include "cli/options.h"
 #include "lex/lexer.h"
 #include "parser/parser.h"
 #include "util/io.h"
+#include <cassert>
 
 namespace lygos {
     llvm::LLVMContext *ctx;
     llvm::Module *mod;
     llvm::IRBuilder<> *builder;
     llvm::TargetMachine *target_machine;
-    Ref<AST::Mod> ast_root = nullptr;
+    AST::Mod *ast_root = nullptr;
 
     void init_llvm(std::string mod_name) {
         llvm::InitializeAllTargetInfos();
@@ -61,8 +64,11 @@ int main(int argc, char **argv) {
     lygos::Lexer lexer(file_content.c_str());
     lygos::Parser::Parser parser(lexer);
     auto root = parser.BuildAst();
-
-    std::cout << lygos::AST::Print(root).str() << std::endl;
+    lygos::ast_root = (lygos::AST::Mod *)root.get();
+    assert(lygos::ast_root && "ast root cannot be null");
+    std::cout << "original:\n" << lygos::AST::Print(root.get()).str() << std::endl;
+    //root->Lower(nullptr);
+    //std::cout << "lowered:\n" << lygos::AST::Print(root.get()).str() << std::endl;
 
     auto type = llvm::FunctionType::get(
         llvm::Type::getInt32Ty(*lygos::ctx),
@@ -73,12 +79,11 @@ int main(int argc, char **argv) {
     );
 
     llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf_ln", *lygos::mod);
+    llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf", *lygos::mod);
 
-    //root->GenCode({});
+    root->GenCode({});
 
     llvm::verifyModule(*lygos::mod, &llvm::errs());
-
-    return 0;
 
     Path output_file = cli_options.OutputFile().UnwrapOrDefault(input_file.replace_extension(".o").string());
     if(cli_options.EmitExe()) {

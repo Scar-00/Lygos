@@ -19,7 +19,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
-                void Lower() override;
+                void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
                 Initializers initializers;
