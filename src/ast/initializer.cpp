@@ -1,6 +1,8 @@
 #include "initializer.h"
 #include "../error/log.h"
+#include "access.h"
 #include "assignment.h"
+#include "literals.h"
 #include "mod.h"
 #include "function.h"
 
@@ -26,9 +28,11 @@ namespace lygos {
                 return;
 
             auto assignment = (AssignmentExpr *)parent;
+
             std::vector<Ref<AST>> assignments;
             for(const auto &[name, value] : initializers) {
-                assignments.push_back(MakeRef<AssignmentExpr>(assignment->Lhs(), value));
+                auto lhs = MakeRef<MemberExpr>(assignment->Lhs(), MakeRef<Identifier>(name));
+                assignments.push_back(MakeRef<AssignmentExpr>(lhs, value));
             }
 
             // this should work but i think insert function is brocken

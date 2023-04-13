@@ -71,7 +71,7 @@ namespace lygos {
     }
 
     template<typename T>
-    void VecInsertAt(std::vector<T> &vec, u32 index, std::vector<T> &elems) {
+    void VecInsertAt(std::vector<T> &vec, s32 index, std::vector<T> &elems) {
         for(u32 i = 0; i < elems.size(); i++) {
             vec.insert(vec.begin() + index + i, std::move(elems[i]));
         }

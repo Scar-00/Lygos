@@ -6,9 +6,11 @@
 #include "lex/lexer.h"
 #include "parser/parser.h"
 #include "util/io.h"
-#include <cassert>
 
 namespace lygos {
+    namespace Test {
+        void test();
+    }
     llvm::LLVMContext *ctx;
     llvm::Module *mod;
     llvm::IRBuilder<> *builder;
@@ -55,6 +57,9 @@ int main(int argc, char **argv) {
     Path input_file = cli_options.InputFile().Expect("error: no input file provided");
     lygos::init_llvm(input_file.string());
 
+    //lygos::Test::test();
+    //return 0;
+
     auto file_content = lygos::IO::ReadFile(input_file);
     if(file_content.size() < 1) {
         std::cout << "Could not read file: `" << input_file << "`" << std::endl;
@@ -67,8 +72,8 @@ int main(int argc, char **argv) {
     lygos::ast_root = (lygos::AST::Mod *)root.get();
     assert(lygos::ast_root && "ast root cannot be null");
     std::cout << "original:\n" << lygos::AST::Print(root.get()).str() << std::endl;
-    //root->Lower(nullptr);
-    //std::cout << "lowered:\n" << lygos::AST::Print(root.get()).str() << std::endl;
+    root->Lower(nullptr);
+    std::cout << "lowered:\n" << lygos::AST::Print(root.get()).str() << std::endl;
 
     auto type = llvm::FunctionType::get(
         llvm::Type::getInt32Ty(*lygos::ctx),

@@ -7,10 +7,14 @@ struct Human {
 
 impl Human {
     fn new(name: *i8, age: i32) -> Human {
-        let mut self: Human;
-        self.name = name;
-        self.age = age;
-        return self;
+        let mut this: Human;
+        this.name = name;
+        this.age = age;
+        return this;
+    }
+
+    fn test(&mut self, x: i32) {
+
     }
 }
 

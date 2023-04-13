@@ -27,8 +27,8 @@ namespace lygos {
                 std::cout << "\t" << PrintType(pair.second.llvm_type) << "\n";
             }
             std::cout << "-vars:\n";
-            for(auto const &pair : vars) {
-                std::cout << "\t{" << pair.first << " : " << PrintType(pair.second->getType()) << "},\n";
+            for(auto const &[name, alloca] : vars) {
+                std::cout << "\t{" << name << " : " << PrintType(alloca->getType()) << "},\n";
             }
             std::cout << "]" << std::endl;
         }

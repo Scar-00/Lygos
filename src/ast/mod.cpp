@@ -33,9 +33,9 @@ namespace lygos {
         }
 
         void Mod::Lower(AST *parent) {
-            for(const auto &item : body) {
+            for(u64 i = 0; i < body.size(); i++) {
                 IncrInstr();
-                item->Lower(this);
+                body[i]->Lower(this);
             }
         }
 

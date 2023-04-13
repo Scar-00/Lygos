@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "../error/log.h"
+#include "assignment.h"
 #include "mod.h"
 #include "function.h"
 #include "binary.h"
@@ -76,6 +77,14 @@ namespace lygos {
                     else
                         ss << "\n";
                 } break;
+                case ASTType::AssignmentExpr: {
+                    ss << ": =\n";
+                    auto assignment = (AssignmentExpr *)node;
+                    auto lhs = Print(assignment->Lhs().get(), depth + 1).str();
+                    auto rhs = Print(assignment->Rhs().get(), depth + 1).str();
+                    ss << lhs;
+                    ss << rhs;
+                } break;
                 /*case ASTType::BinaryExpr: {
                     auto binop = (BinaryExpr *)node;
                     ss << ": " << binop->op;
@@ -96,6 +105,9 @@ namespace lygos {
                     ss << ": " << node->GetValue() << "\n";
                     for(const auto &item : ((Impl *)node)->Body())
                         ss << Print(item.get(), depth + 1).str();
+                } break;
+                case ASTType::Id: {
+                    ss << ": " << node->GetValue() << "\n";
                 } break;
                 default: ss << "\n"; break;
             }

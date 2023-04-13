@@ -9,6 +9,7 @@ namespace lygos {
             public:
                 Impl(std::string type, std::vector<Ref<AST>> body);
                 std::vector<Ref<AST>> &Body() { return body; }
+                std::string &Type() { return type; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

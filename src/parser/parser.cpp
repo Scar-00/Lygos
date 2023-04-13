@@ -34,15 +34,17 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{`");
 
-            std::vector<Ref<AST::AST>> nodes;
+            auto impl = MakeRef<AST::Impl>(id.value, std::vector<Ref<AST::AST>>());
+
+            current_impl = impl;
             while (At().type != TokenType::CurlyRight) {
-                nodes.push_back(ParseFunc());
+                impl->Body().push_back(ParseFunc());
             }
 
             if(Eat().type != TokenType::CurlyRight)
                 Log::Logger::Warn(PEEK(-1), "expected `}`");
-
-            return MakeRef<AST::Impl>(id.value, nodes);
+            current_impl = nullptr;
+            return impl;
         }
 
         Ref<AST::AST> Parser::ParseStmt() {
@@ -106,6 +108,40 @@ namespace lygos {
             return MakeRef<AST::StructDef>(struct_id.value, fields);
         }
 
+        AST::Function::Arg Parser::ParseFuncArg() {
+            auto id = Eat();
+
+            if(id.value == "&" || id.value == "mut" || id.type == TokenType::KwSelf) {\
+                if(!current_impl)
+                    Log::Logger::Warn("member function can only be declared in an impl block");
+                Ref<Type::Type> type = nullptr;
+                if(id.value == "&") {
+                    id = Eat();
+                    bool mut = false;
+                    if(id.value == "mut") {
+                        id = Eat();
+                        mut = true;
+                    }
+                    type = MakeRef<Type::Pointer>(MakeRef<Type::Path>(current_impl->Type()), mut);
+                }
+
+                if(id.type != TokenType::KwSelf)
+                    Log::Logger::Warn(id, "expected keyword `self`");
+
+                return {"self", type};
+            }
+
+            if(id.type != TokenType::Id)
+                Log::Logger::Warn(id, "expected identifier in function signature");
+
+            if(Eat().type != TokenType::Colon)
+                Log::Logger::Warn(PEEK(-1), "expected type for function parameter");
+
+            auto type = this->ParseTypeSpec();
+
+            return {id.value, type};
+        }
+
         Ref<AST::AST> Parser::ParseFunc() {
             Eat();
 
@@ -120,16 +156,7 @@ namespace lygos {
                 Log::Logger::Warn(PEEK(-1), "expected `(`");
 
             while (At().type != TokenType::ParanRight) {
-                auto id = Eat();
-                if(id.type != TokenType::Id)
-                    Log::Logger::Warn(id, "expected identifier in function signature");
-
-                if(Eat().type != TokenType::Colon)
-                    Log::Logger::Warn(PEEK(-1), "expected type for function parameter");
-
-                auto type = this->ParseTypeSpec();
-
-                args.push_back({id.value, type});
+                args.push_back(ParseFuncArg());
 
                 if(At().type == TokenType::ParanRight)
                     break;
@@ -149,7 +176,7 @@ namespace lygos {
 
             if(At().type == TokenType::Semi) {
                 Eat();
-                return MakeRef<AST::Function>(id.value, nullptr, args, std::vector<Ref<AST::AST>>(), ret_type, false);
+                return MakeRef<AST::Function>(id.value, current_impl, args, std::vector<Ref<AST::AST>>(), ret_type, false);
             }
 
             if(Eat().type != TokenType::CurlyLeft)
@@ -161,7 +188,7 @@ namespace lygos {
             }
             Eat();
 
-            return MakeRef<AST::Function>(id.value, nullptr, args, body, ret_type, true);
+            return MakeRef<AST::Function>(id.value, current_impl, args, body, ret_type, true);
         }
 
         Ref<AST::AST> Parser::ParseRetExpr() {
@@ -379,6 +406,9 @@ namespace lygos {
                     values.push_back({"", ParseExpr()});
                     if(At().type == TokenType::BraceRight)
                         break;
+
+                    //if(Eat().type != TokenType::Dot)
+                    //    Log::Logger::Warn("expected `.` before struct member");
 
                     if(Eat().type != TokenType::Comma)
                         Log::Logger::Warn(PEEK(-1), "initializer list values need to be comma `,` seperated");

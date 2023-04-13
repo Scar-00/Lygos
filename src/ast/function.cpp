@@ -4,15 +4,13 @@
 
 namespace lygos {
     namespace AST {
-        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def):
-            AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(is_def) {
+        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def, bool is_member):
+            AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(is_def), is_member(is_member) {
 
         }
 
         void Function::Insert(std::vector<Ref<AST>> &elems) {
-            //this is brocken
             VecInsertAt(body, instr_index, elems);
-            instr_index += elems.size();
         }
 
         llvm::Value *Function::GenCode(Scope *scope) {
@@ -63,15 +61,15 @@ namespace lygos {
             curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
             llvm::verifyFunction(*fn, &llvm::errs());
-
+            curr_scope.Print();
             return nullptr;
         }
 
         void Function::Lower(AST *parent) {
             ast_root->SetCurrentFunction(this);
-            for(const auto &item : body) {
+            for(u64 i = 0; i < body.size(); i++) {
                 IncrInstr();
-                item->Lower(this);
+                body[i]->Lower(this);
             }
         }
 

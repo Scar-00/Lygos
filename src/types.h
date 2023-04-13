@@ -60,6 +60,7 @@ namespace lygos {
         OpGr, // >
 
         OpScope, // ::
+        OpVarArg, // ...
 
         BraceLeft,
         BraceRight,
@@ -83,6 +84,7 @@ namespace lygos {
         KwInclude,
         KwImpl,
         KwType,
+        KwSelf,
 
         Eof,
     };
@@ -102,6 +104,7 @@ namespace lygos {
         {"include", TokenType::KwInclude},
         {"impl", TokenType::KwImpl},
         {"type", TokenType::KwType},
+        {"self", TokenType::KwSelf},
     };
 
     static std::set<std::string> base_types = {
@@ -190,14 +193,16 @@ namespace lygos {
 
         struct Pointer : public Type {
         public:
-            Pointer(Ref<Type> type, bool mut): type(type), mut(mut) {
+            Pointer(Ref<Type> type, bool mut, bool is_ref = false): type(type), is_ref(is_ref), mut(mut) {
                 this->kind = Kind::ptr;
             }
             Ref<Type> GetType() { return type; }
             bool IsMut() { return mut; }
+            bool IsRef() { return is_ref; }
             void SetType(Ref<Type> type) { this->type = type; }
         private:
             Ref<Type> type;
+            bool is_ref;
             bool mut;
         };
 

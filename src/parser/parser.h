@@ -19,6 +19,7 @@
 #include "../ast/casting.h"
 
 #include "../lex/lexer.h"
+#include <vector>
 
 namespace lygos {
     namespace Parser {
@@ -37,6 +38,7 @@ namespace lygos {
             AST::StructDef::Field ParseFieldDecl();
             Ref<AST::AST> ParseStructDecl();
             Ref<AST::AST> ParseVarDecl();
+            AST::Function::Arg ParseFuncArg();
             Ref<AST::AST> ParseFunc();
             Ref<AST::AST> ParseRetExpr();
             Ref<AST::AST> ParseIfExpr();
@@ -57,6 +59,7 @@ namespace lygos {
             Ref<AST::AST> ParsePrimaryExpr();
             Ref<Type::Type> ParseTypeSpec();
             std::vector<Token> tokens;
+            Ref<AST::Impl> current_impl = nullptr;
             s32 index;
         };
     }

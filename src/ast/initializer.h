@@ -8,6 +8,7 @@
 namespace lygos {
     namespace AST {
         struct InitializerList : public AST {
+            //hold onto a Ref<AST> instead of a std::string
             using Initializers = std::vector<std::tuple<std::string, Ref<AST>>>;
             enum class Kind {
                 Named,
