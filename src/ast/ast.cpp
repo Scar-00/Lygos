@@ -95,7 +95,8 @@ namespace lygos {
                     }
                 } break;
                 case ASTType::MemberExpr: {
-                    ss << ": " << node->GetValue() << "\n";
+                    ss << "\n";
+                    ss << Print(((MemberExpr *) node)->Obj().get(), depth + 1).str();
                     ss << Print(((MemberExpr *) node)->Member().get(), depth + 1).str();
                 } break;
                 /*case ASTType::BinaryExpr: {

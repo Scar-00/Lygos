@@ -5,6 +5,7 @@
 
 namespace lygos {
     namespace AST {
+        //add deref operator [->]
         struct MemberExpr : public AST {
             public:
                 MemberExpr(Ref<AST> obj, Ref<AST> member);

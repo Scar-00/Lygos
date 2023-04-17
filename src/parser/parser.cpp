@@ -204,8 +204,8 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseIfExpr() {
-            return nullptr;
-            /*Eat();
+            //return nullptr;
+            Eat();
             auto cond = ParseExpr();
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
@@ -216,19 +216,19 @@ namespace lygos {
             }
             Eat();
 
-            std::shared_ptr<std::vector<Ref<AST::AST>>> else_branch = NULL;
             if(At().type == TokenType::KwElse) {
                 Eat();
                 if(Eat().type != TokenType::CurlyLeft)
                     Log::Logger::Warn(PEEK(-1), "expected `{` after else statement");
 
-                else_branch = std::make_unique<std::vector<Ref<AST::AST>>>();
+                std::vector<Ref<AST::AST>> else_branch;
                 while(At().type != TokenType::CurlyRight) {
-                    else_branch->push_back(ParseStmt());
+                    else_branch.push_back(ParseStmt());
                 }
                 Eat();
+                return MakeRef<AST::IfStmt>(cond, then_branch, else_branch, true);
             }
-            return MakeRef<AST::IfExpr>(cond, then_branch, else_branch);*/
+            return MakeRef<AST::IfStmt>(cond, then_branch);
         }
 
         //TODO!!!!!!!
@@ -323,7 +323,7 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseAssignmentExpr() {
-            Ref<AST::AST> lhs = ParseCallExpr();
+            Ref<AST::AST> lhs = ParseMemberExpr();
 
             if(At().type == TokenType::Equals) {
                 Eat();
@@ -358,7 +358,7 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseCallExpr() {
-            auto callee = ParseMemberExpr();
+            auto callee = ParseResolutionExpr();
 
             if(At().type == TokenType::ParanLeft) {
                 Eat();
@@ -379,16 +379,16 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseMemberExpr() {
-            auto obj = ParseResolutionExpr();
-            while (At().type == TokenType::Dot) {
+            //auto obj = ParseResolutionExpr();
+            auto obj = ParseCallExpr();
+            while(At().type == TokenType::Dot) {
                 Eat();
-                auto member = ParsePrimaryExpr();
-                //auto member = ParseExpr();
-                if(member->type != AST::ASTType::Id)
-                    Log::Logger::Warn("member expression has to be an identifier"); //VERRRRRY temporary probably :)
+                //auto member = ParsePrimaryExpr();
+                auto member = ParseCallExpr();
+                //if(member->type != AST::ASTType::Id)
+                //   Log::Logger::Warn("member expression has to be an identifier"); //VERRRRRY temporary probably :)
                 obj = MakeRef<AST::MemberExpr>(obj, member);
             }
-
             return obj;
         }
 

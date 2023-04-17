@@ -1,4 +1,5 @@
 #include "access.h"
+#include "ast.h"
 #include "call.h"
 #include "literals.h"
 
@@ -17,17 +18,18 @@ namespace lygos {
             auto obj = this->obj->GenCode(scope);
 
             if(member->type == ASTType::CallExpr) {
-                //auto obj = scope->LookupVar(this->obj->getValue());
                 std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
                 auto call = (CallExpr *)member.get();
                 call->Args().insert(call->Args().cbegin(), this->obj);
-                static_cast<Identifier *>(call->GetCaller().get())->GetId() = struct_name + "_" + call->GetCaller()->GetValue();
-                //obj->deleteValue();
-                /*(for(const auto &arg : call->Args()) {
-                    std::cout << arg->GetValue() << "'\n";
+                switch (call->GetCaller()->type) {
+                    case ASTType::Id: {
+                        std::string &fn_name = static_cast<Identifier *>(call->GetCaller().get())->GetId();
+                        fn_name = struct_name + "_" + fn_name;
+                    } break;
+                    default:
+                        std::cout << "????" << std::endl;
+                    break;
                 }
-                Log::Logger::Warn(fmt::format("Function name -> {}", call->GetCaller()->GetValue()));*/
-                //std::cout << fmt::format("Function name -> {}", call->GetCaller()->GetValue()) << "\n";
                 return member->GenCode(scope);
             }
 

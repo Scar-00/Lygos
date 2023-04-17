@@ -1,4 +1,6 @@
 #include "vardecl.h"
+#include "mod.h"
+#include "function.h"
 
 namespace lygos {
     namespace AST {
@@ -26,6 +28,9 @@ namespace lygos {
                 val = builder->CreateCast(GetCastOp(val->getType(), type), val, type);
             }
 
+            if(val->getType()->isVoidTy())
+                Log::Logger::Warn("cannot assign to `void` value to variable");
+
             auto alloca = builder->CreateAlloca(val->getType());
             builder->CreateStore(val, alloca);
             scope->DeclVar(id, cnst, alloca);
@@ -33,8 +38,9 @@ namespace lygos {
         }
 
         void VarDecl::Lower(AST *parent) {
-            if(value != nullptr)
+            if(value != nullptr) {
                 this->value->Lower(this);
+            }
         }
 
         void VarDecl::Sanatize() {

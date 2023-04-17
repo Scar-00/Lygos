@@ -39,12 +39,11 @@ namespace lygos {
                 arg_values.push_back(val);
                 i++;
             }
-
             return builder->CreateCall(callee, arg_values);
         }
 
         void CallExpr::Lower(AST *parent) {
-            if(caller->type == ASTType::MemberExpr) {
+            /*if(caller->type == ASTType::MemberExpr) {
                 std::vector<Ref<AST>> elems;
                 auto call = MakeRef<CallExpr>(static_cast<MemberExpr *>(caller.get())->Member(), args);
                 auto member = MakeRef<MemberExpr>(static_cast<MemberExpr *>(caller.get())->Obj(), call);
@@ -52,7 +51,7 @@ namespace lygos {
                 elems.push_back(member);
 
                 ast_root->GetCurrentFunction()->Insert(elems);
-            }
+            }*/
         }
 
         void CallExpr::Sanatize() {
@@ -72,12 +71,13 @@ namespace lygos {
             if(value == NULL)
                 return NULL;
 
-            if(!scope->GetRet())
-                Log::Logger::Warn("invalid return type for function with return type `void`");
 
             auto val = value->GenCode(scope);
             if(ShouldLoad(value.get()))
                 val = LoadOrIgnore(val);
+
+            if(!scope->HasRetValue())
+                Log::Logger::Warn(fmt::format("invalid return type `{}` for function with return type `void`", PrintType(val->getType())));
 
             return builder->CreateStore(val, scope->GetRet());
         }

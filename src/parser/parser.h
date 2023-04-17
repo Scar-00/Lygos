@@ -7,7 +7,7 @@
 #include "../ast/assignment.h"
 #include "../ast/binary.h"
 #include "../ast/call.h"
-//#include "../ast/cfg.h"
+#include "../ast/control_flow.h"
 #include "../ast/function.h"
 #include "../ast/literals.h"
 #include "../ast/mod.h"

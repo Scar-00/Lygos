@@ -33,6 +33,16 @@ namespace lygos {
             std::cout << "]" << std::endl;
         }
 
+        bool Scope::HasRetValue() {
+            if(ret != nullptr)
+                return true;
+
+            if(parent == nullptr)
+                return false;
+
+            return parent->HasRetValue();
+        }
+
         llvm::AllocaInst *Scope::LookupVar(std::string id) {
             Scope *scope = this->Resolve(id);
             if(!scope->vars.contains(id))

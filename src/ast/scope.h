@@ -17,6 +17,7 @@ namespace lygos {
                 void DeclVar(std::string id, bool cnst, llvm::AllocaInst *value);
                 void SetRet(llvm::Value *value) { ret = value; }
                 llvm:: Value *GetRet() { return ret; }
+                bool HasRetValue();
                 llvm::AllocaInst *LookupVar(std::string id);
                 std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
                 void AddType(std::string id, Type::StructType struct_type);

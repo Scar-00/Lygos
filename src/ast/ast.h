@@ -17,8 +17,8 @@ namespace lygos {
             //expr
             AssignmentExpr,
             MemberExpr,
-            IfExpr,
-            ForExpr,
+            IfStmt,
+            ForStmt,
             CallExpr,
             AccessExpr,
             UnaryExpr,

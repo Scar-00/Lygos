@@ -7,8 +7,6 @@
 * determine if expr result of if/for/while are valid values
 * deref '->' operator and '(*x).x'
 * rewrite return instructions (return block)
-* fix escape sequences
-* rethink parser (this is not it)
 * fix deref
 * redo initializers parsing
 
