@@ -10,6 +10,7 @@ namespace lygos {
             public:
                 CallExpr(Ref<AST> caller, std::vector<Ref<AST>> args);
                 Ref<AST> &GetCaller() { return caller; }
+                std::vector<Ref<AST>> &Args() { return args; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

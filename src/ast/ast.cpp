@@ -1,6 +1,8 @@
 #include "ast.h"
 #include "../error/log.h"
+#include "access.h"
 #include "assignment.h"
+#include "call.h"
 #include "mod.h"
 #include "function.h"
 #include "binary.h"
@@ -84,6 +86,17 @@ namespace lygos {
                     auto rhs = Print(assignment->Rhs().get(), depth + 1).str();
                     ss << lhs;
                     ss << rhs;
+                } break;
+                case ASTType::CallExpr: {
+                    ss << ": " << node->GetValue() << "\n";
+                    ss << Print(((CallExpr *)node)->GetCaller().get(), depth + 1).str();
+                    for(const auto &arg : ((CallExpr *)node)->Args()) {
+                        ss << Print(arg.get(), depth + 1).str();
+                    }
+                } break;
+                case ASTType::MemberExpr: {
+                    ss << ": " << node->GetValue() << "\n";
+                    ss << Print(((MemberExpr *) node)->Member().get(), depth + 1).str();
                 } break;
                 /*case ASTType::BinaryExpr: {
                     auto binop = (BinaryExpr *)node;

@@ -2,6 +2,7 @@
 #define _LYGOS_AST_MOD_H_
 
 #include "ast.h"
+#include <unordered_set>
 #include <vector>
 
 namespace lygos {
@@ -15,6 +16,8 @@ namespace lygos {
                 void Insert(std::vector<Ref<AST>> &elems);
                 void SetCurrentFunction(Function *func);
                 Function *GetCurrentFunction();
+                Function *GetFunction(std::string &name);
+                void AddFunction(Function *func);
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -25,6 +28,7 @@ namespace lygos {
                 std::vector<Ref<AST>> body;
                 u32 instr_index = 0;
                 Function *current_func = nullptr;
+                std::unordered_map<std::string, Function *> functions;
         };
     }
 }

@@ -8,6 +8,8 @@ namespace lygos {
         struct MemberExpr : public AST {
             public:
                 MemberExpr(Ref<AST> obj, Ref<AST> member);
+                Ref<AST> Member() { return member; }
+                Ref<AST> Obj() { return obj; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

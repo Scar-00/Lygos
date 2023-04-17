@@ -1,16 +1,19 @@
 #include "function.h"
 #include "ast.h"
 #include "mod.h"
+#include "impl.h"
+#include <cstdio>
 
 namespace lygos {
     namespace AST {
-        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def, bool is_member):
-            AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(is_def), is_member(is_member) {
+        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def):
+            AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(is_def) {
 
         }
 
         void Function::Insert(std::vector<Ref<AST>> &elems) {
-            VecInsertAt(body, instr_index, elems);
+            VecReplaceAt(body, instr_index, elems);
+            //IncrInstr();
         }
 
         llvm::Value *Function::GenCode(Scope *scope) {
@@ -35,7 +38,10 @@ namespace lygos {
                     *mod
                 );
             }
-
+            //if(is_definition)
+            //    scope->TypeAddFunction(obj->Type(), {name, fn});
+            ast_root->SetCurrentFunction(this);
+            ast_root->AddFunction(this);
             if(!is_definition)
                 return nullptr;
 

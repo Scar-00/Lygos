@@ -1,4 +1,5 @@
 #include "mod.h"
+#include "function.h"
 
 namespace lygos {
     namespace AST {
@@ -7,8 +8,8 @@ namespace lygos {
         }
 
         void Mod::Insert(std::vector<Ref<AST>> &elems) {
-            VecInsertAt(body, instr_index - 1, elems);
-            instr_index += elems.size();
+            VecReplaceAt(body, instr_index, elems);
+            IncrInstr();
         }
 
         void Mod::SetCurrentFunction(Function *func) {
@@ -19,6 +20,17 @@ namespace lygos {
             return current_func;
         }
 
+        Function *Mod::GetFunction(std::string &name) {
+            if(!functions.contains(name))
+                Log::Logger::Warn(fmt::format("unknown function `{}`", name));
+
+            return functions.at(name);
+        }
+
+        void Mod::AddFunction(Function *func) {
+            functions.insert({func->GetName(), func});
+        }
+
         std::string Mod::GetValue() {
             return name;
         }
@@ -26,8 +38,8 @@ namespace lygos {
         llvm::Value *Mod::GenCode(Scope *scope) {
             Scope global{};
             for(const auto &item : body) {
-                IncrInstr();
                 item->GenCode(&global);
+                IncrInstr();
             }
             return nullptr;
         }

@@ -84,7 +84,6 @@ namespace lygos {
         KwInclude,
         KwImpl,
         KwType,
-        KwSelf,
 
         Eof,
     };
@@ -104,7 +103,6 @@ namespace lygos {
         {"include", TokenType::KwInclude},
         {"impl", TokenType::KwImpl},
         {"type", TokenType::KwType},
-        {"self", TokenType::KwSelf},
     };
 
     static std::set<std::string> base_types = {
@@ -179,6 +177,7 @@ namespace lygos {
         struct Type {
             Kind kind;
             bool Matches(Ref<Type> other);
+            std::string &GetName();
         };
 
         struct Path : public Type {

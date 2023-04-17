@@ -111,7 +111,7 @@ namespace lygos {
         AST::Function::Arg Parser::ParseFuncArg() {
             auto id = Eat();
 
-            if(id.value == "&" || id.value == "mut" || id.type == TokenType::KwSelf) {\
+            if(id.value == "&" || id.value == "mut" || id.value == "self") {\
                 if(!current_impl)
                     Log::Logger::Warn("member function can only be declared in an impl block");
                 Ref<Type::Type> type = nullptr;
@@ -125,7 +125,7 @@ namespace lygos {
                     type = MakeRef<Type::Pointer>(MakeRef<Type::Path>(current_impl->Type()), mut);
                 }
 
-                if(id.type != TokenType::KwSelf)
+                if(id.value != "self")
                     Log::Logger::Warn(id, "expected keyword `self`");
 
                 return {"self", type};
@@ -150,7 +150,7 @@ namespace lygos {
                 Log::Logger::Warn(PEEK(-1), "expected identifier after keyword `fn`");
 
             std::vector<AST::Function::Arg> args;
-            bool is_var_arg = false;
+            //bool is_var_arg = false;
 
             if(Eat().type != TokenType::ParanLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `(`");
@@ -173,6 +173,10 @@ namespace lygos {
                 Eat();
                 ret_type = this->ParseTypeSpec();
             }
+
+            //"mangle" function name
+            if(current_impl)
+                id.value = current_impl->Type() + "_" + id.value;
 
             if(At().type == TokenType::Semi) {
                 Eat();
@@ -378,8 +382,8 @@ namespace lygos {
             auto obj = ParseResolutionExpr();
             while (At().type == TokenType::Dot) {
                 Eat();
-                //auto member = ParseExpr();
                 auto member = ParsePrimaryExpr();
+                //auto member = ParseExpr();
                 if(member->type != AST::ASTType::Id)
                     Log::Logger::Warn("member expression has to be an identifier"); //VERRRRRY temporary probably :)
                 obj = MakeRef<AST::MemberExpr>(obj, member);

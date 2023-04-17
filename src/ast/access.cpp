@@ -16,6 +16,21 @@ namespace lygos {
         llvm::Value *MemberExpr::GenCode(Scope *scope) {
             auto obj = this->obj->GenCode(scope);
 
+            if(member->type == ASTType::CallExpr) {
+                //auto obj = scope->LookupVar(this->obj->getValue());
+                std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
+                auto call = (CallExpr *)member.get();
+                call->Args().insert(call->Args().cbegin(), this->obj);
+                static_cast<Identifier *>(call->GetCaller().get())->GetId() = struct_name + "_" + call->GetCaller()->GetValue();
+                //obj->deleteValue();
+                /*(for(const auto &arg : call->Args()) {
+                    std::cout << arg->GetValue() << "'\n";
+                }
+                Log::Logger::Warn(fmt::format("Function name -> {}", call->GetCaller()->GetValue()));*/
+                //std::cout << fmt::format("Function name -> {}", call->GetCaller()->GetValue()) << "\n";
+                return member->GenCode(scope);
+            }
+
             size_t index;
             auto struct_fields = scope->GetStruct(static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data()).fields;
             for(size_t i = 0; i < struct_fields.size(); i++)
@@ -84,7 +99,7 @@ namespace lygos {
             auto fn = (CallExpr *)member.get();
             std::string fn_name = obj->GetValue() + "_" + fn->GetCaller()->GetValue();
             ((Identifier *)fn->GetCaller().get())->GetId() = fn_name;
-            return fn->GenCode(scope);
+            return member->GenCode(scope);
         }
 
         void ResolutionExpr::Lower(AST *parent) {

@@ -1,5 +1,6 @@
 #include "types.h"
 #include "core.h"
+#include <cassert>
 
 namespace lygos {
     std::string PrintType(llvm::Type *type) {
@@ -107,5 +108,18 @@ namespace lygos {
         }
 
         return kind == other->kind;
+    }
+
+    std::string &Type::Type::GetName() {
+        if(kind == Kind::path)
+            return ((Path *)this)->GetPath();
+
+        if(kind == Kind::ptr)
+            return ((Pointer *)this)->GetType()->GetName();
+
+        if(kind == Kind::arr)
+            return ((Array *)this)->GetType()->GetName();
+
+        assert(false && "Cannot get type name");
     }
 }

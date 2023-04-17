@@ -1,4 +1,11 @@
 #include "call.h"
+#include "access.h"
+#include "ast.h"
+#include "mod.h"
+#include "function.h"
+#include "access.h"
+#include <ios>
+#include <vector>
 
 namespace lygos {
     namespace AST {
@@ -12,8 +19,10 @@ namespace lygos {
         }
 
         llvm::Value *CallExpr::GenCode(Scope *scope) {
-            auto callee = mod->getFunction(caller->GetValue());
-            if(!callee) {
+            auto fn_name = caller->GetValue();
+            auto fn = ast_root->GetFunction(fn_name);
+            auto callee = mod->getFunction(fn_name);
+            if(!callee || !fn) {
                 Log::Logger::Warn(fmt::format("unknown function `{}`", caller->GetValue()));
             }
 
@@ -21,19 +30,29 @@ namespace lygos {
                 Log::Logger::Warn(fmt::format("expected `{}` args but only `{}` were supplied", callee->arg_size(), args.size()));
 
             std::vector<llvm::Value *> arg_values;
+            u64 i = 0;
             for(const auto &arg : args) {
                 auto val = arg->GenCode(scope);
-                if(ShouldLoad(arg.get()) && arg->type != ASTType::UnaryExpr)
+                if(ShouldLoad(arg.get()) && arg->type != ASTType::UnaryExpr && !(i == 0 && fn->IsMember()))
                     val = LoadOrIgnore(val);
                 //add implicit casting
                 arg_values.push_back(val);
+                i++;
             }
 
             return builder->CreateCall(callee, arg_values);
         }
 
         void CallExpr::Lower(AST *parent) {
+            if(caller->type == ASTType::MemberExpr) {
+                std::vector<Ref<AST>> elems;
+                auto call = MakeRef<CallExpr>(static_cast<MemberExpr *>(caller.get())->Member(), args);
+                auto member = MakeRef<MemberExpr>(static_cast<MemberExpr *>(caller.get())->Obj(), call);
 
+                elems.push_back(member);
+
+                ast_root->GetCurrentFunction()->Insert(elems);
+            }
         }
 
         void CallExpr::Sanatize() {

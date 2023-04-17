@@ -3,6 +3,7 @@
 
 #include "../core.h"
 
+#include <unordered_map>
 #include <unordered_set>
 
 namespace lygos {
@@ -19,9 +20,12 @@ namespace lygos {
                 llvm::AllocaInst *LookupVar(std::string id);
                 std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
                 void AddType(std::string id, Type::StructType struct_type);
-                void TypeAddFunction(std::string type, Type::Function func);
+                //void TypeAddFunction(std::string type, Type::Function func);
+                //Type::Function &GetMemberFunction(std::string &type, Type::Function &func);
                 llvm::Type *GetType(Type::Type *type);
                 Type::StructType &GetStruct(std::string);
+                void AddFunction(Function *func);
+                Function *GetFunction(std::string &name);
                 Ref<Mod> GetMod();
             private:
                 Scope *Resolve(std::string id);
@@ -37,5 +41,4 @@ namespace lygos {
         };
     }
 }
-
 #endif // _LYGOS_SCOPE_H_

@@ -15,9 +15,9 @@ namespace lygos {
 
         llvm::Value *Impl::GenCode(Scope *scope) {
             for(const auto &member : body) {
-                Function *fn = (Function *)member.get();
-                fn->GetName() = type + "_" + fn->GetName();
-                fn->GenCode(scope);
+                //Function *fn = (Function *)member.get();
+                //fn->GetName() = type + "_" + fn->GetName();
+                member->GenCode(scope);
             }
             return nullptr;
         }

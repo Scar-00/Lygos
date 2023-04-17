@@ -11,11 +11,12 @@ namespace lygos {
         struct Function : public AST {
             using Arg = std::tuple<std::string, Ref<Type::Type>>;
             public:
-                Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def, bool is_member = false);
+                Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def);
                 void IncrInstr() { instr_index++; }
                 std::vector<Ref<AST>> &Body() { return body; }
                 void Insert(std::vector<Ref<AST>> &elems);
                 std::string &GetName() { return name; }
+                bool IsMember() { return obj.get() != nullptr; }
             public:
                 std::string GetValue() override{ return name; }
                 llvm::Value *GenCode(Scope *scope) override;
@@ -30,7 +31,6 @@ namespace lygos {
                 Ref<Type::Type> ret_type;
                 bool is_definition;
                 bool is_var_arg = false;
-                bool is_member;
                 u32 instr_index = 0;
         };
     }
