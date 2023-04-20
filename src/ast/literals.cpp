@@ -57,6 +57,11 @@ namespace lygos {
 
         llvm::Value *NumberLiteral::GenCode(Scope *scope) {
             if(type == "Integer") return llvm::ConstantInt::get(*ctx, llvm::APInt(32, std::atoi(value.c_str())));
+            if(type == "Char") {
+                auto reg = std::regex("\\\\0");
+                auto unescaped = std::regex_replace(value, reg, "\n");
+                return llvm::ConstantInt::get(*ctx, llvm::APInt(8, unescaped.c_str()[0]));
+            }
             return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*ctx), std::atof(value.c_str()));
         }
 

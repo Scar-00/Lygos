@@ -33,6 +33,16 @@ namespace lygos {
             std::cout << "]" << std::endl;
         }
 
+        llvm::Value *Scope::GetRet() {
+            if(ret != nullptr)
+                return ret;
+
+            if(parent == nullptr)
+                return ret;
+
+            return parent->GetRet();
+        }
+
         bool Scope::HasRetValue() {
             if(ret != nullptr)
                 return true;
@@ -122,7 +132,7 @@ namespace lygos {
 
                 } break;
             }
-            Log::Logger::Warn(fmt::format("unknwon type `{}`", STRINGIFY(type->kind)));
+            Log::Logger::Warn(fmt::format("unknwon type `{}`", type->GetName()));
             std::exit(1);
         }
 

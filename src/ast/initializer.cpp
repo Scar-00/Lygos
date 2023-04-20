@@ -31,7 +31,7 @@ namespace lygos {
 
             std::vector<Ref<AST>> assignments;
             for(const auto &[name, value] : initializers) {
-                auto lhs = MakeRef<MemberExpr>(assignment->Lhs(), MakeRef<Identifier>(name));
+                auto lhs = MakeRef<MemberExpr>(assignment->Lhs(), MakeRef<Identifier>(name), false);
                 assignments.push_back(MakeRef<AssignmentExpr>(lhs, value));
             }
 

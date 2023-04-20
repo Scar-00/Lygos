@@ -20,6 +20,20 @@ namespace lygos {
                 std::vector<Ref<AST>> else_body;
                 bool has_else_brach;
         };
+
+        struct ForStmt : public AST {
+            public:
+                ForStmt(Ref<AST> var, Ref<AST> cond, std::vector<Ref<AST>> body);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower(AST *parent) override;
+                void Sanatize() override;
+            private:
+                Ref<AST> var;
+                Ref<AST> cond;
+                std::vector<Ref<AST>> body;
+        };
     }
 }
 

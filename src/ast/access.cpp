@@ -5,8 +5,8 @@
 
 namespace lygos {
     namespace AST {
-        MemberExpr::MemberExpr(Ref<AST> obj, Ref<AST> member):
-            AST(ASTType::MemberExpr), obj(obj), member(member) {
+        MemberExpr::MemberExpr(Ref<AST> obj, Ref<AST> member, bool deref):
+            AST(ASTType::MemberExpr), obj(obj), member(member), deref(deref) {
 
         }
 
@@ -16,6 +16,8 @@ namespace lygos {
 
         llvm::Value *MemberExpr::GenCode(Scope *scope) {
             auto obj = this->obj->GenCode(scope);
+            if(deref)
+                obj = LoadOrIgnore(obj);
 
             if(member->type == ASTType::CallExpr) {
                 std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
@@ -39,7 +41,7 @@ namespace lygos {
                 if(struct_fields[i] == member->GetValue())
                     index = i;
 
-            if(member->type == ASTType::MemberExpr)
+            if(member->type != ASTType::Id)
                 member->GenCode(scope);
 
             return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, index);

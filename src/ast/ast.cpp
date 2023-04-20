@@ -8,6 +8,7 @@
 #include "binary.h"
 #include "impl.h"
 #include "vardecl.h"
+#include "casting.h"
 #include <sstream>
 
 namespace lygos {
@@ -15,8 +16,8 @@ namespace lygos {
         bool ShouldLoad(AST *ast) {
             return ast->type == ASTType::Id
                 || ast->type == ASTType::MemberExpr
-                || ast->type == ASTType::AccessExpr;
-                //|| ast->type == ASTType::UnaryExpr;
+                || ast->type == ASTType::AccessExpr
+                || ast->type == ASTType::UnaryExpr;
         }
 
         std::ostream &operator<<(std::ostream &os, ASTType type) {
@@ -27,8 +28,8 @@ namespace lygos {
                 case ASTType::VarDecl: os << "VarDecl"; break;
                 case ASTType::AssignmentExpr: os << "AssignmentExpr"; break;
                 case ASTType::MemberExpr: os << "MemberExpr"; break;
-                case ASTType::IfExpr: os << "IfExpr"; break;
-                case ASTType::ForExpr: os << "ForExpr"; break;
+                case ASTType::IfStmt: os << "IfStmt"; break;
+                case ASTType::ForStmt: os << "ForStmt"; break;
                 case ASTType::CallExpr: os << "CallExpr"; break;
                 case ASTType::AccessExpr: os << "AccessExpr"; break;
                 case ASTType::UnaryExpr: os << "UnaryExpr"; break;
@@ -110,11 +111,16 @@ namespace lygos {
                 } break;
                 case ASTType::NumberLiteral: {
                     ss << ": " << node->GetValue() << "\n";
-                } break;
-                case ASTType::UnaryExpr: {
-                    ss << ": " << static_cast<UnaryExpr *>(node)->op << "\n";
-                    ss << Print(static_cast<UnaryExpr *>(node)->obj, depth + 1).str() << "\n";
                 } break;*/
+                case ASTType::UnaryExpr: {
+                    ss << ": " << static_cast<UnaryExpr *>(node)->Op() << "\n";
+                    ss << Print(static_cast<UnaryExpr *>(node)->Obj().get(), depth + 1).str();
+                } break;
+                case ASTType::AccessExpr: {
+                    ss << "\n";
+                    ss << Print(((AccessExpr *) node)->Obj().get(), depth + 1).str();
+                    ss << Print(((AccessExpr *) node)->Index().get(), depth + 1).str();
+                } break;
                 case ASTType::Impl: {
                     ss << ": " << node->GetValue() << "\n";
                     for(const auto &item : ((Impl *)node)->Body())

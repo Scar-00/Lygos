@@ -67,7 +67,7 @@ namespace lygos {
             curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
             llvm::verifyFunction(*fn, &llvm::errs());
-            curr_scope.Print();
+            //curr_scope.Print();
             return nullptr;
         }
 

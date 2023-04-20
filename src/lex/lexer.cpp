@@ -46,6 +46,16 @@ namespace lygos {
         return {std::move(value), TokenType::String, line};
     }
 
+    Token Lexer::LexChar() {
+        std::string value;
+        while (curr != '\'') {
+            value.push_back(curr);
+            Advance();
+        }
+        Advance();
+        return {std::move(value), TokenType::Char, line};
+    }
+
     Token Lexer::LexId() {
         std::string value = {0};
         while (std::isalpha(curr) || std::isdigit(curr) ||curr == '_'){
@@ -93,12 +103,27 @@ namespace lygos {
                 case '}': return AdvanceToken({"}", TokenType::CurlyRight, line});
                 case '(': return AdvanceToken({"(", TokenType::ParanLeft, line});
                 case ')': return AdvanceToken({")", TokenType::ParanRight, line});
-                case '<': return AdvanceToken({"<", TokenType::OpLe, line});
-                case '>': return AdvanceToken({">", TokenType::OpGr, line});
+                case '<': {
+                    switch (src[index + 1]) {
+                        case '=': Advance(); return AdvanceToken({"<=", TokenType::OpEqEq, line});
+                        default: return AdvanceToken({"<", TokenType::OpGr, line});
+                    }
+                }
+                case '>': {
+                    switch (src[index + 1]) {
+                        case '=': Advance(); return AdvanceToken({">=", TokenType::OpEqEq, line});
+                        default: return AdvanceToken({">", TokenType::Bang, line});
+                    }
+                }
                 case '&': return AdvanceToken({"&", TokenType::Ampercent, line});
                 case '#': return AdvanceToken({"#", TokenType::Hash, line});
                 case '|': return AdvanceToken({"|", TokenType::Pipe, line});
-                case '!': return AdvanceToken({"!", TokenType::Bang, line});
+                case '!': {
+                    switch (src[index + 1]) {
+                        case '=': Advance(); return AdvanceToken({"!=", TokenType::OpEqEq, line});
+                        default: return AdvanceToken({"!", TokenType::Bang, line});
+                    }
+                }
                 case '=': {
                     switch (src[index + 1]) {
                         case '=': Advance(); return AdvanceToken({"==", TokenType::OpEqEq, line});
@@ -106,6 +131,7 @@ namespace lygos {
                     }
                 }
                 case '\"': Advance(); return LexString();
+                case '\'': Advance(); return LexChar();
                 case '\0': return {"", TokenType::Eof, line};
                 default:
                     if(std::isdigit(curr))

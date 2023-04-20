@@ -19,6 +19,7 @@ namespace lygos {
         }
 
         llvm::Value *CallExpr::GenCode(Scope *scope) {
+            //std::cout << this->GetCaller()->type << "\n";
             auto fn_name = caller->GetValue();
             auto fn = ast_root->GetFunction(fn_name);
             auto callee = mod->getFunction(fn_name);
@@ -27,13 +28,13 @@ namespace lygos {
             }
 
             if(!callee->isVarArg() && callee->arg_size() != args.size())
-                Log::Logger::Warn(fmt::format("expected `{}` args but only `{}` were supplied", callee->arg_size(), args.size()));
+                Log::Logger::Warn(fmt::format("function `{}` expected `{}` args but only `{}` were supplied", fn_name, callee->arg_size(), args.size()));
 
             std::vector<llvm::Value *> arg_values;
             u64 i = 0;
             for(const auto &arg : args) {
                 auto val = arg->GenCode(scope);
-                if(ShouldLoad(arg.get()) && arg->type != ASTType::UnaryExpr && !(i == 0 && fn->IsMember()))
+                if(ShouldLoad(arg.get()) && !(i == 0 && fn->IsMember()))
                     val = LoadOrIgnore(val);
                 //add implicit casting
                 arg_values.push_back(val);

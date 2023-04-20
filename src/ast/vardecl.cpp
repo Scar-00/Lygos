@@ -20,16 +20,17 @@ namespace lygos {
                 return alloca;
             }
             auto val = value->GenCode(scope);
-            if(ShouldLoad(value.get()) && value->type != ASTType::UnaryExpr)
+            if(ShouldLoad(value.get()) /*&& value->type != ASTType::UnaryExpr()*/)
                 val = LoadOrIgnore(val);
 
             if(type.get()) {
                 auto type = scope->GetType(this->type.get());
+                //val = TryCast(val, type);
                 val = builder->CreateCast(GetCastOp(val->getType(), type), val, type);
             }
 
             if(val->getType()->isVoidTy())
-                Log::Logger::Warn("cannot assign to `void` value to variable");
+                Log::Logger::Warn("cannot assign `void` value to variable");
 
             auto alloca = builder->CreateAlloca(val->getType());
             builder->CreateStore(val, alloca);

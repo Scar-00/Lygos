@@ -6,7 +6,7 @@ struct Foo {
 
 impl Foo {
     fn test(&mut self) {
-        printf("%d\n", (*self).x);
+        printf("%d\n", self->x);
         printf("YESSSS\n");
     }
 }
@@ -33,13 +33,24 @@ impl Human {
     }
 }
 
-fn test(x: i32) -> i32 {
-    return 10;
+fn test() {
+    for let y = 0 in y < 10 {
+        for let x = 0 in x < 10 {
+            if y == 0 {
+                printf("# ");
+            }else {
+                printf("* ");
+            }
+            x = x + 1;
+        }
+        printf("\n");
+        y = y + 1;
+    }
 }
 
 fn main(argc: i32, argv: **i8) -> i32 {
-    let max = Human::new("Max", 18);
-    max.foo.test();
-    printf("%s -> %d\n", max.name, max.age);
+    let mut foo: Foo;
+    foo.x = 100;
+    foo.test();
     return 0;
 }

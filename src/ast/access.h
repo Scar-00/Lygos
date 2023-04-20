@@ -8,7 +8,7 @@ namespace lygos {
         //add deref operator [->]
         struct MemberExpr : public AST {
             public:
-                MemberExpr(Ref<AST> obj, Ref<AST> member);
+                MemberExpr(Ref<AST> obj, Ref<AST> member, bool deref);
                 Ref<AST> Member() { return member; }
                 Ref<AST> Obj() { return obj; }
             public:
@@ -19,11 +19,14 @@ namespace lygos {
             private:
                 Ref<AST> obj;
                 Ref<AST> member;
+                bool deref;
         };
 
         struct AccessExpr : public AST {
             public:
                 AccessExpr(Ref<AST> obj, Ref<AST> index);
+                Ref<AST> &Obj() { return obj; }
+                Ref<AST> &Index() { return index; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

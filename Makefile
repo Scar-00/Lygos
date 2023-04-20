@@ -2,7 +2,7 @@ CC = clang++
 #CC = cl
 
 CFLAGS = -std=c++20 -O0 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing -Wno-newline-eof -Wno-deprecated-declarations -Wno-unused-parameter -DLYGOS_DEBUG
-CFLAGS += -I../D/LLVM
+#CFLAGS += -I../D/LLVM
 
 #LDFLAGS = -lrt -ldl -lpthread -lm -ltinfo
 #LDFLAGS += `llvm-config -lib All Analysis Core ExecutionEngine InstCombine Object OrcJIT RuntimeDyld ScalarOpts Support native finfo`

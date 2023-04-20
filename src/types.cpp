@@ -28,6 +28,7 @@ namespace lygos {
         if(type == "u64") return llvm::Type::getIntNTy(*ctx, 64);
         if(type == "f32") return llvm::Type::getFloatTy(*ctx);
         if(type == "f64") return llvm::Type::getDoubleTy(*ctx);
+        if(type == "bool") return llvm::Type::getIntNTy(*ctx, 1);
         if(type == "void") return llvm::Type::getVoidTy(*ctx);
         Log::Logger::Warn(fmt::format("unknown type `{}`", type));
         std::exit(1);
@@ -41,10 +42,10 @@ namespace lygos {
     }
 
     llvm::Value *LoadOrIgnore(llvm::Value *value) {
-        if(value->getType()->isPointerTy()) {
+        //if(value->getType()->isPointerTy()) {
             return builder->CreateLoad(TryGetPointerBase(value->getType()), value);
-        }
-        return value;
+        //}
+        //return value;
     }
 
     llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest) {
@@ -73,6 +74,15 @@ namespace lygos {
         if(src->isFloatingPointTy() && dest->isFloatingPointTy()) return true;
         if(src->isIntegerTy() && dest->isFloatingPointTy()) return true;
         return false;
+    }
+
+    llvm::Value *TryCast(llvm::Value *val, llvm::Type *dest) {
+        //Log::Logger::Warn(fmt::format("cannot convert `{}` to `{}`", PrintType(val->getType()), PrintType(dest)));
+        if(val->getType()->isArrayTy() && dest->isPointerTy())
+            val = builder->CreateConstGEP1_64(val->getType(), val, 0);
+
+        val = builder->CreateCast(GetCastOp(val->getType(), dest), val, dest);
+        return val;
     }
 
     bool IsFunctionType(llvm::Type *type) {

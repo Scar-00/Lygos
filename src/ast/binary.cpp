@@ -28,9 +28,12 @@ namespace lygos {
             if(op == "-") return builder->CreateSub(lhs, rhs);
             if(op == "*") return builder->CreateMul(lhs, rhs);
             if(op == "/") return builder->CreateSDiv(lhs, rhs);
-            if(op == "==") return builder->CreateCmp(llvm::ICmpInst::ICMP_EQ, lhs, rhs);
+            if(op == "==") return builder->CreateICmpEQ(lhs, rhs);
+            if(op == "!=") return builder->CreateICmpNE(lhs, rhs);
             if(op == "<") return builder->CreateICmpSLT(lhs, rhs);
-            if(op == ">") return builder->CreateICmpSGE(lhs, rhs);
+            if(op == "<=") return builder->CreateICmpSLE(lhs, rhs);
+            if(op == ">") return builder->CreateICmpSGT(lhs, rhs);
+            if(op == ">=") return builder->CreateICmpSGE(lhs, rhs);
             Log::Logger::Warn(fmt::format("unknow binary operator `{}`", op));
             std::exit(1);
         }

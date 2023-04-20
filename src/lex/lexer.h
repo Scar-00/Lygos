@@ -33,6 +33,7 @@ namespace lygos {
         void Advance() { index++; curr = src[index]; }
         Token LexNumber();
         Token LexString();
+        Token LexChar();
         Token LexId();
         Token AdvanceToken(Token token);
         Token NextToken();

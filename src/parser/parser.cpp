@@ -233,21 +233,26 @@ namespace lygos {
 
         //TODO!!!!!!!
         Ref<AST::AST> Parser::ParseForExpr() {
-            return nullptr;
-            /*Eat();
+            Eat();
             auto var = ParseExpr();
             //change this [can be any lvalue]
-            if(var->type != AST::ASTType::Id)
-                Log::Logger::Warn(PEEK(-1), "expected expression after keyword `fn`");
+            if(var->type != AST::ASTType::VarDecl)
+                Log::Logger::Warn(PEEK(-1), "expected expression after keyword `for`");
             if(Eat().type != TokenType::KwIn)
                 Log::Logger::Warn(PEEK(-1), "expected `in` after expression");
 
-            auto iter = ParseExpr();
+            auto cond = ParseExpr();
 
-            std::vector<AST::AST *> body;
+            if(Eat().type != TokenType::CurlyLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
 
-            Log::Logger::Warn("NOT YET IMPL");
-            return new AST::ForExpr(var, iter, body);*/
+            std::vector<Ref<AST::AST>> body;
+            while (At().type != TokenType::CurlyRight) {
+                body.push_back(ParseStmt());
+            }
+            Eat();
+
+            return MakeRef<AST::ForStmt>(var, cond, body);
         }
 
         Ref<AST::AST> Parser::ParseVarDecl() {
@@ -323,7 +328,7 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseAssignmentExpr() {
-            Ref<AST::AST> lhs = ParseMemberExpr();
+            Ref<AST::AST> lhs = ParseIndexExpr();
 
             if(At().type == TokenType::Equals) {
                 Eat();
@@ -381,19 +386,20 @@ namespace lygos {
         Ref<AST::AST> Parser::ParseMemberExpr() {
             //auto obj = ParseResolutionExpr();
             auto obj = ParseCallExpr();
-            while(At().type == TokenType::Dot) {
-                Eat();
+            while(At().type == TokenType::Dot
+                ||At().type == TokenType::Arrow) {
+                auto op = Eat();
                 //auto member = ParsePrimaryExpr();
                 auto member = ParseCallExpr();
                 //if(member->type != AST::ASTType::Id)
                 //   Log::Logger::Warn("member expression has to be an identifier"); //VERRRRRY temporary probably :)
-                obj = MakeRef<AST::MemberExpr>(obj, member);
+                obj = MakeRef<AST::MemberExpr>(obj, member, op.type == TokenType::Arrow ? true : false);
             }
             return obj;
         }
 
         Ref<AST::AST> Parser::ParseResolutionExpr() {
-            auto obj = ParseIndexExpr();
+            auto obj = ParseUnaryExpr();
             while (At().type == TokenType::OpScope) {
                 Eat();
                 auto member = ParseExpr();
@@ -438,7 +444,8 @@ namespace lygos {
 
         Ref<AST::AST> Parser::ParseUnaryExpr() {
             if(At().type == TokenType::Ampercent
-            || At().type == TokenType::OpMul) {
+            || At().type == TokenType::OpMul
+            || At().type == TokenType::Bang) {
                 auto op = Eat().value;
                 auto obj = ParseExpr();
                 //auto obj = ParseIndexExpr();
@@ -448,7 +455,7 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseIndexExpr() {
-            auto obj = ParseUnaryExpr();
+            auto obj = ParseMemberExpr();
             while(At().type == TokenType::BraceLeft) {
                 Eat();
                 //auto index = ParsePrimaryExpr();
@@ -472,6 +479,9 @@ namespace lygos {
                 }
                 case TokenType::Float: {
                     return MakeRef<AST::NumberLiteral>(Eat().value, "Float");
+                }
+                case TokenType::Char: {
+                    return MakeRef<AST::NumberLiteral>(Eat().value, "Char");
                 }
                 case TokenType::String: {
                     return MakeRef<AST::StringLiteral>(Eat().value);

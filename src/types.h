@@ -34,7 +34,8 @@ namespace lygos {
         Integer,
         Float,
         Id,
-        Range, // 1..10
+        Char,
+        //Range, // 1..10
 
         //general
         Equals, // =
@@ -56,8 +57,11 @@ namespace lygos {
         OpMod, // %
 
         OpEqEq, // ==
+        OpNeEq, // !=
         OpLe, // <
+        OpLeEq, // <=
         OpGr, // >
+        OpGrEq, // >=
 
         OpScope, // ::
         OpVarArg, // ...
@@ -121,6 +125,8 @@ namespace lygos {
         {"f32"},
         {"f64"},
 
+        {"bool"},
+
         //empty type
         {"void"},
     };
@@ -148,6 +154,7 @@ namespace lygos {
     llvm::Value *LoadOrIgnore(llvm::Value *value);
     llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest);
     bool IsCastable(llvm::Type *src, llvm::Type *dest);
+    llvm::Value *TryCast(llvm::Value *val, llvm::Type *dest);
     bool IsFunctionType(llvm::Type *type);
     bool IsArrayType(llvm::Type *type);
     std::string &MangleName(std::string &name, std::string &obj, std::string &spec);

@@ -8,6 +8,8 @@ namespace lygos {
         struct UnaryExpr : public AST {
             public:
                 UnaryExpr(Ref<AST> obj, std::string op);
+                Ref<AST> &Obj() { return obj; }
+                std::string &Op() { return op; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
