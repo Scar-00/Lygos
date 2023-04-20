@@ -1,0 +1,13 @@
+[package]
+name = "lygosc"
+typ = "bin"
+src = ["src/"]
+out_dir = "bin/"
+
+[compiler]
+flags = ["-e llvm-ir"]
+compiler = "../bin/lygosc"
+
+[linker]
+flags = ["`llvm-config --ldflags --libs all`"]
+#libs = ["-lc", "-L/usr/lib"]
