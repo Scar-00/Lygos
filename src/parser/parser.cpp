@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "../error/log.h"
+#include <cstdlib>
 #include <vector>
 
 namespace lygos {
@@ -19,8 +20,18 @@ namespace lygos {
                 case TokenType::KwStruct: return ParseStructDecl();
                 case TokenType::KwFn: return ParseFunc();
                 case TokenType::KwImpl: return ParseImpl();
+                case TokenType::KwStatic: return ParseStatic();
                 default: return ParseStmt();
             }
+        }
+
+        Ref<AST::AST> Parser::ParseStatic() {
+            Eat();
+            auto assignemnt = ParseAssignmentExpr();
+            auto type = ((AST::AssignmentExpr *)assignemnt.get())->Rhs()->type;
+            if(!(type == AST::ASTType::StringLiteral || type == AST::ASTType::NumberLiteral))
+                Log::Logger::Warn("can only assign literal values to static declarations");
+            return MakeRef<AST::StaticLiterial>(assignemnt);
         }
 
         Ref<AST::AST> Parser::ParseImpl() {
@@ -162,7 +173,7 @@ namespace lygos {
                     break;
 
                 if(At().type != TokenType::Comma)
-                    Log::Logger::Warn(At(), "expected `;` at the end of function decl");
+                    Log::Logger::Warn(At(), "expected `;` or `->` at the end of function decl");
                 else Eat();
             }
             Eat();
@@ -306,12 +317,19 @@ namespace lygos {
         Ref<AST::AST> Parser::ParseParanExpr() {
             if(At().type == TokenType::ParanLeft) {
                 Eat();
+                if(At().type == TokenType::Colon) {
+                    Eat();
+                    auto type = ParseTypeSpec();
+                    if(Eat().type != TokenType::ParanRight)
+                        Log::Logger::Warn(PEEK(-1), "expected closing paran `)`");
+                    return MakeRef<AST::CastExpr>(ParseExpr(), type);
+                }
                 auto node = ParseExpr();
                 if(Eat().type != TokenType::ParanRight)
                     Log::Logger::Warn(PEEK(-1), "expected closing paran `)`");
                 return node;
             }
-            return ParseCastExpr();
+            return ParsePrimaryExpr();
         }
 
         Ref<AST::AST> Parser::ParseCondExpr() {

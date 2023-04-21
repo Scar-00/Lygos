@@ -88,6 +88,7 @@ namespace lygos {
         KwInclude,
         KwImpl,
         KwType,
+        KwStatic,
 
         Eof,
     };
@@ -107,6 +108,7 @@ namespace lygos {
         {"include", TokenType::KwInclude},
         {"impl", TokenType::KwImpl},
         {"type", TokenType::KwType},
+        {"static", TokenType::KwStatic},
     };
 
     static std::set<std::string> base_types = {

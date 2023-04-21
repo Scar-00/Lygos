@@ -1,4 +1,7 @@
 #include "literals.h"
+#include "assignment.h"
+#include <llvm/IR/GlobalValue.h>
+#include <llvm/IR/GlobalVariable.h>
 #include <regex>
 
 namespace lygos {
@@ -70,6 +73,28 @@ namespace lygos {
         }
 
         void NumberLiteral::Sanatize() {
+
+        }
+
+        StaticLiterial::StaticLiterial(Ref<AST> value):
+            AST(ASTType::StaticLiterial), value(value) {
+            name = ((AssignmentExpr *)value.get())->Lhs()->GetValue();
+        }
+
+        std::string StaticLiterial::GetValue() {
+            return name;
+        }
+
+        llvm::Value *StaticLiterial::GenCode(Scope *scope) {
+            Log::Logger::Warn("unimplemented [Statics]");
+            return nullptr;
+        }
+
+        void StaticLiterial::Lower(AST *parent) {
+
+        }
+
+        void StaticLiterial::Sanatize() {
 
         }
     }

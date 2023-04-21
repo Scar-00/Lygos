@@ -32,6 +32,7 @@ namespace lygos {
             NumberLiteral,
             StringLiteral,
             InitializerList,
+            StaticLiterial,
             BinaryExpr,
             Id,
         };

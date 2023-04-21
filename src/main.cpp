@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     assert(lygos::ast_root && "ast root cannot be null");
     //std::cout << "original:\n" << lygos::AST::Print(root.get()).str() << std::endl;
     root->Lower(nullptr);
-    //std::cout << "lowered:\n" << lygos::AST::Print(root.get()).str() << std::endl;
+    std::cout << "lowered:\n" << lygos::AST::Print(root.get()).str() << std::endl;
 
     auto type = llvm::FunctionType::get(
         llvm::Type::getInt32Ty(*lygos::ctx),

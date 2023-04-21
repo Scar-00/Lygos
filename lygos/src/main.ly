@@ -9,7 +9,42 @@ fn LLVMAddFunction(mod: *i8, name: *i8, fn_type: *i8) -> *i8;
 
 fn LLVMDumpModule(mod: *i8);
 
-fn isdigit(c: i8) -> i32;
+fn isdigit(c: i32) -> i32;
+fn strlen(str: *i8) -> i32;
+
+fn malloc(size: u32) -> *i8;
+fn memcpy(dest: *i8, src: *i8, size: u32) -> *i8;
+fn strlen(str: *i8) -> u32;
+fn strcpy(dest: *i8, src: *i8) -> *i8;
+
+struct String {
+    data: *i8;
+    len: u32;
+    cap: u32;
+};
+
+impl String {
+    fn new(size: i32) -> String {
+        let mut str: String;
+        str.data = malloc(size);
+        str.len = 0;
+        str.cap = size;
+        return str;
+    }
+
+    fn from(ptr: *i8) -> String {
+        let len = strlen(ptr);
+        let str = String::new(*len);
+        strcpy(str.data, ptr);
+        str.len = len;
+        return str;
+    }
+
+    fn push(&mut self, char: i8) {
+        self->data[self->len] = char;
+        self->len = self->len + 1;
+    }
+}
 
 struct Token {
     typ: u32;
@@ -55,12 +90,11 @@ impl Lexer {
     fn lex_number(&self) -> Token {
         let start = self->index;
         let mut len = 0;
-        for let curr = self->curr in isdigit(self->curr) == 1 {
+        for let curr = self->curr in isdigit((:i32)self->curr) != 0 {
             (*self).advance();
             len = len + 1;
         }
         printf("len -> %d\n", len);
-        printf("bool -> %d\n", isdigit(self->curr));
     }
 }
 
@@ -97,11 +131,7 @@ fn main(argc: i32, argv: **i8) -> i32 {
     let fn_type = LLVMFunctionType(LLVMInt32Type(), t, 1, false);
     ctx.add_function("test", fn_type);
 
-
-    LLVMDumpModule(ctx.mod);
-
-    let lexer = Lexer::new("123", 3);
-    lexer.lex_number();
+    let lexer = Lexer::new("hfghf123", 3);
     printf("%s\n", lexer.src);
     for let i = 0 in i < lexer.len {
         printf("%c", lexer.src[i]);

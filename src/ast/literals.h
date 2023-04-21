@@ -42,6 +42,19 @@ namespace lygos {
                 std::string value;
                 std::string type;
         };
+
+        struct StaticLiterial : public AST {
+            public:
+                StaticLiterial(Ref<AST> value);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower(AST *parent) override;
+                void Sanatize() override;
+            private:
+                std::string name;
+                Ref<AST> value;
+        };
     }
 }
 

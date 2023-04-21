@@ -33,6 +33,7 @@ namespace lygos {
             Token& At() { return tokens[index]; }
             Token& Eat() { auto& token = tokens.at(index); index++; return token; }
             Ref<AST::AST> ParseGlobals();
+            Ref<AST::AST> ParseStatic();
             Ref<AST::AST> ParseImpl();
             Ref<AST::AST> ParseStmt();
             AST::StructDef::Field ParseFieldDecl();
