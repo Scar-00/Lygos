@@ -19,6 +19,7 @@ namespace lygos {
             if(deref)
                 obj = LoadOrIgnore(obj);
 
+            //check if function is actually a member and not static
             if(member->type == ASTType::CallExpr) {
                 std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
                 auto call = (CallExpr *)member.get();
@@ -99,6 +100,7 @@ namespace lygos {
             return obj->GetValue();
         }
 
+        //check for static -> cant call static functions on an object
         llvm::Value *ResolutionExpr::GenCode(Scope *scope) {
             auto fn = (CallExpr *)member.get();
             std::string fn_name = obj->GetValue() + "_" + fn->GetCaller()->GetValue();

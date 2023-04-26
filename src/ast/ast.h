@@ -19,6 +19,7 @@ namespace lygos {
             MemberExpr,
             IfStmt,
             ForStmt,
+            MatchStmt,
             CallExpr,
             AccessExpr,
             UnaryExpr,

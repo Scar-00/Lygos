@@ -1,7 +1,8 @@
 #include "control_flow.h"
 #include "ast.h"
 #include "scope.h"
-#include <llvm/IR/Function.h>
+#include <llvm/ADT/Twine.h>
+#include <vector>
 
 namespace lygos {
     namespace AST {
@@ -14,21 +15,25 @@ namespace lygos {
             return {};
         }
 
-        // fix returning from if braches
+        //fix non early return
         llvm::Value *IfStmt::GenCode(Scope *scope) {
             llvm::Function *fn = builder->GetInsertBlock()->getParent();
 
-            auto true_block = llvm::BasicBlock::Create(*ctx, "", fn);
-            auto false_block = llvm::BasicBlock::Create(*ctx, "", fn);
-            auto merge = llvm::BasicBlock::Create(*ctx, "", fn);
-            builder->CreateCondBr(cond->GenCode(scope), true_block, false_block);
+            scope->SetRetBlock(llvm::BasicBlock::Create(*ctx, "", fn));
+            auto ret_block = scope->GetRetBlock();
+
+            auto true_block = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
+            auto false_block = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
+            auto merge = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
+            builder->CreateCondBr(cond->GenCode(scope), true_block, has_else_brach ? false_block : merge);
 
             builder->SetInsertPoint(true_block);
             Scope then_scope{scope};
             for(const auto &node : then_body) {
                 node->GenCode(&then_scope);
             }
-            builder->CreateBr(merge);
+            if(!true_block->getTerminator())
+                builder->CreateBr(merge);
 
             //generate else
             //fn->insert(fn->end(), false_block);
@@ -36,14 +41,16 @@ namespace lygos {
             if(has_else_brach) {
                 Scope else_scope{scope};
                 for(const auto &node : else_body) {
-                    std::cout << "test\n";
                     node->GenCode(&else_scope);
                 }
             }
-            builder->CreateBr(merge);
+            if(!false_block->getTerminator())
+                builder->CreateBr(merge);
 
+            //maybe try and remove merge block and all of its children
+            //if(!merge->hasNUses(0))
             builder->SetInsertPoint(merge);
-            //Log::Logger::Warn("unimplemented [IfStmt]");
+
             return nullptr;
         }
 
@@ -64,6 +71,7 @@ namespace lygos {
             return {};
         }
 
+        //fix returning -> see if_stmt
         llvm::Value *ForStmt::GenCode(Scope *scope) {
             llvm::Function *fn = builder->GetInsertBlock()->getParent();
 
@@ -95,6 +103,52 @@ namespace lygos {
         }
 
         void ForStmt::Sanatize() {
+
+        }
+
+        MatchStmt::MatchStmt(Ref<AST> value, std::vector<Case> cases):
+            AST(ASTType::MatchStmt), value(value), cases(cases) {
+
+        }
+
+        std::string MatchStmt::GetValue() {
+            return value->GetValue();
+        }
+
+        //fix returning -> see if_stmt
+        llvm::Value *MatchStmt::GenCode(Scope *scope) {
+            auto val = value->GenCode(scope);
+            if(ShouldLoad(value.get()))
+                val = LoadOrIgnore(val);
+
+
+            auto fn = builder->GetInsertBlock()->getParent();
+            auto merge = llvm::BasicBlock::Create(*ctx, "", fn);
+            auto sw = builder->CreateSwitch(val, merge);
+            std::vector<std::tuple<llvm::Value *, llvm::BasicBlock *>> branches;
+            for(const auto &[value, body] : cases) {
+                Scope scope_local{scope};
+                auto bb = llvm::BasicBlock::Create(*ctx, "", fn, merge);
+                builder->SetInsertPoint(bb);
+                    for(const auto &node : body)
+                        node->GenCode(&scope_local);
+                builder->CreateBr(merge);
+                branches.push_back({value->GenCode(scope), bb});
+            }
+
+            for(const auto &[value, bb] : branches) {
+                sw->addCase((llvm::ConstantInt *)value, bb);
+            }
+
+            builder->SetInsertPoint(merge);
+            return nullptr;
+        }
+
+        void MatchStmt::Lower(AST *parent) {
+
+        }
+
+        void MatchStmt::Sanatize() {
 
         }
     }

@@ -67,6 +67,9 @@ namespace lygos {
             case TokenType::KwFor:
                 node = ParseForExpr();
                 break;
+            case TokenType::KwMatch:
+                node = ParseMatchExpr();
+                break;
             default:
                 node = ParseExpr();
                 if(Eat().type != TokenType::Semi) {
@@ -242,7 +245,6 @@ namespace lygos {
             return MakeRef<AST::IfStmt>(cond, then_branch);
         }
 
-        //TODO!!!!!!!
         Ref<AST::AST> Parser::ParseForExpr() {
             Eat();
             auto var = ParseExpr();
@@ -264,6 +266,43 @@ namespace lygos {
             Eat();
 
             return MakeRef<AST::ForStmt>(var, cond, body);
+        }
+
+        AST::MatchStmt::Case Parser::ParseMatchCase() {
+            auto value = ParsePrimaryExpr();
+
+            if(Eat().type != TokenType::Arrow)
+                Log::Logger::Warn(PEEK(-1), "expected `->` after case identifier");
+
+            if(Eat().type != TokenType::CurlyLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
+
+            std::vector<Ref<AST::AST>> body;
+            while (At().type != TokenType::CurlyRight) {
+                body.push_back(ParseStmt());
+            }
+            Eat();
+
+            return {value, body};
+        }
+
+        Ref<AST::AST> Parser::ParseMatchExpr() {
+            Eat();
+
+            auto id = ParsePrimaryExpr();
+            if(id->type != AST::ASTType::Id)
+                Log::Logger::Warn("expected id after keyword `match`");
+
+            if(Eat().type != TokenType::CurlyLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
+
+            std::vector<AST::MatchStmt::Case> cases;
+            while (At().type != TokenType::CurlyRight) {
+                cases.push_back(ParseMatchCase());
+            }
+            Eat();
+
+            return MakeRef<AST::MatchStmt>(id, cases);
         }
 
         Ref<AST::AST> Parser::ParseVarDecl() {
@@ -335,12 +374,13 @@ namespace lygos {
         Ref<AST::AST> Parser::ParseCondExpr() {
             auto lhs = ParseAdditiveExpr();
 
-            if(At().type == TokenType::OpEqEq
+            while(At().type == TokenType::OpEqEq
             || At().type == TokenType::OpLe
-            || At().type == TokenType::OpGr) {
+            || At().type == TokenType::OpGr
+            || At().type == TokenType::OpOr) {
                 auto op = Eat().value;
                 auto rhs = ParseAdditiveExpr();
-                return MakeRef<AST::BinaryExpr>(lhs, rhs, op);
+                lhs = MakeRef<AST::BinaryExpr>(lhs, rhs, op);
             }
             return lhs;
         }

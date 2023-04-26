@@ -93,9 +93,9 @@ int main(int argc, char **argv) {
 
     Path output_file = cli_options.OutputFile().UnwrapOrDefault(input_file.replace_extension(".o").string());
     if(cli_options.EmitExe()) {
-        lygos::IO::EmitExec(output_file);
+        //lygos::IO::EmitExec(output_file);
     }else {
-        lygos::IO::EmitObj(output_file);
+        //lygos::IO::EmitObj(output_file);
     }
 
     if(cli_options.EmitIr()) {

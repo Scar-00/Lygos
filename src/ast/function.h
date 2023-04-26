@@ -16,7 +16,7 @@ namespace lygos {
                 std::vector<Ref<AST>> &Body() { return body; }
                 void Insert(std::vector<Ref<AST>> &elems);
                 std::string &GetName() { return name; }
-                bool IsMember() { return obj.get() != nullptr; }
+                bool IsMember() { return obj.get() != nullptr && std::get<0>(args[0]) == "self"; }
             public:
                 std::string GetValue() override{ return name; }
                 llvm::Value *GenCode(Scope *scope) override;

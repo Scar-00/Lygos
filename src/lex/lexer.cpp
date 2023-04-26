@@ -115,9 +115,18 @@ namespace lygos {
                         default: return AdvanceToken({">", TokenType::Bang, line});
                     }
                 }
-                case '&': return AdvanceToken({"&", TokenType::Ampercent, line});
-                case '#': return AdvanceToken({"#", TokenType::Hash, line});
-                case '|': return AdvanceToken({"|", TokenType::Pipe, line});
+                case '&': {
+                    switch (src[index + 1]) {
+                        case '&': Advance(); return AdvanceToken({"&&", TokenType::OpAnd, line});
+                        default: return AdvanceToken({"&", TokenType::Ampercent, line});
+                    }
+                }               case '#': return AdvanceToken({"#", TokenType::Hash, line});
+                case '|': {
+                    switch (src[index + 1]) {
+                        case '|': Advance(); return AdvanceToken({"||", TokenType::OpOr, line});
+                        default: return AdvanceToken({"|", TokenType::Pipe, line});
+                    }
+                }
                 case '!': {
                     switch (src[index + 1]) {
                         case '=': Advance(); return AdvanceToken({"!=", TokenType::OpEqEq, line});

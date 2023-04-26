@@ -69,8 +69,11 @@ namespace lygos {
         }
 
         llvm::Value *ReturnExpr::GenCode(Scope *scope) {
-            if(value == NULL)
+            if(value == NULL) {
+                //if(scope->GetRetBlock() != nullptr)
+                //    builder->CreateBr(scope->GetRetBlock());
                 return NULL;
+            }
 
 
             auto val = value->GenCode(scope);
@@ -79,6 +82,12 @@ namespace lygos {
 
             if(!scope->HasRetValue())
                 Log::Logger::Warn(fmt::format("invalid return type `{}` for function with return type `void`", PrintType(val->getType())));
+
+            if(scope->GetRetBlock() != nullptr) {
+                auto store = builder->CreateStore(val, scope->GetRet());
+                builder->CreateBr(scope->GetRetBlock());
+                return store;
+            }
 
             return builder->CreateStore(val, scope->GetRet());
         }

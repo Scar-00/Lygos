@@ -34,6 +34,7 @@ namespace lygos {
             if(op == "<=") return builder->CreateICmpSLE(lhs, rhs);
             if(op == ">") return builder->CreateICmpSGT(lhs, rhs);
             if(op == ">=") return builder->CreateICmpSGE(lhs, rhs);
+            if(op == "||") return builder->CreateOr(lhs, rhs);
             Log::Logger::Warn(fmt::format("unknow binary operator `{}`", op));
             std::exit(1);
         }

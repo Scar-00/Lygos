@@ -1,5 +1,6 @@
 #include "types.h"
 #include "core.h"
+#include "error/log.h"
 #include <cassert>
 
 namespace lygos {
@@ -42,10 +43,9 @@ namespace lygos {
     }
 
     llvm::Value *LoadOrIgnore(llvm::Value *value) {
-        //if(value->getType()->isPointerTy()) {
-            return builder->CreateLoad(TryGetPointerBase(value->getType()), value);
-        //}
-        //return value;
+        if(!value->getType()->isPointerTy())
+            Log::Logger::Warn("cannot deref non pointer");
+        return builder->CreateLoad(TryGetPointerBase(value->getType()), value);
     }
 
     llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest) {

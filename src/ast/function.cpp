@@ -58,12 +58,16 @@ namespace lygos {
                 curr_scope.DeclVar(std::get<0>(this->args.at(i)), false, alloca);
             }
 
+            //curr_scope.SetRetBlock(llvm::BasicBlock::Create(*ctx, "", fn));
+
             if(!(ret_type->kind == Type::Kind::path && ((Type::Path *)ret_type.get())->GetPath() == "void"))
                 curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
 
             for(const auto &node : body)
                 node->GenCode(&curr_scope);
 
+            if(curr_scope.GetRetBlock() != nullptr)
+                builder->SetInsertPoint(curr_scope.GetRetBlock());
             curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
             llvm::verifyFunction(*fn, &llvm::errs());

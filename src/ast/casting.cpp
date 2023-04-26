@@ -55,6 +55,10 @@ namespace lygos {
 
             auto dest_type = scope->GetType(target_type.get());
             auto src_type = obj->getType();
+            //std::cout << "src -> " << PrintType(src_type) << "\n";
+            //std::cout << "dest -> " << PrintType(dest_type) << "\n";
+            //if(TryGetPointerBase(src_type)->isArrayTy() && dest_type->isPointerTy())
+            //    return builder->CreateConstGEP1_32(TryGetPointerBase(obj->getType()), obj, 0);
             return builder->CreateCast(GetCastOp(src_type, dest_type), obj, dest_type);
         }
 

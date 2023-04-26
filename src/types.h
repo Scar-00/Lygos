@@ -62,6 +62,8 @@ namespace lygos {
         OpLeEq, // <=
         OpGr, // >
         OpGrEq, // >=
+        OpOr, // ||
+        OpAnd, // &&
 
         OpScope, // ::
         OpVarArg, // ...
@@ -89,6 +91,7 @@ namespace lygos {
         KwImpl,
         KwType,
         KwStatic,
+        KwMatch,
 
         Eof,
     };
@@ -109,6 +112,7 @@ namespace lygos {
         {"impl", TokenType::KwImpl},
         {"type", TokenType::KwType},
         {"static", TokenType::KwStatic},
+        {"match", TokenType::KwMatch},
     };
 
     static std::set<std::string> base_types = {

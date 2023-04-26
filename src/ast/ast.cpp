@@ -30,6 +30,7 @@ namespace lygos {
                 case ASTType::MemberExpr: os << "MemberExpr"; break;
                 case ASTType::IfStmt: os << "IfStmt"; break;
                 case ASTType::ForStmt: os << "ForStmt"; break;
+                case ASTType::MatchStmt: os << "MatchStmt"; break;
                 case ASTType::CallExpr: os << "CallExpr"; break;
                 case ASTType::AccessExpr: os << "AccessExpr"; break;
                 case ASTType::UnaryExpr: os << "UnaryExpr"; break;
@@ -37,6 +38,7 @@ namespace lygos {
                 case ASTType::Impl: os << "Impl"; break;
                 case ASTType::NumberLiteral: os << "NumberLiteral"; break;
                 case ASTType::StringLiteral: os << "StringLiteral"; break;
+                case ASTType::StaticLiterial: os << "StaticLiterial"; break;
                 case ASTType::BinaryExpr: os << "BinaryExpr"; break;
                 case ASTType::Id: os << "Identifier"; break;
                 case ASTType::ResolutionExpr: os << "ResolutionExpr"; break;

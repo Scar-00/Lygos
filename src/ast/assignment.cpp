@@ -15,8 +15,10 @@ namespace lygos {
             auto var = assignee->GenCode(scope);
             auto val = value->GenCode(scope);
 
-            if(ShouldLoad(value.get())/* && value->type != ASTType::UnaryExpr*/)
+            if(ShouldLoad(value.get()))
                 val = LoadOrIgnore(val);
+
+            //type check
 
             builder->CreateStore(val, var);
             return var;

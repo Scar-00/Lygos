@@ -44,6 +44,8 @@ namespace lygos {
             Ref<AST::AST> ParseRetExpr();
             Ref<AST::AST> ParseIfExpr();
             Ref<AST::AST> ParseForExpr();
+            AST::MatchStmt::Case ParseMatchCase();
+            Ref<AST::AST> ParseMatchExpr();
             Ref<AST::AST> ParseExpr();
             Ref<AST::AST> ParseParanExpr();
             Ref<AST::AST> ParseCondExpr();
