@@ -43,9 +43,12 @@ namespace lygos {
     }
 
     llvm::Value *LoadOrIgnore(llvm::Value *value) {
-        if(!value->getType()->isPointerTy())
+        /*if(!value->getType()->isPointerTy())
             Log::Logger::Warn("cannot deref non pointer");
-        return builder->CreateLoad(TryGetPointerBase(value->getType()), value);
+        return builder->CreateLoad(TryGetPointerBase(value->getType()), value);*/
+        if(value->getType()->isPointerTy())
+            return builder->CreateLoad(TryGetPointerBase(value->getType()), value);
+        return value;
     }
 
     llvm::Instruction::CastOps GetCastOp(llvm::Type *src, llvm::Type *dest) {

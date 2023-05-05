@@ -92,6 +92,7 @@ namespace lygos {
         KwType,
         KwStatic,
         KwMatch,
+        KwTrait,
 
         Eof,
     };
@@ -113,6 +114,7 @@ namespace lygos {
         {"type", TokenType::KwType},
         {"static", TokenType::KwStatic},
         {"match", TokenType::KwMatch},
+        {"trait", TokenType::KwTrait},
     };
 
     static std::set<std::string> base_types = {

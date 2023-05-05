@@ -5,12 +5,12 @@
 
 namespace lygos {
     namespace AST {
-        //add deref operator [->]
         struct MemberExpr : public AST {
             public:
                 MemberExpr(Ref<AST> obj, Ref<AST> member, bool deref);
                 Ref<AST> Member() { return member; }
                 Ref<AST> Obj() { return obj; }
+                bool Deref() { return deref; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

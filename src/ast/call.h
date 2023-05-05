@@ -19,6 +19,7 @@ namespace lygos {
             private:
                 Ref<AST> caller;
                 std::vector<Ref<AST>> args;
+                bool deref_self = false;
         };
 
         struct ReturnExpr : public AST {

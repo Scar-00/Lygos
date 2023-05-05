@@ -30,6 +30,7 @@ namespace lygos {
             //literals
             StructDef,
             Impl,
+            Trait,
             NumberLiteral,
             StringLiteral,
             InitializerList,

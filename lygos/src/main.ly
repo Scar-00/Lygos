@@ -94,7 +94,7 @@ impl Lexer {
     }
 
     fn advance_token(&mut self, token: Token) -> Token {
-        (*self).advance();
+        self->advance();
         return token;
     }
 
@@ -103,7 +103,7 @@ impl Lexer {
         let mut str = String::new(2);
         for let curr = self->curr in isdigit((:i32)self->curr) != 0 {
             str.push(self->curr);
-            (*self).advance();
+            self->advance();
         }
         return Token::new(str, 1);
     }
@@ -113,7 +113,7 @@ impl Lexer {
         let mut str = String::new(2);
         for let curr = self->curr in self->curr != (:i8)34 {
             str.push(self->curr);
-            (*self).advance();
+            self->advance();
         }
         return Token::new(str, 0);
     }
@@ -128,7 +128,7 @@ impl Lexer {
         let mut str = String::new(2);
         for let curr = self->curr in isalpha((:i32)self->curr) != 0 {
             str.push(self->curr);
-            (*self).advance();
+            self->advance();
         }
         return Token::new(str, 4);
     }
@@ -136,10 +136,24 @@ impl Lexer {
     fn next_token(&mut self) -> Token {
         for let w = 0 in self->index < self->len {
             for let l = 0 in isspace((:i32)self->curr) != 0 {
-                (*self).advance();
+                self->advance();
             }
 
-            printf("`%c`\n", self->curr);
+            let mut token: Token;
+            if self->curr == '='{
+                token = self->advance_token(Token::new(String::from("="), 5));
+            }
+            if isdigit((:i32)self->curr) != 0 {
+                token = self->lex_number();
+            }
+            if isalpha((:i32)self->curr) != 0 {
+                printf("[info]: lexing id\n");
+                token = self->lex_id();
+                printf("[info]: token -> %s\n", token.value.data);
+            }
+            if (:bool)1 {
+                return token;
+            }
         }
     }
 }
@@ -177,9 +191,10 @@ fn main(argc: i32, argv: **i8) -> i32 {
     let fn_type = LLVMFunctionType(LLVMInt32Type(), t, 1, false);
     ctx.add_function("test", fn_type);
 
-    let lexer = Lexer::new("123", 3);
+    let lexer = Lexer::new("let x = 10;", 11);
     printf("%s\n", lexer.src);
     lexer.next_token();
-
+    let tok = lexer.next_token();
+    printf("tok -> %s\n", tok.value.data);
     return 0;
 }

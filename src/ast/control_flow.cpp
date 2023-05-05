@@ -19,7 +19,8 @@ namespace lygos {
         llvm::Value *IfStmt::GenCode(Scope *scope) {
             llvm::Function *fn = builder->GetInsertBlock()->getParent();
 
-            scope->SetRetBlock(llvm::BasicBlock::Create(*ctx, "", fn));
+            if(has_else_brach)
+                scope->SetRetBlock(llvm::BasicBlock::Create(*ctx, "", fn));
             auto ret_block = scope->GetRetBlock();
 
             auto true_block = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
@@ -36,16 +37,17 @@ namespace lygos {
                 builder->CreateBr(merge);
 
             //generate else
-            //fn->insert(fn->end(), false_block);
             builder->SetInsertPoint(false_block);
             if(has_else_brach) {
                 Scope else_scope{scope};
                 for(const auto &node : else_body) {
                     node->GenCode(&else_scope);
                 }
+                if(!false_block->getTerminator())
+                    builder->CreateBr(merge);
+            }else if(false_block->hasNUses(0)){
+                false_block->removeFromParent();
             }
-            if(!false_block->getTerminator())
-                builder->CreateBr(merge);
 
             //maybe try and remove merge block and all of its children
             //if(!merge->hasNUses(0))
@@ -55,7 +57,13 @@ namespace lygos {
         }
 
         void IfStmt::Lower(AST *parent) {
-
+            this->cond->Lower(this);
+            for(const auto &item : this->then_body) {
+                item->Lower(this);
+            }
+            for(const auto &item : this->else_body) {
+                item->Lower(this);
+            }
         }
 
         void IfStmt::Sanatize() {
@@ -99,7 +107,11 @@ namespace lygos {
         }
 
         void ForStmt::Lower(AST *parent) {
-
+            this->cond->Lower(this);
+            this->var->Lower(this);
+            for(const auto &item : this->body) {
+                item->Lower(this);
+            }
         }
 
         void ForStmt::Sanatize() {
@@ -116,6 +128,7 @@ namespace lygos {
         }
 
         //fix returning -> see if_stmt
+        //add `default case` eg. -> x/_ -> {...}
         llvm::Value *MatchStmt::GenCode(Scope *scope) {
             auto val = value->GenCode(scope);
             if(ShouldLoad(value.get()))
@@ -145,7 +158,13 @@ namespace lygos {
         }
 
         void MatchStmt::Lower(AST *parent) {
-
+            value->Lower(this);
+            for(const auto &[cond, body] : cases) {
+                cond->Lower(this);
+                for(const auto &item : body) {
+                    item->Lower(this);
+                }
+            }
         }
 
         void MatchStmt::Sanatize() {

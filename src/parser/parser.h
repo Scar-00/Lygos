@@ -17,6 +17,7 @@
 #include "../ast/initializer.h"
 #include "../ast/impl.h"
 #include "../ast/casting.h"
+#include "../ast/trait.h"
 
 #include "../lex/lexer.h"
 #include <vector>
@@ -35,6 +36,7 @@ namespace lygos {
             Ref<AST::AST> ParseGlobals();
             Ref<AST::AST> ParseStatic();
             Ref<AST::AST> ParseImpl();
+            Ref<AST::AST> ParseTrait();
             Ref<AST::AST> ParseStmt();
             AST::StructDef::Field ParseFieldDecl();
             Ref<AST::AST> ParseStructDecl();

@@ -9,13 +9,15 @@ target triple = "x86_64-pc-linux-gnu"
 %Ctx = type { i8*, i8*, i8*, i8* }
 
 @0 = private unnamed_addr constant [29 x i8] c"unimplemented [`lex_char()`]\00", align 1
-@1 = private unnamed_addr constant [20 x i8] c"x86_64-pc-linux-gnu\00", align 1
-@2 = private unnamed_addr constant [5 x i8] c"test\00", align 1
-@3 = private unnamed_addr constant [5 x i8] c"test\00", align 1
-@4 = private unnamed_addr constant [4 x i8] c"123\00", align 1
-@5 = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
-@6 = private unnamed_addr constant [3 x i8] c"%c\00", align 1
-@7 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+@1 = private unnamed_addr constant [2 x i8] c"=\00", align 1
+@2 = private unnamed_addr constant [19 x i8] c"[info]: lexing id\0A\00", align 1
+@3 = private unnamed_addr constant [21 x i8] c"[info]: token -> %s\0A\00", align 1
+@4 = private unnamed_addr constant [20 x i8] c"x86_64-pc-linux-gnu\00", align 1
+@5 = private unnamed_addr constant [5 x i8] c"test\00", align 1
+@6 = private unnamed_addr constant [5 x i8] c"test\00", align 1
+@7 = private unnamed_addr constant [12 x i8] c"let x = 10;\00", align 1
+@8 = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
+@9 = private unnamed_addr constant [11 x i8] c"tok -> %s\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -40,6 +42,8 @@ declare void @LLVMDumpModule(i8*)
 declare i32 @isdigit(i32)
 
 declare i32 @isalpha(i32)
+
+declare i32 @isspace(i32)
 
 declare i32 @strlen(i8*)
 
@@ -145,7 +149,7 @@ define dso_local void @String_push(%String* %0, i8 %1) {
   %39 = call i8* @realloc(i8* %35, i32 %38)
   br label %40
 
-40:                                               ; preds = %2, %26
+40:                                               ; preds = %26, %2
   %41 = load %String*, %String** %3, align 8
   %42 = bitcast %String* %41 to i8**
   %43 = load i8*, i8** %42, align 8
@@ -403,6 +407,121 @@ define dso_local %Token @Lexer_lex_id(%Lexer* %0) {
   ret %Token %35
 }
 
+define dso_local %Token @Lexer_next_token(%Lexer* %0) {
+  %2 = alloca %Lexer*, align 8
+  store %Lexer* %0, %Lexer** %2, align 8
+  %3 = alloca %Token, align 8
+  %4 = alloca i32, align 4
+  store i32 0, i32* %4, align 4
+  %5 = load %Lexer*, %Lexer** %2, align 8
+  %6 = getelementptr inbounds %Lexer, %Lexer* %5, i32 0, i32 3
+  %7 = load %Lexer*, %Lexer** %2, align 8
+  %8 = getelementptr inbounds %Lexer, %Lexer* %7, i32 0, i32 1
+  %9 = load i32, i32* %6, align 4
+  %10 = load i32, i32* %8, align 4
+  %11 = icmp slt i32 %9, %10
+  br i1 %11, label %.preheader1, label %20
+
+.preheader1:                                      ; preds = %1
+  br label %12
+
+12:                                               ; preds = %.preheader1, %70
+  %13 = alloca i32, align 4
+  store i32 0, i32* %13, align 4
+  %14 = load %Lexer*, %Lexer** %2, align 8
+  %15 = getelementptr inbounds %Lexer, %Lexer* %14, i32 0, i32 2
+  %16 = load i8, i8* %15, align 1
+  %17 = sext i8 %16 to i32
+  %18 = call i32 @isspace(i32 %17)
+  %19 = icmp ne i32 %18, 0
+  br i1 %19, label %.preheader, label %31
+
+.preheader:                                       ; preds = %12
+  br label %22
+
+20:                                               ; preds = %70, %1
+  %21 = load %Token, %Token* %3, align 8
+  ret %Token %21
+
+22:                                               ; preds = %.preheader, %22
+  %23 = load %Lexer*, %Lexer** %2, align 8
+  %24 = load %Lexer*, %Lexer** %2, align 8
+  call void @Lexer_advance(%Lexer* %24)
+  %25 = load %Lexer*, %Lexer** %2, align 8
+  %26 = getelementptr inbounds %Lexer, %Lexer* %25, i32 0, i32 2
+  %27 = load i8, i8* %26, align 1
+  %28 = sext i8 %27 to i32
+  %29 = call i32 @isspace(i32 %28)
+  %30 = icmp ne i32 %29, 0
+  br i1 %30, label %22, label %31
+
+31:                                               ; preds = %22, %12
+  %32 = alloca %Token, align 8
+  %33 = load %Lexer*, %Lexer** %2, align 8
+  %34 = getelementptr inbounds %Lexer, %Lexer* %33, i32 0, i32 2
+  %35 = load i8, i8* %34, align 1
+  %36 = icmp eq i8 %35, 61
+  br i1 %36, label %37, label %43
+
+37:                                               ; preds = %31
+  %38 = load %Lexer*, %Lexer** %2, align 8
+  %39 = load %Lexer*, %Lexer** %2, align 8
+  %40 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @1, i32 0, i32 0))
+  %41 = call %Token @Token_new(%String %40, i32 5)
+  %42 = call %Token @Lexer_advance_token(%Lexer* %39, %Token %41)
+  store %Token %42, %Token* %32, align 8
+  br label %43
+
+43:                                               ; preds = %37, %31
+  %44 = load %Lexer*, %Lexer** %2, align 8
+  %45 = getelementptr inbounds %Lexer, %Lexer* %44, i32 0, i32 2
+  %46 = load i8, i8* %45, align 1
+  %47 = sext i8 %46 to i32
+  %48 = call i32 @isdigit(i32 %47)
+  %49 = icmp ne i32 %48, 0
+  br i1 %49, label %50, label %54
+
+50:                                               ; preds = %43
+  %51 = load %Lexer*, %Lexer** %2, align 8
+  %52 = load %Lexer*, %Lexer** %2, align 8
+  %53 = call %Token @Lexer_lex_number(%Lexer* %52)
+  store %Token %53, %Token* %32, align 8
+  br label %54
+
+54:                                               ; preds = %50, %43
+  %55 = load %Lexer*, %Lexer** %2, align 8
+  %56 = getelementptr inbounds %Lexer, %Lexer* %55, i32 0, i32 2
+  %57 = load i8, i8* %56, align 1
+  %58 = sext i8 %57 to i32
+  %59 = call i32 @isalpha(i32 %58)
+  %60 = icmp ne i32 %59, 0
+  br i1 %60, label %61, label %70
+
+61:                                               ; preds = %54
+  %62 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([19 x i8], [19 x i8]* @2, i32 0, i32 0))
+  %63 = load %Lexer*, %Lexer** %2, align 8
+  %64 = load %Lexer*, %Lexer** %2, align 8
+  %65 = call %Token @Lexer_lex_id(%Lexer* %64)
+  store %Token %65, %Token* %32, align 8
+  %66 = getelementptr inbounds %Token, %Token* %32, i32 0, i32 1
+  %67 = bitcast %String* %66 to i8**
+  %68 = load i8*, i8** %67, align 8
+  %69 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([21 x i8], [21 x i8]* @3, i32 0, i32 0), i8* %68)
+  br label %70
+
+70:                                               ; preds = %61, %54
+  %71 = load %Token, %Token* %32, align 8
+  store %Token %71, %Token* %3, align 8
+  %72 = load %Lexer*, %Lexer** %2, align 8
+  %73 = getelementptr inbounds %Lexer, %Lexer* %72, i32 0, i32 3
+  %74 = load %Lexer*, %Lexer** %2, align 8
+  %75 = getelementptr inbounds %Lexer, %Lexer* %74, i32 0, i32 1
+  %76 = load i32, i32* %73, align 4
+  %77 = load i32, i32* %75, align 4
+  %78 = icmp slt i32 %76, %77
+  br i1 %78, label %12, label %20
+}
+
 define dso_local %Ctx @Ctx_init(i8* %0) {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -457,8 +576,8 @@ define dso_local i32 @main(i32 %0, i8** %1) {
   store i8** %1, i8*** %4, align 8
   %5 = alloca i32, align 4
   %6 = alloca i8*, align 8
-  store i8* getelementptr inbounds ([20 x i8], [20 x i8]* @1, i32 0, i32 0), i8** %6, align 8
-  %7 = call %Ctx @Ctx_init(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @2, i32 0, i32 0))
+  store i8* getelementptr inbounds ([20 x i8], [20 x i8]* @4, i32 0, i32 0), i8** %6, align 8
+  %7 = call %Ctx @Ctx_init(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @5, i32 0, i32 0))
   %8 = alloca %Ctx, align 8
   store %Ctx %7, %Ctx* %8, align 8
   %9 = alloca [1 x i8*], align 8
@@ -475,45 +594,22 @@ define dso_local i32 @main(i32 %0, i8** %1) {
   %18 = alloca i8*, align 8
   store i8* %17, i8** %18, align 8
   %19 = load i8*, i8** %18, align 8
-  %20 = call i8* @Ctx_add_function(%Ctx* %8, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @3, i32 0, i32 0), i8* %19)
-  %21 = call %Lexer @Lexer_new(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @4, i32 0, i32 0), i32 3)
+  %20 = call i8* @Ctx_add_function(%Ctx* %8, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @6, i32 0, i32 0), i8* %19)
+  %21 = call %Lexer @Lexer_new(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @7, i32 0, i32 0), i32 11)
   %22 = alloca %Lexer, align 8
   store %Lexer %21, %Lexer* %22, align 8
   %23 = bitcast %Lexer* %22 to i8**
   %24 = load i8*, i8** %23, align 8
-  %25 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @5, i32 0, i32 0), i8* %24)
-  %26 = alloca i32, align 4
-  store i32 0, i32* %26, align 4
-  %27 = getelementptr inbounds %Lexer, %Lexer* %22, i32 0, i32 1
-  %28 = load i32, i32* %26, align 4
-  %29 = load i32, i32* %27, align 4
-  %30 = icmp slt i32 %28, %29
-  br i1 %30, label %.preheader, label %45
-
-.preheader:                                       ; preds = %2
-  br label %31
-
-31:                                               ; preds = %.preheader, %31
-  %32 = bitcast %Lexer* %22 to i8**
-  %33 = load i8*, i8** %32, align 8
-  %34 = load i32, i32* %26, align 4
-  %35 = getelementptr inbounds i8, i8* %33, i32 %34
-  %36 = load i8, i8* %35, align 1
-  %37 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @6, i32 0, i32 0), i8 %36)
-  %38 = load i32, i32* %26, align 4
-  %39 = add i32 %38, 1
-  store i32 %39, i32* %26, align 4
-  %40 = load i32, i32* %26, align 4
-  %41 = bitcast %Lexer* %22 to i8*
-  %sunkaddr = getelementptr inbounds i8, i8* %41, i64 8
-  %42 = bitcast i8* %sunkaddr to i32*
-  %43 = load i32, i32* %42, align 4
-  %44 = icmp slt i32 %40, %43
-  br i1 %44, label %31, label %45
-
-45:                                               ; preds = %31, %2
-  %46 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @7, i32 0, i32 0))
+  %25 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @8, i32 0, i32 0), i8* %24)
+  %26 = call %Token @Lexer_next_token(%Lexer* %22)
+  %27 = call %Token @Lexer_next_token(%Lexer* %22)
+  %28 = alloca %Token, align 8
+  store %Token %27, %Token* %28, align 8
+  %29 = getelementptr inbounds %Token, %Token* %28, i32 0, i32 1
+  %30 = bitcast %String* %29 to i8**
+  %31 = load i8*, i8** %30, align 8
+  %32 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @9, i32 0, i32 0), i8* %31)
   store i32 0, i32* %5, align 4
-  %47 = load i32, i32* %5, align 4
-  ret i32 %47
+  %33 = load i32, i32* %5, align 4
+  ret i32 %33
 }

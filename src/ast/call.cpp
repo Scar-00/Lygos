@@ -34,7 +34,7 @@ namespace lygos {
             u64 i = 0;
             for(const auto &arg : args) {
                 auto val = arg->GenCode(scope);
-                if(ShouldLoad(arg.get()) && !(i == 0 && fn->IsMember()))
+                if(ShouldLoad(arg.get()) && (!(i == 0 && fn->IsMember()) || (i == 0 && deref_self)))
                     val = LoadOrIgnore(val);
                 //add implicit casting
                 arg_values.push_back(val);
@@ -44,6 +44,9 @@ namespace lygos {
         }
 
         void CallExpr::Lower(AST *parent) {
+            if(parent->type == ASTType::MemberExpr) {
+                deref_self = ((MemberExpr *)parent)->Deref();
+            }
             /*if(caller->type == ASTType::MemberExpr) {
                 std::vector<Ref<AST>> elems;
                 auto call = MakeRef<CallExpr>(static_cast<MemberExpr *>(caller.get())->Member(), args);

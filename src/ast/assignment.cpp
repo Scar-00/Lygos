@@ -15,6 +15,8 @@ namespace lygos {
             auto var = assignee->GenCode(scope);
             auto val = value->GenCode(scope);
 
+            //std::cout << assignee->GetValue() << "\n";
+            //std::cout << PrintValue(val) << "\n";
             if(ShouldLoad(value.get()))
                 val = LoadOrIgnore(val);
 

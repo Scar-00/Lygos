@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "../error/log.h"
 #include <cstdlib>
+#include <memory>
 #include <vector>
 
 namespace lygos {
@@ -21,6 +22,7 @@ namespace lygos {
                 case TokenType::KwFn: return ParseFunc();
                 case TokenType::KwImpl: return ParseImpl();
                 case TokenType::KwStatic: return ParseStatic();
+                case TokenType::KwTrait: return ParseTrait();
                 default: return ParseStmt();
             }
         }
@@ -56,6 +58,28 @@ namespace lygos {
                 Log::Logger::Warn(PEEK(-1), "expected `}`");
             current_impl = nullptr;
             return impl;
+        }
+
+        Ref<AST::AST> Parser::ParseTrait() {
+            Eat();
+
+            auto id = Eat();
+
+            if(id.type != TokenType::Id)
+                Log::Logger::Warn(At(), "expected identifier after keyword `trait`");
+
+            if(Eat().type != TokenType::CurlyLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `{`");
+
+            auto trait = MakeRef<AST::Trait::Trait>(id.value, std::vector<Ref<AST::Function>>());
+
+            while (At().type != TokenType::CurlyRight) {
+                trait->Functions().push_back(std::static_pointer_cast<AST::Function>(ParseFunc()));
+            }
+
+            if(Eat().type != TokenType::CurlyRight)
+                Log::Logger::Warn(PEEK(-1), "expected `}`");
+            return trait;
         }
 
         Ref<AST::AST> Parser::ParseStmt() {
@@ -275,7 +299,7 @@ namespace lygos {
                 Log::Logger::Warn(PEEK(-1), "expected `->` after case identifier");
 
             if(Eat().type != TokenType::CurlyLeft)
-                Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
+                Log::Logger::Warn(PEEK(-1), "expected `{` after case identifier");
 
             std::vector<Ref<AST::AST>> body;
             while (At().type != TokenType::CurlyRight) {
@@ -289,12 +313,10 @@ namespace lygos {
         Ref<AST::AST> Parser::ParseMatchExpr() {
             Eat();
 
-            auto id = ParsePrimaryExpr();
-            if(id->type != AST::ASTType::Id)
-                Log::Logger::Warn("expected id after keyword `match`");
+            auto id = ParseExpr();
 
             if(Eat().type != TokenType::CurlyLeft)
-                Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
+                Log::Logger::Warn(PEEK(-1), "expected `{` after match statement");
 
             std::vector<AST::MatchStmt::Case> cases;
             while (At().type != TokenType::CurlyRight) {

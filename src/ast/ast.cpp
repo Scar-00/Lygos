@@ -14,6 +14,8 @@
 namespace lygos {
     namespace AST {
         bool ShouldLoad(AST *ast) {
+            if(ast->type == ASTType::MemberExpr && ((MemberExpr *)ast)->Member()->type == ASTType::CallExpr)
+                return false;
             return ast->type == ASTType::Id
                 || ast->type == ASTType::MemberExpr
                 || ast->type == ASTType::AccessExpr
@@ -63,7 +65,7 @@ namespace lygos {
             ss << "[" << node->type << "]";
             switch (node->type) {
                 case ASTType::Mod: {
-                    ss << ": " << node->GetValue() << '\n';
+                    ss << ":" << node->GetValue() << '\n';
                     for(const auto &n : ((Mod *)node)->Body())
                         ss << Print(n.get(), depth + 1).str();
                 } break;
@@ -75,7 +77,7 @@ namespace lygos {
                 case ASTType::VarDecl: {
                     ss << "\n";
                     indent(ss, depth);
-                    ss << "var: " << node->GetValue();
+                    ss << "var:" << node->GetValue();
                     auto value = static_cast<VarDecl *>(node)->Value();
                     if(value)
                         ss << " = \n" << Print(value.get(), depth + 1).str();

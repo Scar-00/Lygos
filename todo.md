@@ -1,5 +1,5 @@
 # IMPORTANT
-* **Traverse AST pre code gen(lower it) to get better type information/inferance**
+* Traverse AST pre code gen(lower it) to get better type information/inferance
 
 # TODO/FIXME
 * compare types at assignment, decl, ...

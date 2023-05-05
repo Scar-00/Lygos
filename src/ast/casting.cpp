@@ -1,6 +1,7 @@
 #include "casting.h"
 #include "ast.h"
 #include "../types.h"
+#include <fmt/core.h>
 
 namespace lygos {
     namespace AST {
@@ -15,8 +16,11 @@ namespace lygos {
 
         llvm::Value *UnaryExpr::GenCode(Scope *scope) {
             auto obj = this->obj->GenCode(scope);
-            if(op == "*")
+            if(op == "*") {
+                if(!obj->getType()->isPointerTy())
+                    Log::Logger::Warn(fmt::format("cannot deref non pointer"));
                 return this->obj->type == ASTType::MemberExpr ? obj :  builder->CreateLoad(TryGetPointerBase(obj->getType()), obj);
+            }
             if(op == "&")
                 return obj;
             if(op == "!") {

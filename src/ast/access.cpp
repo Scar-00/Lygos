@@ -37,9 +37,14 @@ namespace lygos {
             }
 
             size_t index;
-            auto struct_fields = scope->GetStruct(static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data()).fields;
+            std::string type_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
+            auto struct_fields = scope->GetStruct(type_name).fields;
+            std::string member_name = member->GetValue();
+            if(!VecContains(struct_fields, member_name)) {
+                Log::Logger::Warn(fmt::format("unknown field `{}` in struct `{}`", member_name, type_name));
+            }
             for(size_t i = 0; i < struct_fields.size(); i++)
-                if(struct_fields[i] == member->GetValue())
+                if(struct_fields[i] == member_name)
                     index = i;
 
             if(member->type != ASTType::Id)
@@ -49,7 +54,8 @@ namespace lygos {
         }
 
         void MemberExpr::Lower(AST *parent) {
-
+            member->Lower(this);
+            obj->Lower(this);
         }
 
         void MemberExpr::Sanatize() {
