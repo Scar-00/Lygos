@@ -8,7 +8,7 @@ namespace lygos {
         struct Macro : public AST {
             public:
                 Macro(std::string name, Block exprs);
-                std::vector<Ref<AST>> &Body() { return body.Body(); }
+                Block &Body() { return body; }
                 std::string &GetName() { return name; }
             public:
                 std::string GetValue() override;

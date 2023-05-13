@@ -473,7 +473,6 @@ namespace lygos {
         Ref<AST::AST> Parser::ParseCallExpr() {
             bool is_macro = false;
             auto callee = ParseResolutionExpr();
-            std::cout << At() << "\n";
             if(At().type == TokenType::Dollar) {
                 Eat();
                 is_macro = true;

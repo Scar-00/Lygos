@@ -1,4 +1,9 @@
+macro foo() {
+    let x = 10;
+}
+
 macro test() {
+    foo$();
     printf("Hello, World!\n");
 }
 

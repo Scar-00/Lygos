@@ -34,10 +34,9 @@ namespace lygos {
                     lhs_value = ((AssignmentExpr *)parent)->Lhs();
                 } break;
                 case ASTType::VarDecl: {
-                    //TODO:
                     auto decl = (VarDecl *)parent;
-                    if(!decl->Value().get())
-                        Log::Logger::Warn("variable has to declare type when using initializer list");
+                    if(!decl->Type().get())
+                        Log::Logger::Warn(fmt::format("variable `{}` has to declare type when using initializer list", decl->Id()));
                     exprs.push_back(MakeRef<VarDecl>(decl->Id(), false, decl->Type(), nullptr));
                     lhs_value = MakeRef<Identifier>(decl->Id());
                 } break;

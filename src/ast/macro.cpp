@@ -22,6 +22,7 @@ namespace lygos {
 
         void Macro::Lower(AST *parent) {
             ast_root->DeclMacro(this);
+            ast_root->SetCurrentBlock(&body);
             for(size_t i = 0; i < body.Body().size(); i++) {
                 body.Body()[i]->Lower(this);
                 body.Increment();
@@ -48,7 +49,13 @@ namespace lygos {
         }
 
         void MacroCall::Lower(AST *parent) {
-            std::vector<Ref<AST>> body = ast_root->GetMacro(name)->Body();
+            Block &macro_block = ast_root->GetMacro(name)->Body();
+            std::vector<Ref<AST>> body = macro_block.Body();
+            /*ast_root->SetCurrentBlock(&macro_block);
+            for(size_t i = 0; i < body.size(); i++) {
+                body[i]->Lower(this);
+                macro_block.Increment();
+            }*/
             ast_root->Replace(body);
         }
 

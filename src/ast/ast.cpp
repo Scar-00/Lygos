@@ -158,7 +158,7 @@ namespace lygos {
                 } break;
                 case ASTType::Macro: {
                     ss << ": " << node->GetValue() << "\n";
-                    for(const auto &item : ((Macro *)node)->Body())
+                    for(const auto &item : ((Macro *)node)->Body().Body())
                         ss << Print(item.get(), depth + 1).str();
                 } break;
                 default: ss << "\n"; break;

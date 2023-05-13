@@ -31,10 +31,11 @@ struct String {
 
 impl String {
     fn new(size: i32) -> String {
-        let mut str: String;
-        str.data = malloc(size);
-        str.len = 0;
-        str.cap = size;
+        let str: String = {
+            .data = malloc(size),
+            .len = 0,
+            .cap = size,
+        };
         return str;
     }
 
