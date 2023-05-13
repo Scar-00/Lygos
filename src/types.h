@@ -46,6 +46,7 @@ namespace lygos {
         Colon, // :
         Ampercent, // &
         Hash, // #
+        Dollar, // $
         Pipe, // |
         Bang, // !
 
@@ -93,6 +94,7 @@ namespace lygos {
         KwStatic,
         KwMatch,
         KwTrait,
+        KwMacro,
 
         Eof,
     };
@@ -115,6 +117,7 @@ namespace lygos {
         {"static", TokenType::KwStatic},
         {"match", TokenType::KwMatch},
         {"trait", TokenType::KwTrait},
+        {"macro", TokenType::KwMacro},
     };
 
     static std::set<std::string> base_types = {

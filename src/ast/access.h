@@ -2,6 +2,7 @@
 #define _LYGOS_AST_ACCESS_H_
 
 #include "ast.h"
+#include <llvm/ADT/ArrayRef.h>
 
 namespace lygos {
     namespace AST {

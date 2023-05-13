@@ -29,7 +29,7 @@ build: $(OBJ)
 	$(CC) -o bin/lygosc $^ $(LDFLAGS)
 
 run: build
-	bin/lygosc test3.txt -o tmp/test3.o -e llvm-ir
+	bin/lygosc tests/test.ly -o tests/test -e llvm-ir
 
 data: build
 	sed -e '1 s/./[ '\\\n'{/' -e '$$ s/,$$/'\\\n'] /' $(DATA) > compile_commands.json

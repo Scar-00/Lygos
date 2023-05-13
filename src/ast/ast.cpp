@@ -3,6 +3,7 @@
 #include "access.h"
 #include "assignment.h"
 #include "call.h"
+#include "macro.h"
 #include "mod.h"
 #include "function.h"
 #include "binary.h"
@@ -13,6 +14,24 @@
 
 namespace lygos {
     namespace AST {
+        Block::Block(Content body): body(body), index(0) {}
+
+        void Block::Insert(Content &exprs) {
+            VecInsertAt(body, index, exprs);
+        }
+
+        void Block::Insert(Ref<AST> &expr) {
+            VecInsertAt(body, index, expr);
+        }
+
+        void Block::Replace(Content &exprs) {
+            VecReplaceAt(body, index, exprs);
+        }
+
+        void Block::Replace(Ref<AST> &expr) {
+            VecReplaceAt(body, index, expr);
+        }
+
         bool ShouldLoad(AST *ast) {
             if(ast->type == ASTType::MemberExpr && ((MemberExpr *)ast)->Member()->type == ASTType::CallExpr)
                 return false;
@@ -23,6 +42,7 @@ namespace lygos {
         }
 
         std::ostream &operator<<(std::ostream &os, ASTType type) {
+            //stringify instead of pushing into os;
             switch(type) {
                 case ASTType::Mod: os << "Program"; break;
                 case ASTType::Function: os << "Function"; break;
@@ -47,6 +67,9 @@ namespace lygos {
                 case ASTType::CastExpr: os << "CastExpr"; break;
                 case ASTType::ReturnExpr: os << "ReturnExpr"; break;
                 case ASTType::InitializerList: os << "InitializerList"; break;
+                case ASTType::Macro: os << "Macro"; break;
+                case ASTType::MacroCall: os << "MacroCall"; break;
+                case ASTType::Trait: os << "Trait"; break;
             }
             return os;
         }
@@ -77,10 +100,10 @@ namespace lygos {
                 case ASTType::VarDecl: {
                     ss << "\n";
                     indent(ss, depth);
-                    ss << "var:" << node->GetValue();
+                    ss << "var: " << node->GetValue();
                     auto value = static_cast<VarDecl *>(node)->Value();
                     if(value)
-                        ss << " = \n" << Print(value.get(), depth + 1).str();
+                        ss << " =\n" << Print(value.get(), depth + 1).str();
                     else
                         ss << "\n";
                 } break;
@@ -132,6 +155,11 @@ namespace lygos {
                 } break;
                 case ASTType::Id: {
                     ss << ": " << node->GetValue() << "\n";
+                } break;
+                case ASTType::Macro: {
+                    ss << ": " << node->GetValue() << "\n";
+                    for(const auto &item : ((Macro *)node)->Body())
+                        ss << Print(item.get(), depth + 1).str();
                 } break;
                 default: ss << "\n"; break;
             }

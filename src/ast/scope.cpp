@@ -1,6 +1,7 @@
 #include "scope.h"
 
 #include "../error/log.h"
+#include "macro.h"
 
 #include "function.h"
 
@@ -85,32 +86,6 @@ namespace lygos {
                 Log::Logger::Warn(fmt::format("cannot redeclare `%s`", id));
             this->struct_types.insert({id, struct_type});
         }
-
-        /*void Scope::TypeAddFunction(std::string type, Type::Function func) {
-            auto scope = this->Resolve(type.c_str());
-            if(!scope->struct_types.contains(type))
-                Log::Logger::Warn(fmt::format("unknown type `{}`", type));
-
-            if(VecContains(scope->struct_types.at(type).functions, func))
-                Log::Logger::Warn(fmt::format("cannot redeclare function `{}` in type `{}`", func.name, type));
-
-            this->struct_types.at(type).functions.push_back(func);
-        }
-
-        Type::Function &Scope::GetMemberFunction(std::string &type, Type::Function &func) {
-            auto scope = this->Resolve(type.c_str());
-            if(!scope->struct_types.contains(type))
-                Log::Logger::Warn(fmt::format("unknown type `{}`", type));
-
-            if(VecContains(scope->struct_types.at(type).functions, func))
-                Log::Logger::Warn(fmt::format("cannot redeclare function `{}` in type `{}`", func.name, type));
-
-            auto typ = scope->struct_types.at(type).functions;
-            for(const auto &fn : typ) {
-                if(fn.name == func.name) return (Type::Function &)fn;
-            }
-            std::exit(1);
-        }*/
 
         llvm::Type *Scope::GetType(Type::Type *type) {
             switch (type->kind) {

@@ -3,7 +3,7 @@ struct Square {
 };
 
 trait Area {
-    fn area(&self) -> i32;
+    fn area() -> i32;
 }
 
 fn main(argc: i32, argv: **i8) -> i32 {

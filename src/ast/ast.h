@@ -4,6 +4,7 @@
 #include "../core.h"
 #include "scope.h"
 #include <memory>
+#include <vector>
 
 namespace lygos {
         namespace AST {
@@ -31,6 +32,8 @@ namespace lygos {
             StructDef,
             Impl,
             Trait,
+            Macro,
+            MacroCall,
             NumberLiteral,
             StringLiteral,
             InitializerList,
@@ -49,6 +52,25 @@ namespace lygos {
             virtual llvm::Value *GenCode(Scope *scope) { return nullptr; }
             virtual void Lower(AST *parent) {}
             virtual void Sanatize() {}
+        };
+
+        struct Block {
+        using Content = std::vector<Ref<AST>>;
+        public:
+            Block() {}
+            Block(Content body);
+            Content &Body() { return body; }
+            const Content &Body() const { return body; }
+            void Increment() { index++; }
+            void Insert(Content &exprs);
+            void Insert(Ref<AST> &expr);
+            void Replace(Content &exprs);
+            void Replace(Ref<AST> &expr);
+            bool Returns() { return returns; }
+        private:
+            Content body;
+            u64 index;
+            bool returns;
         };
 
         bool ShouldLoad(AST *ast);

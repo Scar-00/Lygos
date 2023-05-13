@@ -9,7 +9,7 @@ namespace lygos {
     namespace AST {
         struct IfStmt : public AST {
             public:
-                IfStmt(Ref<AST> cond, std::vector<Ref<AST>> then_body, std::vector<Ref<AST>> else_body = {}, bool has_else_brach = false);
+                IfStmt(Ref<AST> cond, Block then_body, Block else_body = {}, bool has_else_brach = false);
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -17,14 +17,14 @@ namespace lygos {
                 void Sanatize() override;
             private:
                 Ref<AST> cond;
-                std::vector<Ref<AST>> then_body;
-                std::vector<Ref<AST>> else_body;
+                Block then_body;
+                Block else_body;
                 bool has_else_brach;
         };
 
         struct ForStmt : public AST {
             public:
-                ForStmt(Ref<AST> var, Ref<AST> cond, std::vector<Ref<AST>> body);
+                ForStmt(Ref<AST> var, Ref<AST> cond, Block body);
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -33,12 +33,12 @@ namespace lygos {
             private:
                 Ref<AST> var;
                 Ref<AST> cond;
-                std::vector<Ref<AST>> body;
+                Block body;
         };
 
         struct MatchStmt : public AST {
             public:
-                using Case = std::tuple<Ref<AST>, std::vector<Ref<AST>>>;
+                using Case = std::tuple<Ref<AST>, Block>;
             public:
                 MatchStmt(Ref<AST> value, std::vector<Case> cases);
             public:

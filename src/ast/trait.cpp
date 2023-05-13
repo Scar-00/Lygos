@@ -7,6 +7,22 @@ namespace lygos {
                 AST(ASTType::Trait), name(name), functions(functions) {
 
             }
+
+            std::string Trait::GetValue() {
+                return name;
+            }
+
+            llvm::Value *Trait::GenCode(Scope *scope) {
+                return nullptr;
+            }
+
+            void Trait::Lower(AST *parent) {
+
+            }
+
+            void Trait::Sanatize() {
+
+            }
         }
     }
 }

@@ -6,14 +6,9 @@
 
 namespace lygos {
     namespace AST {
-        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def):
+        Function::Function(std::string name, Ref<Impl> obj, std::vector<Function::Arg> args, Block body, Ref<Type::Type> ret_type, bool is_def):
             AST(ASTType::Function), name(name), obj(obj), args(args), body(body), ret_type(ret_type), is_definition(is_def) {
 
-        }
-
-        void Function::Insert(std::vector<Ref<AST>> &elems) {
-            VecReplaceAt(body, instr_index, elems);
-            //IncrInstr();
         }
 
         llvm::Value *Function::GenCode(Scope *scope) {
@@ -63,7 +58,7 @@ namespace lygos {
             if(!(ret_type->kind == Type::Kind::path && ((Type::Path *)ret_type.get())->GetPath() == "void"))
                 curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
 
-            for(const auto &node : body)
+            for(const auto &node : body.Body())
                 node->GenCode(&curr_scope);
 
             if(curr_scope.GetRetBlock() != nullptr)
@@ -77,9 +72,10 @@ namespace lygos {
 
         void Function::Lower(AST *parent) {
             ast_root->SetCurrentFunction(this);
-            for(u64 i = 0; i < body.size(); i++) {
-                IncrInstr();
-                body[i]->Lower(this);
+            ast_root->SetCurrentBlock(&body);
+            for(u64 i = 0; i < body.Body().size(); i++) {
+                body.Body()[i]->Lower(this);
+                body.Increment();
             }
         }
 

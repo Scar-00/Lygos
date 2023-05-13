@@ -1,1 +1,1 @@
-./bin/lygosc -o tmp/test3 test3.txt -e llvm-ir
+./bin/lygosc tests/test.ly -o tests/test -e llvm-ir

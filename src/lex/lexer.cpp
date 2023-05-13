@@ -103,6 +103,8 @@ namespace lygos {
                 case '}': return AdvanceToken({"}", TokenType::CurlyRight, line});
                 case '(': return AdvanceToken({"(", TokenType::ParanLeft, line});
                 case ')': return AdvanceToken({")", TokenType::ParanRight, line});
+                case '#': return AdvanceToken({"#", TokenType::Hash, line});
+                case '$': return AdvanceToken({"$", TokenType::Dollar, line});
                 case '<': {
                     switch (src[index + 1]) {
                         case '=': Advance(); return AdvanceToken({"<=", TokenType::OpEqEq, line});
@@ -120,7 +122,7 @@ namespace lygos {
                         case '&': Advance(); return AdvanceToken({"&&", TokenType::OpAnd, line});
                         default: return AdvanceToken({"&", TokenType::Ampercent, line});
                     }
-                }               case '#': return AdvanceToken({"#", TokenType::Hash, line});
+                }
                 case '|': {
                     switch (src[index + 1]) {
                         case '|': Advance(); return AdvanceToken({"||", TokenType::OpOr, line});

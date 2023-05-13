@@ -11,7 +11,10 @@ namespace lygos {
                     Trait(std::string name, std::vector<Ref<Function>> functions);
                     std::vector<Ref<Function>> &Functions() { return functions; }
                 public:
-
+                    std::string GetValue() override;
+                    llvm::Value *GenCode(Scope *scope) override;
+                    void Lower(AST *parent) override;
+                    void Sanatize() override;
                 private:
                     std::string name;
                     std::vector<Ref<Function>> functions;

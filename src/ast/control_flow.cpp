@@ -1,12 +1,13 @@
 #include "control_flow.h"
 #include "ast.h"
 #include "scope.h"
+#include "mod.h"
 #include <llvm/ADT/Twine.h>
 #include <vector>
 
 namespace lygos {
     namespace AST {
-        IfStmt::IfStmt(Ref<AST> cond, std::vector<Ref<AST>> then_body, std::vector<Ref<AST>> else_body, bool has_else_brach):
+        IfStmt::IfStmt(Ref<AST> cond, Block then_body, Block else_body, bool has_else_brach):
             AST(ASTType::IfStmt), cond(cond), then_body(then_body), else_body(else_body), has_else_brach(has_else_brach) {
 
         }
@@ -30,7 +31,7 @@ namespace lygos {
 
             builder->SetInsertPoint(true_block);
             Scope then_scope{scope};
-            for(const auto &node : then_body) {
+            for(const auto &node : then_body.Body()) {
                 node->GenCode(&then_scope);
             }
             if(!true_block->getTerminator())
@@ -40,7 +41,7 @@ namespace lygos {
             builder->SetInsertPoint(false_block);
             if(has_else_brach) {
                 Scope else_scope{scope};
-                for(const auto &node : else_body) {
+                for(const auto &node : else_body.Body()) {
                     node->GenCode(&else_scope);
                 }
                 if(!false_block->getTerminator())
@@ -58,11 +59,17 @@ namespace lygos {
 
         void IfStmt::Lower(AST *parent) {
             this->cond->Lower(this);
-            for(const auto &item : this->then_body) {
-                item->Lower(this);
+            ast_root->SetCurrentBlock(&then_body);
+            for(size_t i = 0; i < then_body.Body().size(); i++) {
+                then_body.Body()[i]->Lower(this);
+                then_body.Increment();
             }
-            for(const auto &item : this->else_body) {
-                item->Lower(this);
+            if(has_else_brach) {
+                ast_root->SetCurrentBlock(&else_body);
+                for(size_t i = 0; i < else_body.Body().size(); i++) {
+                    else_body.Body()[i]->Lower(this);
+                    else_body.Increment();
+                }
             }
         }
 
@@ -70,7 +77,7 @@ namespace lygos {
 
         }
 
-        ForStmt::ForStmt(Ref<AST> var, Ref<AST> cond, std::vector<Ref<AST>> body):
+        ForStmt::ForStmt(Ref<AST> var, Ref<AST> cond, Block body):
             AST(ASTType::ForStmt), var(var), cond(cond), body(body) {
 
         }
@@ -97,8 +104,8 @@ namespace lygos {
             builder->SetInsertPoint(entry);
             builder->CreateCondBr(this->cond->GenCode(&loop_scope), block, merge);
             builder->SetInsertPoint(block);
-            for(const auto &item : body)
-                item->GenCode(&loop_scope);
+            for(const auto &expr : body.Body())
+                expr->GenCode(&loop_scope);
             builder->CreateBr(entry);
 
             builder->SetInsertPoint(merge);
@@ -109,8 +116,10 @@ namespace lygos {
         void ForStmt::Lower(AST *parent) {
             this->cond->Lower(this);
             this->var->Lower(this);
-            for(const auto &item : this->body) {
-                item->Lower(this);
+            ast_root->SetCurrentBlock(&body);
+            for(size_t i = 0; i < body.Body().size(); i++) {
+                body.Body()[i]->Lower(this);
+                body.Increment();
             }
         }
 
@@ -143,8 +152,8 @@ namespace lygos {
                 Scope scope_local{scope};
                 auto bb = llvm::BasicBlock::Create(*ctx, "", fn, merge);
                 builder->SetInsertPoint(bb);
-                    for(const auto &node : body)
-                        node->GenCode(&scope_local);
+                for(const auto &node : body.Body())
+                    node->GenCode(&scope_local);
                 builder->CreateBr(merge);
                 branches.push_back({value->GenCode(scope), bb});
             }
@@ -159,10 +168,12 @@ namespace lygos {
 
         void MatchStmt::Lower(AST *parent) {
             value->Lower(this);
-            for(const auto &[cond, body] : cases) {
+            for(auto &[cond, body] : cases) {
                 cond->Lower(this);
-                for(const auto &item : body) {
-                    item->Lower(this);
+                ast_root->SetCurrentBlock(&body);
+                for(size_t i = 0; i < body.Body().size(); i++) {
+                    body.Body()[i]->Lower(this);
+                    body.Increment();
                 }
             }
         }

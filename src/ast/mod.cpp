@@ -1,5 +1,6 @@
 #include "mod.h"
 #include "function.h"
+#include "macro.h"
 
 namespace lygos {
     namespace AST {
@@ -7,9 +8,24 @@ namespace lygos {
 
         }
 
-        void Mod::Insert(std::vector<Ref<AST>> &elems) {
-            VecReplaceAt(body, instr_index, elems);
-            IncrInstr();
+        void Mod::Insert(Ref<AST> &expr) {
+            current_block->Insert(expr);
+        }
+
+        void Mod::Insert(Block::Content &exprs) {
+            current_block->Insert(exprs);
+        }
+
+        void Mod::Replace(Ref<AST> &expr) {
+            current_block->Replace(expr);
+        }
+
+        void Mod::Replace(Block::Content &exprs) {
+            current_block->Replace(exprs);
+        }
+
+        void Mod::SetCurrentBlock(Block *block) {
+            current_block = block;
         }
 
         void Mod::SetCurrentFunction(Function *func) {
@@ -31,30 +47,40 @@ namespace lygos {
             functions.insert({func->GetName(), func});
         }
 
+        void Mod::DeclMacro(Macro *macro) {
+            if(macros.contains(macro->GetName()))
+                Log::Logger::Warn(fmt::format("cannot redeclare macro `{}`", macro->GetName()));
+            macros.insert({macro->GetName(), macro});
+        }
+
+        Macro *Mod::GetMacro(std::string &name) {
+            if(!macros.contains(name))
+                Log::Logger::Warn(fmt::format("cannot find macro named `{}`", name));
+            return macros.at(name);
+        }
+
         std::string Mod::GetValue() {
             return name;
         }
 
         llvm::Value *Mod::GenCode(Scope *scope) {
             Scope global{};
-            for(const auto &item : body) {
+            for(const auto &item : body.Body()) {
                 item->GenCode(&global);
-                IncrInstr();
             }
             return nullptr;
         }
 
         void Mod::Lower(AST *parent) {
-            for(u64 i = 0; i < body.size(); i++) {
-                IncrInstr();
-                body[i]->Lower(this);
+            for(u64 i = 0; i < body.Body().size(); i++) {
+                body.Body()[i]->Lower(this);
+                body.Increment();
             }
         }
 
         void Mod::Sanatize() {
             LYGOS_ASSERT(name != "" && "Module name cannot be `\"\"`");
-            LYGOS_ASSERT(body.size() > 0 && "Empty Module");
-            LYGOS_ASSERT(instr_index != 0 && "Failed to lower the ast");
+            LYGOS_ASSERT(body.Body().size() > 0 && "Empty Module");
             LYGOS_ASSERT(current_func != NULL && "No Function in Module");
         }
     }

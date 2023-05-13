@@ -1,13 +1,12 @@
 # IMPORTANT
+* sanatize AST lowering (void Expr::Sanatize() & integrety of Mod::Insert()/Replace())
 * Traverse AST pre code gen(lower it) to get better type information/inferance
 
 # TODO/FIXME
 * compare types at assignment, decl, ...
 * add var-arg as special function type
 * determine if expr result of if/for/while are valid values
-* deref '->' operator and '(*x).x'
 * rewrite return instructions (return block)
-* fix deref
 * redo initializers parsing
 
 #AST building
@@ -18,7 +17,7 @@
    \ ---------| |
 - Mutlipl <---| |
    \ ---------| |
-- Assignment ---| [these are all of equal precedence]
+- Assignment ---|
    \            |
 - Call ---------|
    \            |

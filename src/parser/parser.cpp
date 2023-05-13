@@ -23,6 +23,7 @@ namespace lygos {
                 case TokenType::KwImpl: return ParseImpl();
                 case TokenType::KwStatic: return ParseStatic();
                 case TokenType::KwTrait: return ParseTrait();
+                case TokenType::KwMacro: return ParseMacro();
                 default: return ParseStmt();
             }
         }
@@ -61,6 +62,7 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseTrait() {
+            Log::Logger::Warn("unimplemented [ParseTrait]");
             Eat();
 
             auto id = Eat();
@@ -72,14 +74,40 @@ namespace lygos {
                 Log::Logger::Warn(PEEK(-1), "expected `{`");
 
             auto trait = MakeRef<AST::Trait::Trait>(id.value, std::vector<Ref<AST::Function>>());
-
+            current_trait = trait;
             while (At().type != TokenType::CurlyRight) {
                 trait->Functions().push_back(std::static_pointer_cast<AST::Function>(ParseFunc()));
             }
 
             if(Eat().type != TokenType::CurlyRight)
                 Log::Logger::Warn(PEEK(-1), "expected `}`");
+            current_trait = nullptr;
             return trait;
+        }
+
+        Ref<AST::AST> Parser::ParseMacro() {
+            Eat();
+
+            auto id = Eat();
+            if(id.type != TokenType::Id)
+                Log::Logger::Warn(id, "expected identifier after keyword `macro`");
+
+            /*-------------------*/
+            //parse args
+            Eat();
+            Eat();
+            /*-------------------*/
+
+            if(Eat().type != TokenType::CurlyLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `{` after function signature");
+
+            std::vector<Ref<AST::AST>> body;
+            while (At().type != TokenType::CurlyRight) {
+                body.push_back(ParseStmt());
+            }
+            Eat();
+
+            return MakeRef<AST::Macro>(id.value, body);
         }
 
         Ref<AST::AST> Parser::ParseStmt() {
@@ -128,7 +156,7 @@ namespace lygos {
             auto struct_id = Eat();
 
             if(struct_id.type != TokenType::Id)
-                Log::Logger::Warn(PEEK(-1), "expected identifier after keyword 'struct'");
+                Log::Logger::Warn(struct_id, "expected identifier after keyword `struct`");
 
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after struct identifier");
@@ -149,9 +177,9 @@ namespace lygos {
         AST::Function::Arg Parser::ParseFuncArg() {
             auto id = Eat();
 
-            if(id.value == "&" || id.value == "mut" || id.value == "self") {\
+            if(id.value == "&" || id.value == "mut" || id.value == "self") {
                 if(!current_impl)
-                    Log::Logger::Warn("member function can only be declared in an impl block");
+                    Log::Logger::Warn("member function can only be declared in an impl or trait block");
                 Ref<Type::Type> type = nullptr;
                 if(id.value == "&") {
                     id = Eat();
@@ -443,8 +471,14 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseCallExpr() {
+            bool is_macro = false;
             auto callee = ParseResolutionExpr();
-
+            std::cout << At() << "\n";
+            if(At().type == TokenType::Dollar) {
+                Eat();
+                is_macro = true;
+                std::cout << "test" << "\n";
+            }
             if(At().type == TokenType::ParanLeft) {
                 Eat();
                 std::vector<Ref<AST::AST>> args;
@@ -458,6 +492,8 @@ namespace lygos {
                 }
                 Eat();
 
+                if(is_macro)
+                    return MakeRef<AST::MacroCall>(callee->GetValue(), std::vector<Ref<AST::AST>>());
                 return MakeRef<AST::CallExpr>(callee, args);
             }
             return callee;
@@ -489,16 +525,25 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseInitializerExpr() {
-            if(At().type == TokenType::BraceLeft) {
+            if(At().type == TokenType::CurlyLeft) {
                 Eat();
                 AST::InitializerList::Initializers values;
-                while(At().type != TokenType::BraceRight) {
-                    values.push_back({"", ParseExpr()});
-                    if(At().type == TokenType::BraceRight)
-                        break;
+                while(At().type != TokenType::CurlyRight) {
+                    Token name = {"", TokenType::Eof, Location(0)};
 
-                    //if(Eat().type != TokenType::Dot)
-                    //    Log::Logger::Warn("expected `.` before struct member");
+                    if(At().type == TokenType::Dot) {
+                        Eat();
+                        name = Eat();
+                        if(name.type != TokenType::Id)
+                            Log::Logger::Warn(name, "expected `identifier` after `.` in initializer list");
+
+                        if(Eat().type != TokenType::Equals)
+                            Log::Logger::Warn(PEEK(-1), "expected `=` between member and value");
+                    }
+
+                    values.push_back({name.value, ParseExpr()});
+                    if(At().type == TokenType::CurlyRight)
+                        break;
 
                     if(Eat().type != TokenType::Comma)
                         Log::Logger::Warn(PEEK(-1), "initializer list values need to be comma `,` seperated");

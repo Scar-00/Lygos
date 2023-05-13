@@ -11,10 +11,8 @@ namespace lygos {
         struct Function : public AST {
             using Arg = std::tuple<std::string, Ref<Type::Type>>;
             public:
-                Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, std::vector<Ref<AST>> body, Ref<Type::Type> ret_type, bool is_def);
-                void IncrInstr() { instr_index++; }
-                std::vector<Ref<AST>> &Body() { return body; }
-                void Insert(std::vector<Ref<AST>> &elems);
+                Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, Block body, Ref<Type::Type> ret_type, bool is_def);
+                std::vector<Ref<AST>> &Body() { return body.Body(); }
                 std::string &GetName() { return name; }
                 bool IsMember() { return obj.get() != nullptr && std::get<0>(args[0]) == "self"; }
             public:
@@ -27,11 +25,10 @@ namespace lygos {
                 std::string mangeled_name;
                 Ref<Impl> obj;
                 std::vector<Arg> args;
-                std::vector<Ref<AST>> body;
+                Block body;
                 Ref<Type::Type> ret_type;
                 bool is_definition;
                 bool is_var_arg = false;
-                u32 instr_index = 0;
         };
     }
 }

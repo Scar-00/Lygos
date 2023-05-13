@@ -79,6 +79,11 @@ namespace lygos {
     }
 
     template<typename T>
+    void VecInsertAt(std::vector<T> &vec, s32 index, T &elem) {
+        vec.insert(vec.begin() + index, std::move(elem));
+    }
+
+    template<typename T>
     void VecReplaceAt(std::vector<T> &vec, s32 index, std::vector<T> &elems) {
         for(u32 i = 0; i < elems.size(); i++) {
             if(i == 0) {
@@ -87,6 +92,11 @@ namespace lygos {
                 vec.insert(vec.begin() + index + i, std::move(elems[i]));
             }
         }
+    }
+
+    template<typename T>
+    void VecReplaceAt(std::vector<T> &vec, s32 index, T &elem) {
+        vec[index] = std::move(elem);
     }
 }
 

@@ -2,9 +2,12 @@
 #include "../error/log.h"
 #include "access.h"
 #include "assignment.h"
+#include "ast.h"
 #include "literals.h"
 #include "mod.h"
 #include "function.h"
+#include "vardecl.h"
+#include <memory>
 
 namespace lygos {
     namespace AST {
@@ -24,19 +27,34 @@ namespace lygos {
         }
 
         void InitializerList::Lower(AST *parent) {
-            if(parent->type != ASTType::AssignmentExpr)
-                return;
-
-            auto assignment = (AssignmentExpr *)parent;
-
-            std::vector<Ref<AST>> assignments;
-            for(const auto &[name, value] : initializers) {
-                auto lhs = MakeRef<MemberExpr>(assignment->Lhs(), MakeRef<Identifier>(name), false);
-                assignments.push_back(MakeRef<AssignmentExpr>(lhs, value));
+            std::vector<Ref<AST>> exprs;
+            Ref<AST> lhs_value = nullptr;
+            switch(parent->type) {
+                case ASTType::AssignmentExpr: {
+                    lhs_value = ((AssignmentExpr *)parent)->Lhs();
+                } break;
+                case ASTType::VarDecl: {
+                    //TODO:
+                    auto decl = (VarDecl *)parent;
+                    if(!decl->Value().get())
+                        Log::Logger::Warn("variable has to declare type when using initializer list");
+                    exprs.push_back(MakeRef<VarDecl>(decl->Id(), false, decl->Type(), nullptr));
+                    lhs_value = MakeRef<Identifier>(decl->Id());
+                } break;
+                default: Log::Logger::Warn("invalid lhs to initializer list");
             }
 
-            // this should work but i think insert function is brocken
-            ast_root->GetCurrentFunction()->Insert(assignments);
+            LYGOS_ASSERT(lhs_value.get() != nullptr);
+            u32 idx = 0;
+            for(const auto &[name, value] : initializers) {
+                Ref<AST> lhs = name == ""
+                    ? std::static_pointer_cast<AST>(MakeRef<AccessExpr>(lhs_value, MakeRef<NumberLiteral>(fmt::format("{}", idx), "Integer")))
+                    : std::static_pointer_cast<AST>(MakeRef<MemberExpr>(lhs_value, MakeRef<Identifier>(name), false));
+                idx++;
+                exprs.push_back(MakeRef<AssignmentExpr>(lhs, value));
+            }
+
+            ast_root->Replace(exprs);
             return;
         }
 
