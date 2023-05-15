@@ -1,22 +1,25 @@
-macro foo() {
-    let x = 10;
-}
+macro foo {
+    () -> {
+        let x = 10;
+    }
+    (x: $) -> {
+        x;
+    }
 
-macro test(x: $) {
-    foo$();
-    x;
-    printf("Hello, World!\n");
-}
+    (x: $, y: $) -> {
+        x;
+        y;
+        printf("Test\n");
+    }
 
-macro vec2(v: $[]) {
-    let x = v[0];
-    let y = v[1];
-    let z = v;
-    printf("%d, %d", v[...]);
+    (x: $, y: $[]) -> {
+        x;
+        y;
+        printf("Hello, World\n");
+    }
 }
 
 fn main() -> i32 {
-    test$(let mut y = 10, y = 20);
-    printf("%d\n", y);
+    foo$(let x = 10, 1);
     return 0;
 }

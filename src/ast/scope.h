@@ -35,6 +35,8 @@ namespace lygos {
                 Scope *Resolve(const char *type);
             private:
                 Ref<Mod> mod;
+                //add own type for more info
+                //std::unordered_map<std::string, std::tuple<llvm::AllocaInst *, Ref<Type::Type>>> vars;
                 std::unordered_map<std::string, llvm::AllocaInst *> vars;
                 std::set<std::string> constants;
                 //std::unordered_set<std::string> generics;

@@ -95,46 +95,94 @@ namespace lygos {
 
             /*-------------------*/
             //parse args
-            AST::Macro::Arg arg;
-            if(Eat().type != TokenType::ParanLeft)
+            /*if(Eat().type != TokenType::ParanLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `(`");
 
-            if(At().type != TokenType::ParanRight) {
+            while(At().type != TokenType::ParanRight) {
                 if(Eat().type != TokenType::Id)
                     Log::Logger::Warn(PEEK(-1), "expected identifier");
                 std::string name = PEEK(-1).value;
-                u32 num_args = 0;
                 AST::Macro::ArgType type = AST::Macro::ArgType::None;
                 if(Eat().type != TokenType::Colon)
                     Log::Logger::Warn(PEEK(-1), fmt::format("expected `:` after macro arg `{}`", name));
 
-                if(At().type == TokenType::Dollar) { Eat(); num_args = 1; type = AST::Macro::ArgType::Single;}
+                if(At().type == TokenType::Dollar) { Eat(); type = AST::Macro::ArgType::Single;}
                 if(At().type == TokenType::BraceLeft) {
                     Eat();
-                    if(At().type == TokenType::Integer) {
-                        num_args = std::atoi(Eat().value.c_str());
-                        type = AST::Macro::ArgType::Arr;
-                    }else {
-                        type = AST::Macro::ArgType::Var;
-                    }
+                    type = AST::Macro::ArgType::Var;
                     if(Eat().type != TokenType::BraceRight)
                         Log::Logger::Warn(PEEK(-1), "expected closing bracked `]`");
                 }
 
-                arg = {name, type, num_args};
+                args.push_back({name, type});
             }
-            Eat();
+            Eat();*/
 
-            if(Eat().type != TokenType::CurlyLeft)
+            /*if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after function signature");
 
             std::vector<Ref<AST::AST>> body;
             while (At().type != TokenType::CurlyRight) {
                 body.push_back(ParseStmt());
             }
+            Eat();*/
+            std::vector<AST::Macro::Arm> arms;
+            if(Eat().type != TokenType::CurlyLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `{` after macro name");
+
+            while (At().type != TokenType::CurlyRight) {
+                if(Eat().type != TokenType::ParanLeft)
+                    Log::Logger::Warn(PEEK(-1), "expected `(`");
+
+                std::vector<AST::Macro::Cond> conds;
+                while(At().type != TokenType::ParanRight) {
+                    //parse conds
+                    if(At().type != TokenType::Id)
+                        Log::Logger::Warn(At(), "expected identifier");
+                    std::string name = Eat().value;
+                    AST::Macro::ArgType type = AST::Macro::ArgType::None;
+                    if(Eat().type != TokenType::Colon)
+                        Log::Logger::Warn(PEEK(-1), fmt::format("expected `:` after macro arg `{}`", name));
+
+                    if(At().type == TokenType::Dollar) { Eat(); type = AST::Macro::ArgType::Single;}
+                    if(At().type == TokenType::BraceLeft) {
+                        Eat();
+                        type = AST::Macro::ArgType::Var;
+                        if(Eat().type != TokenType::BraceRight)
+                            Log::Logger::Warn(PEEK(-1), "expected closing bracked `]`");
+                    }
+
+                    for(const auto &[cond_name, type] : conds) {
+                        if(cond_name == name)
+                            Log::Logger::Warn(fmt::format("found duplicate identifier in macro arm param `{}`", name));
+                    }
+                    conds.push_back({name, type});
+                    if(At().type == TokenType::ParanRight)
+                        break;
+
+                    if(At().type != TokenType::Comma)
+                        Log::Logger::Warn(At(), "expected `->` after arm decl");
+                    else Eat();
+                }
+                Eat();
+
+                AST::Block block;
+
+                if(Eat().type != TokenType::Arrow)
+                    Log::Logger::Warn(PEEK(-1), "expected `->` after arm decl");
+
+                if(Eat().type != TokenType::CurlyLeft)
+                    Log::Logger::Warn(PEEK(-1), "expected `{` after macro name");
+
+                while (At().type != TokenType::CurlyRight) {
+                    block.Body().push_back(ParseStmt());
+                }
+                Eat();
+                arms.push_back({conds, block});
+            }
             Eat();
 
-            return MakeRef<AST::Macro>(id.value, arg, body);
+            return MakeRef<AST::Macro>(id.value, arms);
         }
 
         Ref<AST::AST> Parser::ParsePundStmt() {

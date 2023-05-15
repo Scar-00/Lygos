@@ -51,6 +51,7 @@ namespace lygos {
             virtual ~AST() {}
             virtual std::string GetValue() { return "NONE"; }
             virtual llvm::Value *GenCode(Scope *scope) { return nullptr; }
+            //maybe pass Scope aswell to get type info
             virtual void Lower(AST *parent) {}
             virtual void Sanatize() {}
         };

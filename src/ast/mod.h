@@ -9,6 +9,7 @@ namespace lygos {
     namespace AST {
         struct Macro;
         struct Function;
+        typedef void (*MacroIntrinsicCallBack)();
         struct Mod : public AST {
             public:
                 Mod();
@@ -37,6 +38,7 @@ namespace lygos {
                 Function *current_func = nullptr;
                 std::unordered_map<std::string, Function *> functions;
                 std::unordered_map<std::string, Macro*> macros;
+                //std::unordered_map<std::string, MacroIntrinsicCallBack> macros_intrinsic;
         };
     }
 }

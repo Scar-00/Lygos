@@ -12,8 +12,8 @@
 
 namespace lygos {
     namespace AST {
-        Macro::Macro(std::string name, Arg arg, Block body):
-            AST(ASTType::Macro), name(name), param(arg), body(body) {
+        Macro::Macro(std::string name, std::vector<Arm> arms):
+            AST(ASTType::Macro), name(name), arms(arms) {
 
         }
 
@@ -27,17 +27,38 @@ namespace lygos {
             return nullptr;
         }
 
+        /*static const char *type_str[] = {
+            "None",
+            "Single",
+            "Var",
+        };*/
+
         void Macro::Lower(AST *parent) {
-            /*auto &[name, type, num] = param;
-            std::cout << "----------------\n";
-            std::cout << "name: " << name << "\n";
-            std::cout << "type: " << (u32)type << "\n";
-            std::cout << "num: " << num << "\n";*/
+            /*u32 idx = 0;
+            for(const auto &[conds, block] : arms) {
+                std::cout << idx << ": {\n";
+                if(conds.size() == 0)
+                    std::cout << "    type: " << type_str[0] << "\n";
+                for(const auto &[n, type] : conds) {
+                    std::cout << "    name -> " << n << "\n";
+                    std::cout << "    type: " << type_str[(u32)type] << "\n";
+                }
+                std::cout << "    block: {\n";
+                for(const auto &expr : block.Body()) {
+                    std::cout << Print(expr.get(), 1).str();
+                }
+                std::cout << "    }\n";
+                std::cout << "}\n";
+                idx++;
+            }*/
             ast_root->DeclMacro(this);
-            for(size_t i = 0; i < body.Body().size(); i++) {
-                ast_root->SetCurrentBlock(&body);
-                body.Body()[i]->Lower(this);
-                body.Increment();
+            for(size_t j = 0; j < arms.size(); j++) {
+                auto body = std::get<1>(arms[j]);
+                for(size_t i = 0; i < body.Body().size(); i++) {
+                    ast_root->SetCurrentBlock(&body);
+                    body.Body()[i]->Lower(this);
+                    body.Increment();
+                }
             }
         }
 
@@ -62,17 +83,48 @@ namespace lygos {
 
         void MacroCall::Lower(AST *parent) {
             auto macro = ast_root->GetMacro(name);
-            Block &macro_block = macro->Body();
-            std::vector<Ref<AST>> body = macro_block.Body();
+            auto arms = macro->GetArms();
+            size_t arm = 0;
+            for(size_t i = 0; i < arms.size(); i++) {
+                const auto &[conds, block] = arms[i];
+                if(conds.size() == 0 && args.size() == 0) {
+                    arm = i;
+                    break;
+                }
+                u32 singe_args = 0;
+                if(conds.size() == args.size()) {
+                    for(size_t j = 0; j < conds.size(); j++) {
+                        if(std::get<1>(conds[j]) == Macro::ArgType::Single)
+                            singe_args++;
+                    }
+                    if(singe_args == conds.size()) {
+                        arm = i;
+                        break;
+                    }
+                }
+                if(singe_args >= args.size())
+                    Log::Logger::Warn("insufficient args supplied to macro");
+
+                arm = i;
+                //handle var
+            }
+            //Log::Logger::Warn(fmt::format("arm = {}", arm));
+            std::cout << fmt::format("arm = {}\n", arm);
+            const auto [conds, block] = arms[arm];
+            std::vector<Ref<AST>> body = block.Body();
             //traverse all subexprs and replace macro var with param
-            for(size_t i = 0; i < body.size(); i++) {
-                if(body[i]->type == ASTType::Id) {
-                    auto iden = std::static_pointer_cast<Identifier>(body[i]);
-                    if(iden->GetId() == std::get<0>(macro->GetArg())) {
-                        VecReplaceAt(body, i, args);
+            for(size_t j = 0; j < conds.size(); j++) {
+                const auto &[name, type] = conds[j];
+                for(size_t i = 0; i < body.size(); i++) {
+                    if(body[i]->type == ASTType::Id) {
+                        auto iden = std::static_pointer_cast<Identifier>(body[i]);
+                        if(iden->GetId() == name) {
+                            VecReplaceAt(body, i, args[j]);
+                        }
                     }
                 }
             }
+            //Log::Logger::Warn(fmt::format("arm = {}", arm));
             ast_root->Replace(body);
         }
 
@@ -96,12 +148,11 @@ namespace lygos {
         }
 
         void MacroInclude::Lower(AST *parent) {
-            /*std::filesystem::path curr = std::filesystem::current_path();
+            std::filesystem::path curr = std::filesystem::current_path();
             auto file_content = IO::ReadFile(curr / file);
             if(!file_content) {
                 Log::Logger::Warn(fmt::format("Could not read file: `{}`", file));
             }
-            printf("root %p\n", (void *)ast_root);
             Lexer lexer(file_content);
             Parser::Parser parser(lexer);
             auto ast = parser.BuildAst();
@@ -109,10 +160,7 @@ namespace lygos {
             Mod *root = (Mod *)ast.get();
             //std::cout << Print(root->Body()[0].get()).str() << "\n";
             Block block = root->Body();
-            Ref<AST> test = MakeRef<Identifier>("test");
-            printf("root %p\n", (void *)ast_root);
-            ast_root->Replace(test);*/
-            Log::Logger::Warn("unimplemented [MacroInclude::Lower()]");
+            ast_root->Replace(block.Body());
         }
 
         void MacroInclude::Sanatize() {

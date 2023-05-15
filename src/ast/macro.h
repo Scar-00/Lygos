@@ -11,15 +11,14 @@ namespace lygos {
             enum class ArgType {
                 None,
                 Single,
-                Arr,
                 Var,
             };
-            using Arg = std::tuple<std::string, ArgType, u32>;
+            using Cond = std::tuple<std::string, ArgType>;
+            using Arm = std::tuple<std::vector<Cond>, Block>;
             public:
-                Macro(std::string name, Arg arg, Block exprs);
-                Block &Body() { return body; }
+                Macro(std::string name, std::vector<Arm> arms);
                 std::string &GetName() { return name; }
-                Arg &GetArg() { return param; }
+                std::vector<Arm> &GetArms() { return arms; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -27,13 +26,13 @@ namespace lygos {
                 void Sanatize() override;
             private:
                 std::string name;
-                Arg param;
-                Block body;
+                std::vector<Arm> arms;
         };
 
         struct MacroCall : public AST {
             public:
                 MacroCall(std::string name, std::vector<Ref<AST>> args);
+                std::vector<Ref<AST>> &GetArgs() { return args; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

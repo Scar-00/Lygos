@@ -98,8 +98,6 @@ namespace lygos {
                         ss << Print(n.get(), depth + 1).str();
                 } break;
                 case ASTType::VarDecl: {
-                    ss << "\n";
-                    indent(ss, depth);
                     ss << "var: " << node->GetValue();
                     auto value = static_cast<VarDecl *>(node)->Value();
                     if(value)
@@ -158,8 +156,8 @@ namespace lygos {
                 } break;
                 case ASTType::Macro: {
                     ss << ": " << node->GetValue() << "\n";
-                    for(const auto &item : ((Macro *)node)->Body().Body())
-                        ss << Print(item.get(), depth + 1).str();
+                    //for(const auto &item : ((Macro *)node)->Body().Body())
+                    //    ss << Print(item.get(), depth + 1).str();
                 } break;
                 default: ss << "\n"; break;
             }
