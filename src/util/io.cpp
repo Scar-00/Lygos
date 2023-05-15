@@ -3,6 +3,7 @@
 
 #include "../core.h"
 
+#include <filesystem>
 #include <sstream>
 #include <fstream>
 #include <string>
@@ -10,16 +11,19 @@
 
 namespace lygos {
     namespace IO {
-        std::string ReadFile(std::filesystem::path path) {
+        const char *ReadFile(std::filesystem::path path) {
+            if(!std::filesystem::exists(path))
+                return nullptr;
             std::ifstream istream;
             istream.open(path);
             istream.seekg(0, std::ios::end);
             size_t length = istream.tellg();
             if(length < 1)
-                return {};
+                return nullptr;
             istream.seekg(0, std::ios::beg);
-            std::string buffer(length, ' ');
-            istream.read(&buffer[0], length);
+            char *buffer = new char[length + 1];
+            istream.read(buffer, length);
+            buffer[length] = '\0';
             return buffer;
         }
 

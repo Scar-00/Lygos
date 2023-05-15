@@ -62,12 +62,12 @@ int main(int argc, char **argv) {
     //return 0;
 
     auto file_content = lygos::IO::ReadFile(input_file);
-    if(file_content.size() < 1) {
+    if(!file_content) {
         std::cout << "Could not read file: `" << input_file << "`" << std::endl;
         return 1;
     }
 
-    lygos::Lexer lexer(file_content.c_str());
+    lygos::Lexer lexer(file_content);
     lygos::Parser::Parser parser(lexer);
     auto root = parser.BuildAst();
     lygos::ast_root = (lygos::AST::Mod *)root.get();

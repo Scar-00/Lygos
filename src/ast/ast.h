@@ -34,6 +34,7 @@ namespace lygos {
             Trait,
             Macro,
             MacroCall,
+            MacroInclude,
             NumberLiteral,
             StringLiteral,
             InitializerList,

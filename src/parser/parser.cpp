@@ -24,6 +24,7 @@ namespace lygos {
                 case TokenType::KwStatic: return ParseStatic();
                 case TokenType::KwTrait: return ParseTrait();
                 case TokenType::KwMacro: return ParseMacro();
+                case TokenType::Hash: return ParsePundStmt();
                 default: return ParseStmt();
             }
         }
@@ -94,9 +95,35 @@ namespace lygos {
 
             /*-------------------*/
             //parse args
+            AST::Macro::Arg arg;
+            if(Eat().type != TokenType::ParanLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `(`");
+
+            if(At().type != TokenType::ParanRight) {
+                if(Eat().type != TokenType::Id)
+                    Log::Logger::Warn(PEEK(-1), "expected identifier");
+                std::string name = PEEK(-1).value;
+                u32 num_args = 0;
+                AST::Macro::ArgType type = AST::Macro::ArgType::None;
+                if(Eat().type != TokenType::Colon)
+                    Log::Logger::Warn(PEEK(-1), fmt::format("expected `:` after macro arg `{}`", name));
+
+                if(At().type == TokenType::Dollar) { Eat(); num_args = 1; type = AST::Macro::ArgType::Single;}
+                if(At().type == TokenType::BraceLeft) {
+                    Eat();
+                    if(At().type == TokenType::Integer) {
+                        num_args = std::atoi(Eat().value.c_str());
+                        type = AST::Macro::ArgType::Arr;
+                    }else {
+                        type = AST::Macro::ArgType::Var;
+                    }
+                    if(Eat().type != TokenType::BraceRight)
+                        Log::Logger::Warn(PEEK(-1), "expected closing bracked `]`");
+                }
+
+                arg = {name, type, num_args};
+            }
             Eat();
-            Eat();
-            /*-------------------*/
 
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after function signature");
@@ -107,7 +134,19 @@ namespace lygos {
             }
             Eat();
 
-            return MakeRef<AST::Macro>(id.value, body);
+            return MakeRef<AST::Macro>(id.value, arg, body);
+        }
+
+        Ref<AST::AST> Parser::ParsePundStmt() {
+            Eat();
+            auto action = Eat().value;
+            if(action == "include") {
+                if(At().type == TokenType::String) {
+                    return MakeRef<AST::MacroInclude>(Eat().value);
+                }
+            }
+            Log::Logger::Warn(PEEK(-1), fmt::format("invalid value `{}` after `#`", action));
+            std::exit(1);
         }
 
         Ref<AST::AST> Parser::ParseStmt() {
@@ -476,7 +515,6 @@ namespace lygos {
             if(At().type == TokenType::Dollar) {
                 Eat();
                 is_macro = true;
-                std::cout << "test" << "\n";
             }
             if(At().type == TokenType::ParanLeft) {
                 Eat();
@@ -492,7 +530,7 @@ namespace lygos {
                 Eat();
 
                 if(is_macro)
-                    return MakeRef<AST::MacroCall>(callee->GetValue(), std::vector<Ref<AST::AST>>());
+                    return MakeRef<AST::MacroCall>(callee->GetValue(), args);
                 return MakeRef<AST::CallExpr>(callee, args);
             }
             return callee;

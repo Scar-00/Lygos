@@ -6,7 +6,7 @@
 
 namespace lygos {
     namespace IO {
-        std::string ReadFile(std::filesystem::path path);
+        const char *ReadFile(std::filesystem::path path);
 
         bool EmitIr(std::filesystem::path path);
         bool EmitObj(std::filesystem::path path);

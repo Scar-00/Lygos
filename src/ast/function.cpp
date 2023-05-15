@@ -72,8 +72,8 @@ namespace lygos {
 
         void Function::Lower(AST *parent) {
             ast_root->SetCurrentFunction(this);
-            ast_root->SetCurrentBlock(&body);
             for(u64 i = 0; i < body.Body().size(); i++) {
+                ast_root->SetCurrentBlock(&body);
                 body.Body()[i]->Lower(this);
                 body.Increment();
             }

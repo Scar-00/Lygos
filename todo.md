@@ -1,11 +1,11 @@
 # IMPORTANT
 * sanatize AST lowering (void Expr::Sanatize() & integrety of Mod::Insert()/Replace())
-* Traverse AST pre code gen(lower it) to get better type information/inferance
 
 # TODO/FIXME
+* fix macros/include (ast replacement[re set block after expr is lowered])
+* rethink macro args
 * compare types at assignment, decl, ...
 * add var-arg as special function type
-* determine if expr result of if/for/while are valid values
 * rewrite return instructions (return block)
 * redo initializers parsing
 

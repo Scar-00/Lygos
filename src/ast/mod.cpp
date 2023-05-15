@@ -21,6 +21,7 @@ namespace lygos {
         }
 
         void Mod::Replace(Block::Content &exprs) {
+            assert(current_block && "???");
             current_block->Replace(exprs);
         }
 
@@ -73,6 +74,7 @@ namespace lygos {
 
         void Mod::Lower(AST *parent) {
             for(u64 i = 0; i < body.Body().size(); i++) {
+                ast_root->SetCurrentBlock(&body);
                 body.Body()[i]->Lower(this);
                 body.Increment();
             }
