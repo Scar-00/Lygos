@@ -29,7 +29,7 @@ namespace lygos {
                 false
             );
 
-            scope->AddType(id, {id, struct_type, struct_fields, {}});
+            scope->AddType(id, {id, struct_type, struct_fields, {}, {}, {}});
             return nullptr;
         }
 

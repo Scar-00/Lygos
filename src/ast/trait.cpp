@@ -1,9 +1,10 @@
 #include "trait.h"
+#include "mod.h"
 
 namespace lygos {
     namespace AST {
         namespace Trait {
-            Trait::Trait(std::string name, std::vector<Ref<Function>> functions):
+            Trait::Trait(std::string name, Block functions):
                 AST(ASTType::Trait), name(name), functions(functions) {
 
             }
@@ -13,11 +14,12 @@ namespace lygos {
             }
 
             llvm::Value *Trait::GenCode(Scope *scope) {
+                //Log::Logger::Warn("unimplemented [Trait::CodeGen()]");
                 return nullptr;
             }
 
             void Trait::Lower(AST *parent) {
-
+                ast_root->DeclTrait(this);
             }
 
             void Trait::Sanatize() {

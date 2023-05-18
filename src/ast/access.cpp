@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "call.h"
 #include "literals.h"
+#include <fmt/core.h>
 
 namespace lygos {
     namespace AST {
@@ -72,9 +73,14 @@ namespace lygos {
         }
 
         llvm::Value *AccessExpr::GenCode(Scope *scope) {
+            //TODO: do not allow this!!
+            //let z = f[0];
             auto obj = this->obj->GenCode(scope);
-            if(!IsArrayType(obj->getType()))
+            if(!IsArrayType(obj->getType()) && !IsStructType(obj->getType()))
                 obj = LoadOrIgnore(obj);
+
+             if(IsStructType(obj->getType()))
+                return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, std::atoi(index->GetValue().c_str()));
 
             auto index = this->index->GenCode(scope);
             if(ShouldLoad(this->index.get()))
@@ -109,8 +115,9 @@ namespace lygos {
         //check for static -> cant call static functions on an object
         llvm::Value *ResolutionExpr::GenCode(Scope *scope) {
             auto fn = (CallExpr *)member.get();
-            std::string fn_name = obj->GetValue() + "_" + fn->GetCaller()->GetValue();
-            ((Identifier *)fn->GetCaller().get())->GetId() = fn_name;
+            ((Identifier *)fn->GetCaller().get())->GetId() = scope->GetStruct(obj->GetValue()).GetFunction(fn->GetCaller()->GetValue()).name_mangeled;
+            //std::string fn_name = obj->GetValue() + "_" + fn->GetCaller()->GetValue();
+            //((Identifier *)fn->GetCaller().get())->GetId() = fn_name;
             return member->GenCode(scope);
         }
 

@@ -1,25 +1,22 @@
-macro foo {
-    () -> {
-        let x = 10;
-    }
-    (x: $) -> {
-        x;
-    }
+struct Quad {
+    width: i32;
+    height: i32;
+};
 
-    (x: $, y: $) -> {
-        x;
-        y;
-        printf("Test\n");
-    }
+trait Area {
+    fn area(&self) -> i32;
+    fn test(&self);
+}
 
-    (x: $, y: $[]) -> {
-        x;
-        y;
-        printf("Hello, World\n");
+impl Area for Quad {
+    fn area(&self) -> i32 {
+        return self->width * self->height;
+    }
+    fn test(&self) {
+
     }
 }
 
 fn main() -> i32 {
-    foo$(let x = 10, 1);
     return 0;
 }

@@ -65,11 +65,33 @@ namespace lygos {
         if(src->isIntegerTy()) {
             if(dest->isFloatTy()) return CastOps::SIToFP;
         }
+        if(src->isStructTy() && dest->isStructTy())
+            if(((llvm::StructType *)src->canLosslesslyBitCastTo(dest)))
+                return CastOps::BitCast;
         Log::Logger::Warn(fmt::format("cannot convert `{}` to `{}`", PrintType(src), PrintType(dest)));
         std::exit(1);
     }
 
     //static void IsImplicityCastable(llvm::Type *src);
+
+    void Type::StructType::AddFunction(Function function) {
+        //Log::Logger::Warn(fmt::format("name {}", this->name));
+        if(this->functions.contains(function.name))
+            Log::Logger::Warn(fmt::format("cannot redeclare function `{}` in struct `{}`", function.name, this->name));
+        functions.insert({function.name, function});
+    }
+
+    Type::Function Type::StructType::GetFunction(std::string name) {
+        if(!functions.contains(name))
+            Log::Logger::Warn(fmt::format("unknown function `{}` in struct {}", name, this->name));
+        return functions.at(name);
+    }
+
+    void Type::StructType::RegisterTraitImpl(std::string trait) {
+        if(traits.contains(trait))
+            Log::Logger::Warn(fmt::format("trait `{}` is already implemented for type `{}`", trait, name));
+        traits.insert(trait);
+    }
 
     bool IsCastable(llvm::Type *src, llvm::Type *dest) {
         if(src->isPointerTy() && dest->isPointerTy()) return true;
@@ -102,6 +124,12 @@ namespace lygos {
         return type->isArrayTy();
     }
 
+    bool IsStructType(llvm::Type *type) {
+        if(type->isPointerTy())
+            return IsStructType(TryGetPointerBase(type));
+        return type->isStructTy();
+    }
+
     std::string &MangleName(std::string &name) {
 
         return name;
@@ -115,10 +143,10 @@ namespace lygos {
             return Matches(((Pointer *)other.get())->GetType());
         }
 
-        if((kind == Kind::path && other->kind == Kind::trait)
+        /*if((kind == Kind::path && other->kind == Kind::trait)
         || (kind == Kind::trait && other->kind == Kind::path)) {
             return ((Path *)kind)->GetPath() == ((Trait *)kind)->GetName();
-        }
+        }*/
 
         return kind == other->kind;
     }

@@ -7,8 +7,8 @@ namespace lygos {
     namespace AST {
         struct Impl : public AST {
             public:
-                Impl(std::string type, std::vector<Ref<AST>> body);
-                std::vector<Ref<AST>> &Body() { return body; }
+                Impl(std::string type, Block body, std::string trait = "");
+                std::vector<Ref<AST>> &Body() { return body.Body(); }
                 std::string &Type() { return type; }
             public:
                 std::string GetValue() override;
@@ -17,7 +17,8 @@ namespace lygos {
                 void Sanatize() override;
             private:
                 std::string type;
-                std::vector<Ref<AST>> body;
+                Block body;
+                std::string trait;
         };
     }
 }

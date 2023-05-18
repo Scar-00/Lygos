@@ -10,6 +10,8 @@ fn main() -> i32 {
         .x = y,
         .y = x
     };
+    let f: Foo = { x, y };
+    let z = f[0];
     printf("foo -> %d | %d\n", foo.x, foo.y);
     return 0;
 }

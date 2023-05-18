@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "../error/log.h"
+#include <cstddef>
 #include <cstdlib>
 #include <memory>
 #include <vector>
@@ -41,6 +42,12 @@ namespace lygos {
         Ref<AST::AST> Parser::ParseImpl() {
             Eat();
 
+            std::string trait = "";
+            if(At().type == TokenType::Id && PEEK(1).type == TokenType::KwFor) {
+                trait = Eat().value;
+                Eat();
+            }
+
             auto id = Eat();
 
             if(id.type != TokenType::Id)
@@ -49,7 +56,7 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{`");
 
-            auto impl = MakeRef<AST::Impl>(id.value, std::vector<Ref<AST::AST>>());
+            auto impl = MakeRef<AST::Impl>(id.value, std::vector<Ref<AST::AST>>(), trait);
 
             current_impl = impl;
             while (At().type != TokenType::CurlyRight) {
@@ -63,7 +70,7 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseTrait() {
-            Log::Logger::Warn("unimplemented [ParseTrait]");
+            //Log::Logger::Warn("unimplemented [ParseTrait]");
             Eat();
 
             auto id = Eat();
@@ -74,10 +81,10 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{`");
 
-            auto trait = MakeRef<AST::Trait::Trait>(id.value, std::vector<Ref<AST::Function>>());
+            auto trait = MakeRef<AST::Trait::Trait>(id.value, AST::Block{});
             current_trait = trait;
             while (At().type != TokenType::CurlyRight) {
-                trait->Functions().push_back(std::static_pointer_cast<AST::Function>(ParseFunc()));
+                trait->Functions().Body().push_back(ParseFunc());
             }
 
             if(Eat().type != TokenType::CurlyRight)
@@ -93,43 +100,11 @@ namespace lygos {
             if(id.type != TokenType::Id)
                 Log::Logger::Warn(id, "expected identifier after keyword `macro`");
 
-            /*-------------------*/
-            //parse args
-            /*if(Eat().type != TokenType::ParanLeft)
-                Log::Logger::Warn(PEEK(-1), "expected `(`");
-
-            while(At().type != TokenType::ParanRight) {
-                if(Eat().type != TokenType::Id)
-                    Log::Logger::Warn(PEEK(-1), "expected identifier");
-                std::string name = PEEK(-1).value;
-                AST::Macro::ArgType type = AST::Macro::ArgType::None;
-                if(Eat().type != TokenType::Colon)
-                    Log::Logger::Warn(PEEK(-1), fmt::format("expected `:` after macro arg `{}`", name));
-
-                if(At().type == TokenType::Dollar) { Eat(); type = AST::Macro::ArgType::Single;}
-                if(At().type == TokenType::BraceLeft) {
-                    Eat();
-                    type = AST::Macro::ArgType::Var;
-                    if(Eat().type != TokenType::BraceRight)
-                        Log::Logger::Warn(PEEK(-1), "expected closing bracked `]`");
-                }
-
-                args.push_back({name, type});
-            }
-            Eat();*/
-
-            /*if(Eat().type != TokenType::CurlyLeft)
-                Log::Logger::Warn(PEEK(-1), "expected `{` after function signature");
-
-            std::vector<Ref<AST::AST>> body;
-            while (At().type != TokenType::CurlyRight) {
-                body.push_back(ParseStmt());
-            }
-            Eat();*/
             std::vector<AST::Macro::Arm> arms;
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after macro name");
 
+            //TODO: organise this mess
             while (At().type != TokenType::CurlyRight) {
                 if(Eat().type != TokenType::ParanLeft)
                     Log::Logger::Warn(PEEK(-1), "expected `(`");
@@ -265,7 +240,7 @@ namespace lygos {
             auto id = Eat();
 
             if(id.value == "&" || id.value == "mut" || id.value == "self") {
-                if(!current_impl)
+                if(current_impl != NULL && current_trait != NULL)
                     Log::Logger::Warn("member function can only be declared in an impl or trait block");
                 Ref<Type::Type> type = nullptr;
                 if(id.value == "&") {
@@ -275,7 +250,10 @@ namespace lygos {
                         id = Eat();
                         mut = true;
                     }
-                    type = MakeRef<Type::Pointer>(MakeRef<Type::Path>(current_impl->Type()), mut);
+                    if(current_impl == NULL)
+                        type = MakeRef<Type::Pointer>(MakeRef<Type::Path>(""), mut);
+                    else
+                        type = MakeRef<Type::Pointer>(MakeRef<Type::Path>(current_impl->Type()), mut);
                 }
 
                 if(id.value != "self")
@@ -328,8 +306,8 @@ namespace lygos {
             }
 
             //"mangle" function name
-            if(current_impl)
-                id.value = current_impl->Type() + "_" + id.value;
+            //if(current_impl)
+            //    id.value = current_impl->Type() + "_" + id.value;
 
             if(At().type == TokenType::Semi) {
                 Eat();

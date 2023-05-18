@@ -2,6 +2,8 @@
 #define _LYGOS_TYPES_H_
 
 #include "llvm.h"
+#include <tuple>
+#include <unordered_map>
 
 template<typename T>
 using Ref = std::shared_ptr<T>;
@@ -168,20 +170,38 @@ namespace lygos {
     llvm::Value *TryCast(llvm::Value *val, llvm::Type *dest);
     bool IsFunctionType(llvm::Type *type);
     bool IsArrayType(llvm::Type *type);
+    bool IsStructType(llvm::Type *type);
     std::string &MangleName(std::string &name, std::string &obj, std::string &spec);
 
     namespace Type {
+        struct Generic {
+            std::string name;
+            std::vector<Ref<struct Type>> constraints;
+        };
+
         struct Function {
             bool operator==(const Function &other) { return name == other.name; }
             std::string name;
-            llvm::Function *llvm_function;
+            std::string name_mangeled;
+            std::vector<std::tuple<std::string, Ref<struct Type>>> args;
+            Ref<struct Type> ret_type;
         };
 
         struct StructType {
             std::string name;
             llvm::StructType *llvm_type;
             std::vector<std::string> fields;
-            std::vector<Function> functions;
+            std::unordered_map<std::string, Function> functions;
+            std::unordered_map<std::string, Generic> generics;
+            std::set<std::string> traits;
+            void AddFunction(Function function);
+            Function GetFunction(std::string name);
+            void RegisterTraitImpl(std::string trait);
+            bool ImplementsTrait(std::string trait) { return traits.contains(trait); }
+        };
+
+        struct Macro {
+            std::string name;
         };
 
         enum Kind {
@@ -245,13 +265,13 @@ namespace lygos {
             Ref<Type> return_type;
         };
 
-        struct Trait : public Type {
+        /*struct Trait : public Type {
             public:
                 Trait(std::string name): name(name) {this->kind = Kind::trait;}
                 std::string &GetName() { return name; }
             private:
                 std::string name;
-        };
+        };*/
     }
 }
 

@@ -8,8 +8,8 @@ namespace lygos {
         namespace Trait {
             struct Trait : public AST {
                 public:
-                    Trait(std::string name, std::vector<Ref<Function>> functions);
-                    std::vector<Ref<Function>> &Functions() { return functions; }
+                    Trait(std::string name, Block functions);
+                    Block &Functions() { return functions; }
                 public:
                     std::string GetValue() override;
                     llvm::Value *GenCode(Scope *scope) override;
@@ -17,7 +17,7 @@ namespace lygos {
                     void Sanatize() override;
                 private:
                     std::string name;
-                    std::vector<Ref<Function>> functions;
+                    Block functions;
             };
         }
     }

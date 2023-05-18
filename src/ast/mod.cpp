@@ -1,6 +1,7 @@
 #include "mod.h"
 #include "function.h"
 #include "macro.h"
+#include "trait.h"
 
 namespace lygos {
     namespace AST {
@@ -58,6 +59,18 @@ namespace lygos {
             if(!macros.contains(name))
                 Log::Logger::Warn(fmt::format("cannot find macro named `{}`", name));
             return macros.at(name);
+        }
+
+        void Mod::DeclTrait(Trait::Trait *trait) {
+            if(traits.contains(trait->GetValue()))
+                Log::Logger::Warn(fmt::format("cannot redeclare trait `{}`", trait->GetValue()));
+            traits.insert({trait->GetValue(), trait});
+        }
+
+        Trait::Trait *Mod::GetTrait(std::string &name) {
+            if(!traits.contains(name))
+                Log::Logger::Warn(fmt::format("cannot find trait `{}`", name));
+            return traits.at(name);
         }
 
         std::string Mod::GetValue() {

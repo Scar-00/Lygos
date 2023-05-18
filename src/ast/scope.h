@@ -21,14 +21,12 @@ namespace lygos {
                 llvm::BasicBlock *GetRetBlock();
                 bool HasRetValue();
                 llvm::AllocaInst *LookupVar(std::string id);
-                std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
+                //std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
+                void RegisterFunction(Type::Function function);
+                Type::Function GetFunction(std::string name);
                 void AddType(std::string id, Type::StructType struct_type);
-                //void TypeAddFunction(std::string type, Type::Function func);
-                //Type::Function &GetMemberFunction(std::string &type, Type::Function &func);
                 llvm::Type *GetType(Type::Type *type);
                 Type::StructType &GetStruct(std::string);
-                void AddFunction(Function *func);
-                Function *GetFunction(std::string &name);
                 Ref<Mod> GetMod();
             private:
                 Scope *Resolve(std::string id);
@@ -39,8 +37,8 @@ namespace lygos {
                 //std::unordered_map<std::string, std::tuple<llvm::AllocaInst *, Ref<Type::Type>>> vars;
                 std::unordered_map<std::string, llvm::AllocaInst *> vars;
                 std::set<std::string> constants;
-                //std::unordered_set<std::string> generics;
                 std::unordered_map<std::string, Type::StructType> struct_types;
+                std::unordered_map<std::string, Type::Function> functions;
                 Scope *parent = nullptr;
                 llvm::Value *ret = nullptr;
                 llvm::BasicBlock *ret_block = nullptr;

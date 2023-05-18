@@ -9,6 +9,9 @@ namespace lygos {
     namespace AST {
         struct Macro;
         struct Function;
+        namespace Trait {
+            struct Trait;
+        }
         typedef void (*MacroIntrinsicCallBack)();
         struct Mod : public AST {
             public:
@@ -26,6 +29,8 @@ namespace lygos {
                 void AddFunction(Function *func);
                 void DeclMacro(Macro *macro);
                 Macro *GetMacro(std::string &name);
+                void DeclTrait(Trait::Trait *trait);
+                Trait::Trait *GetTrait(std::string &name);
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -38,6 +43,7 @@ namespace lygos {
                 Function *current_func = nullptr;
                 std::unordered_map<std::string, Function *> functions;
                 std::unordered_map<std::string, Macro*> macros;
+                std::unordered_map<std::string, Trait::Trait *> traits;
                 //std::unordered_map<std::string, MacroIntrinsicCallBack> macros_intrinsic;
         };
     }

@@ -125,18 +125,6 @@ namespace lygos {
                     ss << Print(((MemberExpr *) node)->Obj().get(), depth + 1).str();
                     ss << Print(((MemberExpr *) node)->Member().get(), depth + 1).str();
                 } break;
-                /*case ASTType::BinaryExpr: {
-                    auto binop = (BinaryExpr *)node;
-                    ss << ": " << binop->op;
-                    ss << "\n";
-                    auto lhs = Print(binop->lhs, depth + 1).str();
-                    ss << lhs;
-                    auto rhs = Print(binop->rhs, depth + 1).str();
-                    ss << rhs;
-                } break;
-                case ASTType::NumberLiteral: {
-                    ss << ": " << node->GetValue() << "\n";
-                } break;*/
                 case ASTType::UnaryExpr: {
                     ss << ": " << static_cast<UnaryExpr *>(node)->Op() << "\n";
                     ss << Print(static_cast<UnaryExpr *>(node)->Obj().get(), depth + 1).str();
@@ -158,6 +146,12 @@ namespace lygos {
                     ss << ": " << node->GetValue() << "\n";
                     //for(const auto &item : ((Macro *)node)->Body().Body())
                     //    ss << Print(item.get(), depth + 1).str();
+                } break;
+                case ASTType::StructDef: {
+                    ss << ": " << node->GetValue() << "\n";
+                } break;
+                case ASTType::Trait: {
+                    ss << ": " << node->GetValue() << "\n";
                 } break;
                 default: ss << "\n"; break;
             }

@@ -1,6 +1,7 @@
 #include "vardecl.h"
 #include "mod.h"
 #include "function.h"
+#include <llvm/IR/DerivedTypes.h>
 
 namespace lygos {
     namespace AST {
@@ -25,7 +26,6 @@ namespace lygos {
 
             if(type.get()) {
                 auto type = scope->GetType(this->type.get());
-                //val = TryCast(val, type);
                 val = builder->CreateCast(GetCastOp(val->getType(), type), val, type);
             }
 

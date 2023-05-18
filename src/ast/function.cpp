@@ -34,7 +34,6 @@ namespace lygos {
                 );
             }
             //if(is_definition)
-            //    scope->TypeAddFunction(obj->Type(), {name, fn});
             ast_root->SetCurrentFunction(this);
             ast_root->AddFunction(this);
             if(!is_definition)
@@ -67,6 +66,7 @@ namespace lygos {
 
             llvm::verifyFunction(*fn, &llvm::errs());
             //curr_scope.Print();
+            scope->RegisterFunction({name, {}, this->args, ret_type});
             return nullptr;
         }
 

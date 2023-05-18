@@ -79,6 +79,17 @@ namespace lygos {
             return scope->vars.at(id);
         }
 
+        void Scope::RegisterFunction(Type::Function function) {
+            if(functions.contains(function.name))
+                Log::Logger::Warn("");
+            functions.insert({function.name, function});
+        }
+
+        Type::Function Scope::GetFunction(std::string name) {
+            if(!functions.contains(name))
+                Log::Logger::Warn("");
+            return functions.at(name);
+        }
 
         void Scope::AddType(std::string id, Type::StructType struct_type) {
             auto scope = this->Resolve(id.c_str());
