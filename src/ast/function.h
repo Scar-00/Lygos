@@ -32,6 +32,9 @@ namespace lygos {
                 bool is_definition;
                 bool is_var_arg = false;
         };
+
+        struct Closure : public AST {
+        };
     }
 }
 

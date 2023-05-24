@@ -25,7 +25,7 @@ namespace lygos {
                 case TokenType::KwStatic: return ParseStatic();
                 case TokenType::KwTrait: return ParseTrait();
                 case TokenType::KwMacro: return ParseMacro();
-                case TokenType::Hash: return ParsePundStmt();
+                case TokenType::Hash: return ParsePoundStmt();
                 default: return ParseStmt();
             }
         }
@@ -160,7 +160,7 @@ namespace lygos {
             return MakeRef<AST::Macro>(id.value, arms);
         }
 
-        Ref<AST::AST> Parser::ParsePundStmt() {
+        Ref<AST::AST> Parser::ParsePoundStmt() {
             Eat();
             auto action = Eat().value;
             if(action == "include") {
@@ -220,6 +220,28 @@ namespace lygos {
             if(struct_id.type != TokenType::Id)
                 Log::Logger::Warn(struct_id, "expected identifier after keyword `struct`");
 
+            std::vector<Type::Generic> generics;
+            if(At().type == TokenType::AngleLeft) {
+                Eat();
+                while (At().type != TokenType::AngleRight) {
+                    Token name = Eat();
+                    if(name.type != TokenType::Id)
+                        Log::Logger::Warn(name, "expected `identifier`");
+
+                    generics.push_back(Type::Generic{name.value, {}});
+
+                    if(At().type == TokenType::AngleRight)
+                        break;
+
+                    if(Eat().type != TokenType::Comma)
+                        Log::Logger::Warn(PEEK(-1), "expected type args to be comma seperated");
+                }
+                if(Eat().type != TokenType::AngleRight) {
+                    Log::Logger::Warn(PEEK(-1), "expected closing bracked `>`");
+                }
+            }
+
+
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after struct identifier");
 
@@ -233,7 +255,7 @@ namespace lygos {
             if(Eat().type != TokenType::Semi)
                 Log::Logger::Warn(PEEK(-1), "expected, `;` after struct declaration");
 
-            return MakeRef<AST::StructDef>(struct_id.value, fields);
+            return MakeRef<AST::StructDef>(struct_id.value, fields, generics);
         }
 
         AST::Function::Arg Parser::ParseFuncArg() {
@@ -468,6 +490,10 @@ namespace lygos {
             }
         }
 
+        Ref<AST::AST> Parser::ParseClosure() {
+            return nullptr;
+        }
+
         Ref<AST::AST> Parser::ParseParanExpr() {
             if(At().type == TokenType::ParanLeft) {
                 Eat();
@@ -490,8 +516,8 @@ namespace lygos {
             auto lhs = ParseAdditiveExpr();
 
             while(At().type == TokenType::OpEqEq
-            || At().type == TokenType::OpLe
-            || At().type == TokenType::OpGr
+            || At().type == TokenType::AngleRight
+            || At().type == TokenType::AngleLeft
             || At().type == TokenType::OpOr) {
                 auto op = Eat().value;
                 auto rhs = ParseAdditiveExpr();
@@ -754,6 +780,22 @@ namespace lygos {
                 origin = MakeRef<Type::Path>(Eat().value);
             }else {
                 static_cast<Type::Pointer *>(spec.get())->SetType(MakeRef<Type::Path>(Eat().value));
+            }
+
+            if(At().type == TokenType::AngleLeft) {
+                Eat();
+                while (At().type != TokenType::AngleRight) {
+                    ((Type::Path *)origin.get())->GetArgs().push_back(ParseTypeSpec());
+
+                    if(At().type == TokenType::AngleRight)
+                        break;
+
+                    if(Eat().type != TokenType::Comma)
+                        Log::Logger::Warn(PEEK(-1), "expected type args to be comma seperated");
+                }
+                if(Eat().type != TokenType::AngleRight) {
+                    Log::Logger::Warn(PEEK(-1), "expected closing bracked `>`");
+                }
             }
 
             return origin;

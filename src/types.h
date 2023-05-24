@@ -61,9 +61,7 @@ namespace lygos {
 
         OpEqEq, // ==
         OpNeEq, // !=
-        OpLe, // <
         OpLeEq, // <=
-        OpGr, // >
         OpGrEq, // >=
         OpOr, // ||
         OpAnd, // &&
@@ -75,6 +73,8 @@ namespace lygos {
         BraceRight,
         CurlyLeft,
         CurlyRight,
+        AngleLeft, // <
+        AngleRight, // >
         ParanLeft,
         ParanRight,
 
@@ -179,6 +179,11 @@ namespace lygos {
             std::vector<Ref<struct Type>> constraints;
         };
 
+        struct Variable {
+            Ref<struct Type> type;
+            llvm::AllocaInst *alloca;
+        };
+
         struct Function {
             bool operator==(const Function &other) { return name == other.name; }
             std::string name;
@@ -224,8 +229,10 @@ namespace lygos {
                 this->kind = Kind::path;
             }
             std::string &GetPath() { return path; }
+            std::vector<Ref<Type>> &GetArgs() { return args; }
         private:
             std::string path;
+            std::vector<Ref<Type>> args;
         };
 
         struct Pointer : public Type {

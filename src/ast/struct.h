@@ -11,7 +11,7 @@ namespace lygos {
                 std::string id;
             };
             public:
-                StructDef(std::string id, std::vector<Field> fields);
+                StructDef(std::string id, std::vector<Field> fields, std::vector<Type::Generic> generics);
             public:
             std::string GetValue() override;
             llvm::Value *GenCode(Scope *scope) override;
@@ -20,6 +20,7 @@ namespace lygos {
             private:
                 std::string id;
                 std::vector<Field> fields;
+                std::vector<Type::Generic> generics;
         };
     }
 }

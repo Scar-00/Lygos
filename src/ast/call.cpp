@@ -5,6 +5,8 @@
 #include "function.h"
 #include "access.h"
 #include <ios>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Instructions.h>
 #include <vector>
 
 namespace lygos {
@@ -22,13 +24,23 @@ namespace lygos {
             //std::cout << this->GetCaller()->type << "\n";
             auto fn_name = caller->GetValue();
             auto fn = ast_root->GetFunction(fn_name);
-            auto callee = mod->getFunction(fn_name);
+            llvm::Function *callee = mod->getFunction(fn_name);
+            bool is_ptr = false;
             if(!callee || !fn) {
-                Log::Logger::Warn(fmt::format("unknown function `{}`", caller->GetValue()));
+                auto test = caller->GenCode(scope);
+                if(!IsFunctionType(test->getType()))
+                    Log::Logger::Warn(fmt::format("unknown function `{}`", caller->GetValue()));
+                fmt::print("test -> {}\n", PrintValue(test));
+                //callee = (llvm::Function *)builder->CreateLoad(TryGetPointerBase(test->getType()), test);
+                callee = (llvm::Function *)test;
+                fmt::print("load -> {}\n", PrintValue(callee));
+                fmt::print("type -> {}\n", PrintType(callee->getType()));
+                is_ptr = true;
             }
-
-            if(!callee->isVarArg() && callee->arg_size() != args.size())
-                Log::Logger::Warn(fmt::format("function `{}` expected `{}` args but only `{}` were supplied", fn_name, callee->arg_size(), args.size()));
+            //llvm::FunctionCallee c = {(llvm::FunctionType *)callee->getType(), callee};
+            if(!is_ptr)
+                if(!callee->isVarArg() && callee->arg_size() != args.size())
+                    Log::Logger::Warn(fmt::format("function `{}` expected `{}` args but only `{}` were supplied", fn_name, callee->arg_size(), args.size()));
 
             std::vector<llvm::Value *> arg_values;
             u64 i = 0;
@@ -36,10 +48,15 @@ namespace lygos {
                 auto val = arg->GenCode(scope);
                 if(ShouldLoad(arg.get()) && (!(i == 0 && fn->IsMember()) || (i == 0 && deref_self)))
                     val = LoadOrIgnore(val);
+                /*if(ShouldLoad(arg.get()))
+                    if(!is_ptr && (!(i == 0 && fn->IsMember()) || (i == 0 && deref_self)))
+                        val = LoadOrIgnore(val);*/
                 //add implicit casting
                 arg_values.push_back(val);
                 i++;
             }
+            //c.getFunctionType()->isVarArg();
+            //Log::Logger::Warn("test");
             return builder->CreateCall(callee, arg_values);
         }
 

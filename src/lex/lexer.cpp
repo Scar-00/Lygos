@@ -95,7 +95,16 @@ namespace lygos {
                     }
                 }
                 case '*': return AdvanceToken({"*", TokenType::OpMul, {line}});
-                case '/': return AdvanceToken({"/", TokenType::OpDiv, line});
+                case '/': {
+                    switch (src[index + 1]) {
+                        case '/': {
+                            while(curr != '\n') {
+                                Advance();
+                            }
+                        } break;
+                        default: return AdvanceToken({"/", TokenType::OpDiv, line});
+                    }
+                }break;
                 case '%': return AdvanceToken({"%", TokenType::OpMod, line});
                 case '[': return AdvanceToken({"[", TokenType::BraceLeft, line});
                 case ']': return AdvanceToken({"]", TokenType::BraceRight, line});
@@ -108,13 +117,13 @@ namespace lygos {
                 case '<': {
                     switch (src[index + 1]) {
                         case '=': Advance(); return AdvanceToken({"<=", TokenType::OpEqEq, line});
-                        default: return AdvanceToken({"<", TokenType::OpGr, line});
+                        default: return AdvanceToken({"<", TokenType::AngleLeft, line});
                     }
                 }
                 case '>': {
                     switch (src[index + 1]) {
                         case '=': Advance(); return AdvanceToken({">=", TokenType::OpEqEq, line});
-                        default: return AdvanceToken({">", TokenType::Bang, line});
+                        default: return AdvanceToken({">", TokenType::AngleRight, line});
                     }
                 }
                 case '&': {
@@ -140,8 +149,7 @@ namespace lygos {
                         case '=': Advance(); return AdvanceToken({"==", TokenType::OpEqEq, line});
                         default: return AdvanceToken({"=", TokenType::Equals, line});
                     }
-                }
-                case '\"': Advance(); return LexString();
+                }                case '\"': Advance(); return LexString();
                 case '\'': Advance(); return LexChar();
                 case '\0': return {"", TokenType::Eof, line};
                 default:

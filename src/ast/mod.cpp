@@ -40,7 +40,8 @@ namespace lygos {
 
         Function *Mod::GetFunction(std::string &name) {
             if(!functions.contains(name))
-                Log::Logger::Warn(fmt::format("unknown function `{}`", name));
+                return nullptr;
+                //Log::Logger::Warn(fmt::format("unknown function `{}`", name));
 
             return functions.at(name);
         }

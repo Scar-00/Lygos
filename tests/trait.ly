@@ -1,11 +1,25 @@
-struct Square {
-    size: i32;
+struct Quad {
+    width: i32;
+    height: i32;
 };
 
 trait Area {
-    fn area() -> i32;
+    fn area(&self) -> i32;
+    fn test(&self);
 }
 
-fn main(argc: i32, argv: **i8) -> i32 {
+impl Area for Quad {
+    fn area(&self) -> i32 {
+        return self->width * self->height;
+    }
+    fn test(&self) {
+
+    }
+}
+
+fn main() -> i32 {
+    let q: Quad = { 10, 5 };
+    let area = q.area();
+    printf("area -> %d\n", area);
     return 0;
 }

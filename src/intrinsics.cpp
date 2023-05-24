@@ -28,13 +28,9 @@ namespace lygos {
                 //if(!Formatable(arg->type))
                 //    Log::Logger::Warn("cannot format");
                 if(arg->type == AST::ASTType::Id) {
-                    auto type = scope->LookupVar(arg->GetValue());
-                    if(type) {
-
-                    }
                 }
             }
-            
+
             std::string format = args[0]->GetValue();
         }
     }

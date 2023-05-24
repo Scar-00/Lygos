@@ -4,7 +4,8 @@
 
 namespace lygos {
     namespace AST {
-        StructDef::StructDef(std::string id, std::vector<Field> fields): AST(ASTType::StructDef), id(id), fields(fields) {
+        StructDef::StructDef(std::string id, std::vector<Field> fields, std::vector<Type::Generic> generics):
+            AST(ASTType::StructDef), id(id), fields(fields), generics(generics) {
 
         }
 
@@ -34,7 +35,9 @@ namespace lygos {
         }
 
         void StructDef::Lower(AST *parent) {
-
+            for(const auto &name : generics) {
+                fmt::print("{}\n", name.name);
+            }
         }
 
         void StructDef::Sanatize() {

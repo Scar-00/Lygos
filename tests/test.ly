@@ -1,21 +1,23 @@
-struct Quad {
-    width: i32;
-    height: i32;
+//fn malloc(size: u64) -> *i8;
+
+struct Foo { x: i32; };
+
+struct Vec<T> {
+    data: *i32;
+    len: u32;
+    cap: u32;
 };
 
-trait Area {
-    fn area(&self) -> i32;
-    fn test(&self);
-}
-
-impl Area for Quad {
-    fn area(&self) -> i32 {
-        return self->width * self->height;
-    }
-    fn test(&self) {
-
-    }
-}
+//impl Vec<T> {
+//    fn new(size: u32) -> Vec<T> {
+//        let this: Vec<T> = {
+//            .data = malloc((:u64)(size * 4)),
+//            .len = 0,
+//            .cap = size,
+//        };
+//        return this;
+//    }
+//}
 
 fn main() -> i32 {
     return 0;

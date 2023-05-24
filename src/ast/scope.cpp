@@ -5,6 +5,7 @@
 
 #include "function.h"
 
+#include <fmt/core.h>
 #include <fmt/format.h>
 
 
@@ -105,7 +106,12 @@ namespace lygos {
                     if(base_types.contains(path)) return ResolveType(path);
                     Scope *scope = this->Resolve(path.c_str());
                     if(scope->struct_types.contains(path)) {
-                        return scope->struct_types.at(path).llvm_type;
+                        Type::StructType &typ = scope->struct_types.at(path);
+                        //handle potential generics of the type
+                        for(const auto &type : ((Type::Path *)type)->GetArgs()) {
+                            fmt::print("{}\n", type->GetName());
+                        }
+                        return typ.llvm_type;
                     }
                 } break;
                 case Type::Kind::ptr:
@@ -113,7 +119,6 @@ namespace lygos {
                     break;
                 case Type::Kind::arr: {
                     auto arr_type = static_cast<Type::Array *>(type);
-                    //error("TODO!, [Arr Type]");
                     return llvm::ArrayType::get(GetType(arr_type->GetType().get()), arr_type->ElemCount());
                 } break;
                 case Type::Kind::function: {
@@ -127,9 +132,7 @@ namespace lygos {
                         params,
                         false
                     );
-                    //error("Unimplemented [FuncPtr]");
                     return llvm::PointerType::get(type, 0);
-                    //return type;
                 }break;
                 case Type::Kind::trait: {
 
