@@ -198,11 +198,14 @@ namespace lygos {
             std::vector<std::string> fields;
             std::unordered_map<std::string, Function> functions;
             std::unordered_map<std::string, Generic> generics;
+            std::unordered_map<Ref<struct Type>, llvm::Type *> variants;
             std::set<std::string> traits;
             void AddFunction(Function function);
             Function GetFunction(std::string name);
             void RegisterTraitImpl(std::string trait);
             bool ImplementsTrait(std::string trait) { return traits.contains(trait); }
+            void AddVariant(Ref<struct Type> type, llvm::Type *variant);
+            llvm::Type *GetVariant(Ref<struct Type> type) { return variants.at(type); }
         };
 
         struct Macro {

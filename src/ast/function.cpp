@@ -49,7 +49,7 @@ namespace lygos {
                 auto arg = &*args + i;
                 auto alloca = builder->CreateAlloca(arg->getType());
                 builder->CreateStore(arg, alloca);
-                curr_scope.DeclVar(std::get<0>(this->args.at(i)), false, alloca);
+                curr_scope.DeclVar(std::get<0>(this->args.at(i)), false, {std::get<1>(this->args[i]), alloca});
             }
 
             //curr_scope.SetRetBlock(llvm::BasicBlock::Create(*ctx, "", fn));

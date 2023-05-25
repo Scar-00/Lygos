@@ -16,7 +16,7 @@ namespace lygos {
         }
 
         llvm::Value *Identifier::GenCode(Scope *scope) {
-            return scope->LookupVar(id);
+            return scope->LookupVar(id).alloca;
         }
 
         void Identifier::Lower(AST *parent) {

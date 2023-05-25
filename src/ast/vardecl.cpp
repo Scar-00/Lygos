@@ -17,7 +17,7 @@ namespace lygos {
         llvm::Value *VarDecl::GenCode(Scope *scope) {
             if(value.get() == nullptr) {
                 auto alloca = builder->CreateAlloca(scope->GetType(type.get()));
-                scope->DeclVar(id, cnst, alloca);
+                scope->DeclVar(id, cnst, {type, alloca});
                 return alloca;
             }
             auto val = value->GenCode(scope);
@@ -34,7 +34,7 @@ namespace lygos {
 
             auto alloca = builder->CreateAlloca(val->getType());
             builder->CreateStore(val, alloca);
-            scope->DeclVar(id, cnst, alloca);
+            scope->DeclVar(id, cnst, {type, alloca});
             return alloca;
         }
 

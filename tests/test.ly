@@ -2,10 +2,9 @@
 
 struct Foo { x: i32; };
 
-struct Vec<T> {
-    data: *i32;
-    len: u32;
-    cap: u32;
+struct Vec<T, E> {
+    data: *T;
+    data1: E;
 };
 
 //impl Vec<T> {
@@ -20,5 +19,6 @@ struct Vec<T> {
 //}
 
 fn main() -> i32 {
+    let mut test: Vec<i32, Foo>;
     return 0;
 }

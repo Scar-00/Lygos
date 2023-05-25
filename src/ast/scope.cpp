@@ -11,7 +11,7 @@
 
 namespace lygos {
     namespace AST {
-        void Scope::DeclVar(std::string id, bool cnst, llvm::AllocaInst *value) {
+        void Scope::DeclVar(std::string id, bool cnst, Type::Variable type) {
             Scope *scpoe = this;
             if(scpoe->vars.contains(id))
                 Log::Logger::Warn(fmt::format("cannot declare variable `{}` twice", id));
@@ -19,7 +19,7 @@ namespace lygos {
             if(cnst)
                 scpoe->constants.insert(id);
 
-            scpoe->vars.insert_or_assign(id, value);
+            scpoe->vars.insert({id, type});
         }
 
         void Scope::Print() {
@@ -30,7 +30,7 @@ namespace lygos {
             }
             std::cout << "-vars:\n";
             for(auto const &[name, alloca] : vars) {
-                std::cout << "\t{" << name << " : " << PrintType(alloca->getType()) << "},\n";
+                std::cout << "\t{" << name << " : " << PrintType(alloca.alloca->getType()) << "},\n";
             }
             std::cout << "]" << std::endl;
         }
@@ -72,7 +72,7 @@ namespace lygos {
             return parent->HasRetValue();
         }
 
-        llvm::AllocaInst *Scope::LookupVar(std::string id) {
+        Type::Variable Scope::LookupVar(std::string id) {
             Scope *scope = this->Resolve(id);
             if(!scope->vars.contains(id))
                 Log::Logger::Warn(fmt::format("`{}` is undefined", id));

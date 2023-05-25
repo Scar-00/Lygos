@@ -14,13 +14,13 @@ namespace lygos {
             public:
                 Scope(Scope *parent = nullptr, Ref<Mod> mod = nullptr): mod(mod), parent(parent) {}
                 void Print();
-                void DeclVar(std::string id, bool cnst, llvm::AllocaInst *value);
+                void DeclVar(std::string id, bool cnst, Type::Variable type);
                 void SetRet(llvm::Value *value) { ret = value; }
                 llvm:: Value *GetRet();
                 void SetRetBlock(llvm::BasicBlock *block);
                 llvm::BasicBlock *GetRetBlock();
                 bool HasRetValue();
-                llvm::AllocaInst *LookupVar(std::string id);
+                Type::Variable LookupVar(std::string id);
                 //std::unordered_map<std::string, llvm::AllocaInst *> &GetVars() { return vars; }
                 void RegisterFunction(Type::Function function);
                 Type::Function GetFunction(std::string name);
@@ -35,7 +35,7 @@ namespace lygos {
                 Ref<Mod> mod;
                 //add own type for more info
                 //std::unordered_map<std::string, std::tuple<llvm::AllocaInst *, Ref<Type::Type>>> vars;
-                std::unordered_map<std::string, llvm::AllocaInst *> vars;
+                std::unordered_map<std::string, Type::Variable> vars;
                 std::set<std::string> constants;
                 std::unordered_map<std::string, Type::StructType> struct_types;
                 std::unordered_map<std::string, Type::Function> functions;

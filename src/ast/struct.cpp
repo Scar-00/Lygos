@@ -30,13 +30,13 @@ namespace lygos {
                 false
             );
 
-            scope->AddType(id, {id, struct_type, struct_fields, {}, {}, {}});
+            scope->AddType(id, {id, struct_type, struct_fields, {}, {}, {}, {}});
             return nullptr;
         }
 
         void StructDef::Lower(AST *parent) {
             for(const auto &name : generics) {
-                fmt::print("{}\n", name.name);
+                fmt::print("generic -> {}\n", name.name);
             }
         }
 

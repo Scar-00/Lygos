@@ -10,6 +10,7 @@
 #include "impl.h"
 #include "vardecl.h"
 #include "casting.h"
+#include "struct.h"
 #include <sstream>
 
 namespace lygos {
@@ -76,7 +77,7 @@ namespace lygos {
 
         static void indent(std::ostream &os, s32 depth) {
             for(s32 i = 0; i < depth; i++) {
-                os << "\t";
+                os << "    ";
             }
         }
 
@@ -98,7 +99,7 @@ namespace lygos {
                         ss << Print(n.get(), depth + 1).str();
                 } break;
                 case ASTType::VarDecl: {
-                    ss << "var: " << node->GetValue();
+                    ss << " var: " << node->GetValue();
                     auto value = static_cast<VarDecl *>(node)->Value();
                     if(value)
                         ss << " =\n" << Print(value.get(), depth + 1).str();
