@@ -30,18 +30,6 @@ namespace lygos {
                 std::vector<Arm> arms;
         };
 
-        struct MacroVar : public AST {
-            public:
-                MacroVar(std::string name);
-            public:
-                std::string GetValue() override;
-                llvm::Value *GenCode(Scope *scope) override;
-                void Lower(AST *parent) override;
-                void Sanatize() override;
-            private:
-                std::string name;
-        };
-
         struct MacroCall : public AST {
             public:
                 MacroCall(std::string name, std::vector<std::vector<Token>> args);

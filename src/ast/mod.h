@@ -31,6 +31,9 @@ namespace lygos {
                 Macro *GetMacro(std::string &name);
                 void DeclTrait(Trait::Trait *trait);
                 Trait::Trait *GetTrait(std::string &name);
+                std::unordered_map<std::string, Function *> &GetFunctions() { return functions; }
+                std::unordered_map<std::string, Macro*> &GetMacros() { return macros; }
+                std::unordered_map<std::string, Trait::Trait *> &GetTraits() { return traits; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

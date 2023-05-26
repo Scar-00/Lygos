@@ -149,6 +149,7 @@ namespace lygos {
                 if(Eat().type != TokenType::CurlyLeft)
                     Log::Logger::Warn(PEEK(-1), "expected `{` after macro name");
 
+                //u32 braces = 0;
                 while (At().type != TokenType::CurlyRight) {
                     block.push_back(Eat());
                 }
@@ -716,12 +717,6 @@ namespace lygos {
                 }
                 case TokenType::String: {
                     return MakeRef<AST::StringLiteral>(Eat().value);
-                }
-                case TokenType::Dollar: {
-                    if(PEEK(1).type != TokenType::Id)
-                        Log::Logger::Warn(Eat(), "unknown token found");
-                    Eat();
-                    return MakeRef<AST::MacroVar>(Eat().value);
                 }
                 default:
                     Log::Logger::Warn(Eat(), "unknown token found");

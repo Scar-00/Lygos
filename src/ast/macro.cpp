@@ -67,35 +67,6 @@ namespace lygos {
 
         }
 
-        MacroVar::MacroVar(std::string name):
-            AST(ASTType::MacroVar), name(name) {
-
-        }
-
-        std::string MacroVar::GetValue() {
-            return name;
-        }
-
-        llvm::Value *MacroVar::GenCode(Scope *scope) {
-            (void)scope;
-            //Log::Logger::Warn("macro should have been expanded before code generation");
-            return nullptr;
-        }
-
-        /*static const char *type_str[] = {
-            "None",
-            "Single",
-            "Var",
-        };*/
-
-        void MacroVar::Lower(AST *parent) {
-
-        }
-
-        void MacroVar::Sanatize() {
-
-        }
-
         MacroCall::MacroCall(std::string name, std::vector<std::vector<Token>> args):
             AST(ASTType::MacroCall), name(name), args(args) {
 
@@ -138,24 +109,6 @@ namespace lygos {
                 arm = i;
                 //handle var
             }
-            //Log::Logger::Warn(fmt::format("arm = {}", arm));
-            //std::cout << fmt::format("arm = {}\n", arm);
-            /*const auto [conds, block] = arms[arm];
-            std::vector<Ref<AST>> body = block.Body();
-            //traverse all subexprs and replace macro var with param
-            for(size_t j = 0; j < conds.size(); j++) {
-                const auto &[name, type] = conds[j];
-                for(size_t i = 0; i < body.size(); i++) {
-                    if(body[i]->type == ASTType::MacroVar) {
-                        auto iden = std::static_pointer_cast<MacroVar>(body[i]);
-                        if(iden->GetValue() == name) {
-                            VecReplaceAt(body, i, args[j]);
-                        }
-                    }
-                }
-            }*/
-            //Log::Logger::Warn(fmt::format("arm = {}", arm));
-            //ast_root->Replace(body);
             auto &[conds, tokens] = arms[arm];
             for(size_t j = 0; j < conds.size(); j++) {
                 const auto &[name, type] = conds[j];
@@ -163,21 +116,37 @@ namespace lygos {
                     if(tokens[i].type == TokenType::Dollar) {
                         if(tokens.size() >= i + 1 && tokens[i + 1].type == TokenType::Id) {
                             if(tokens[i + 1].value == name) {
-                                std::vector<Token> t = args[j];
+                                std::vector<Token> toks = args[j];
                                 tokens.erase(tokens.begin() + i + 1);
-                                VecReplaceAt(tokens, i, t);
+                                if(type == Macro::ArgType::Var) {
+                                    tokens.erase(tokens.begin() + i);
+                                    for(size_t k = j; k < args.size(); k++){
+                                        Token tok{",", TokenType::Comma, 0};
+                                        VecInsertAt(tokens, i, tok);
+                                        VecInsertAt(tokens, i, args[k]);
+                                    }
+                                    break;
+                                }else {
+                                    VecReplaceAt(tokens, i, toks);
+                                }
                             }
                         }
                     }
                 }
             }
-            auto root_original = ast_root;
+
+            for(const auto &token : tokens) {
+                std::cout << token << "\n";
+            }
+
+            Mod *root_original = ast_root;
             tokens.push_back({"", TokenType::Eof, 0});
             Parser::Parser parser{tokens};
             Ref<AST> root = parser.BuildAst();
             ast_root = (Mod *)root.get();
-            std::string bar = "bar";
-            ast_root->DeclMacro(root_original->GetMacro(bar));
+            ast_root->GetFunctions() = root_original->GetFunctions();
+            ast_root->GetMacros() = root_original->GetMacros();
+            ast_root->GetTraits() = root_original->GetTraits();
             root->Lower(nullptr);
             ast_root = root_original;
             ast_root->Replace(((Mod *)root.get())->Body());

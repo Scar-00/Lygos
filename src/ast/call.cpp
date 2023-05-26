@@ -67,7 +67,6 @@ namespace lygos {
             }
             //TODO: make args into a Block
             Block b = args;
-            fmt::print("size -> {}\n", b.Body().size());
             for(u64 i = 0; i < b.Body().size(); i++) {
                 ast_root->SetCurrentBlock(&b);
                 b.Body()[i]->Lower(this);
@@ -114,7 +113,10 @@ namespace lygos {
         }
 
         void ReturnExpr::Lower(AST *parent) {
+            if(!value)
+                return;
 
+            value->Lower(this);
         }
 
         void ReturnExpr::Sanatize() {

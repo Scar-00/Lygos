@@ -154,6 +154,9 @@ namespace lygos {
                 case ASTType::Trait: {
                     ss << ": " << node->GetValue() << "\n";
                 } break;
+                case ASTType::NumberLiteral: {
+                    ss << ": " << node->GetValue() << "\n";
+                } break;
                 default: ss << "\n"; break;
             }
             return ss;

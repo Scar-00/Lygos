@@ -23,6 +23,20 @@ fn strlen(str: *i8) -> u32;
 fn strcpy(dest: *i8, src: *i8) -> *i8;
 fn realloc(ptr: *i8, size: i32) -> *i8;
 
+macro println {
+    () -> {
+        printf("\n");
+    }
+    (string: $) -> {
+        printf("%s\n", $string);
+    }
+
+    (fmt: $, args: $[]) -> {
+        printf($fmt, $args);
+        printf("\n");
+    }
+}
+
 struct String {
     data: *i8;
     len: u32;
@@ -81,11 +95,12 @@ struct Lexer {
 
 impl Lexer {
     fn new(src: *i8, src_len: u32) -> Lexer {
-        let mut this: Lexer;
-        this.src = src;
-        this.len = src_len;
-        this.index = 0;
-        this.curr = src[0];
+        let mut this: Lexer = {
+            .src = src,
+            .len = src_len,
+            .index = 0,
+            .curr = src[0],
+        };
         return this;
     }
 
@@ -197,5 +212,6 @@ fn main(argc: i32, argv: **i8) -> i32 {
     lexer.next_token();
     let tok = lexer.next_token();
     printf("tok -> %s\n", tok.value.data);
+    println$();
     return 0;
 }
