@@ -3,6 +3,13 @@ struct Foo {
     y: i32;
 };
 
+fn test() -> Foo {
+    //return {
+    //    .x = 200,
+    //    .y = 300
+    //};
+}
+
 fn main() -> i32 {
     let x = 10;
     let y = 20;

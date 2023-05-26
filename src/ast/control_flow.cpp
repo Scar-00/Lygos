@@ -59,14 +59,14 @@ namespace lygos {
 
         void IfStmt::Lower(AST *parent) {
             this->cond->Lower(this);
-            ast_root->SetCurrentBlock(&then_body);
             for(size_t i = 0; i < then_body.Body().size(); i++) {
+                ast_root->SetCurrentBlock(&then_body);
                 then_body.Body()[i]->Lower(this);
                 then_body.Increment();
             }
             if(has_else_brach) {
-                ast_root->SetCurrentBlock(&else_body);
                 for(size_t i = 0; i < else_body.Body().size(); i++) {
+                    ast_root->SetCurrentBlock(&else_body);
                     else_body.Body()[i]->Lower(this);
                     else_body.Increment();
                 }
@@ -116,8 +116,8 @@ namespace lygos {
         void ForStmt::Lower(AST *parent) {
             this->cond->Lower(this);
             this->var->Lower(this);
-            ast_root->SetCurrentBlock(&body);
             for(size_t i = 0; i < body.Body().size(); i++) {
+                ast_root->SetCurrentBlock(&body);
                 body.Body()[i]->Lower(this);
                 body.Increment();
             }
@@ -170,8 +170,8 @@ namespace lygos {
             value->Lower(this);
             for(auto &[cond, body] : cases) {
                 cond->Lower(this);
-                ast_root->SetCurrentBlock(&body);
                 for(size_t i = 0; i < body.Body().size(); i++) {
+                    ast_root->SetCurrentBlock(&body);
                     body.Body()[i]->Lower(this);
                     body.Increment();
                 }

@@ -1,7 +1,12 @@
 #include "ast/ast.h"
 #include "ast/macro.h"
+#include "core.h"
 #include "error/log.h"
 #include "intrinsics.h"
+#include "lex/lexer.h"
+#include "types.h"
+#include <cassert>
+#include <vector>
 
 namespace lygos {
     namespace Intrinsics {
@@ -18,20 +23,18 @@ namespace lygos {
             //root->DeclMacro(MakeRef<AST::Macro>("format", AST::Macro::Arg{"fmt", AST::Macro::ArgType::Var, 0}, block).get());
         }
 
-        static bool Formatable(AST::ASTType type) {
-
-        }
-
         void macro_format_intrinsic(AST::MacroCall *macro, AST::Scope *scope) {
-            auto args = macro->GetArgs();
-            for(const auto &arg : args) {
-                //if(!Formatable(arg->type))
-                //    Log::Logger::Warn("cannot format");
-                if(arg->type == AST::ASTType::Id) {
-                }
-            }
+            std::vector<Token> &args = macro->GetArgs()[0];
+            /*for(const auto &arg : args) {
+                switch (arg.type) {
+                    case TokenType::Integer: {
 
-            std::string format = args[0]->GetValue();
+                    } break;
+                }
+            }*/
+
+            LYGOS_ASSERT(args[0].type == TokenType::String);
+            std::string format = args[0].value;
         }
     }
 }

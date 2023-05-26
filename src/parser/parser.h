@@ -30,6 +30,9 @@ namespace lygos {
             Parser(Lexer &lexer): tokens(lexer.GetTokens()), index(0) {
                 tokens.push_back(Token{"", TokenType::Eof, 0});
             }
+            Parser(std::vector<Token> tokens): tokens(tokens), index(0) {
+                tokens.push_back(Token{"", TokenType::Eof, 0});
+            }
             Ref<AST::AST> BuildAst();
         private:
             Token& At() { return tokens[index]; }

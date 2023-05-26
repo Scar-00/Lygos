@@ -93,12 +93,6 @@ namespace lygos {
         traits.insert(trait);
     }
 
-    void Type::StructType::AddVariant(Ref<struct Type> type, llvm::Type *variant) {
-        if(variants.contains(type))
-            return;
-        variants.insert({type, variant});
-    }
-
     bool IsCastable(llvm::Type *src, llvm::Type *dest) {
         if(src->isPointerTy() && dest->isPointerTy()) return true;
         if(src->isIntegerTy() && dest->isIntegerTy()) return true;

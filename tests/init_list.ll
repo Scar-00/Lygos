@@ -9,6 +9,12 @@ target triple = "x86_64-pc-linux-gnu"
 
 declare i32 @printf(i8*, ...)
 
+define dso_local %Foo @test() {
+  %1 = alloca %Foo, align 8
+  %2 = load %Foo, %Foo* %1, align 4
+  ret %Foo %2
+}
+
 define dso_local i32 @main() {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4

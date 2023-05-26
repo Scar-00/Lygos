@@ -4,6 +4,7 @@
 #include "mod.h"
 #include "function.h"
 #include "access.h"
+#include <fmt/core.h>
 #include <ios>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Instructions.h>
@@ -64,15 +65,15 @@ namespace lygos {
             if(parent->type == ASTType::MemberExpr) {
                 deref_self = ((MemberExpr *)parent)->Deref();
             }
-            /*if(caller->type == ASTType::MemberExpr) {
-                std::vector<Ref<AST>> elems;
-                auto call = MakeRef<CallExpr>(static_cast<MemberExpr *>(caller.get())->Member(), args);
-                auto member = MakeRef<MemberExpr>(static_cast<MemberExpr *>(caller.get())->Obj(), call);
-
-                elems.push_back(member);
-
-                ast_root->GetCurrentFunction()->Insert(elems);
-            }*/
+            //TODO: make args into a Block
+            Block b = args;
+            fmt::print("size -> {}\n", b.Body().size());
+            for(u64 i = 0; i < b.Body().size(); i++) {
+                ast_root->SetCurrentBlock(&b);
+                b.Body()[i]->Lower(this);
+                b.Increment();
+            }
+            args = b.Body();
         }
 
         void CallExpr::Sanatize() {

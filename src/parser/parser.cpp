@@ -141,7 +141,7 @@ namespace lygos {
                 }
                 Eat();
 
-                AST::Block block;
+                std::vector<Token> block;
 
                 if(Eat().type != TokenType::Arrow)
                     Log::Logger::Warn(PEEK(-1), "expected `->` after arm decl");
@@ -150,7 +150,7 @@ namespace lygos {
                     Log::Logger::Warn(PEEK(-1), "expected `{` after macro name");
 
                 while (At().type != TokenType::CurlyRight) {
-                    block.Body().push_back(ParseStmt());
+                    block.push_back(Eat());
                 }
                 Eat();
                 arms.push_back({conds, block});
@@ -568,6 +568,25 @@ namespace lygos {
                 Eat();
                 is_macro = true;
             }
+
+            if(is_macro && At().type == TokenType::ParanLeft) {
+                Eat();
+                std::vector<std::vector<Token>> args;
+                while (At().type != TokenType::ParanRight) {
+                    std::vector<Token> arg;
+                    while(At().type != TokenType::ParanRight && At().type != TokenType::Comma) {
+                        arg.push_back(Eat());
+                    }
+                    args.push_back(arg);
+                    if(At().type == TokenType::ParanRight)
+                        break;
+                    if(Eat().type != TokenType::Comma)
+                        Log::Logger::Warn(PEEK(-1), "function parameters need to be comma seperated");
+                }
+                Eat();
+                return MakeRef<AST::MacroCall>(callee->GetValue(), args);
+            }
+
             if(At().type == TokenType::ParanLeft) {
                 Eat();
                 std::vector<Ref<AST::AST>> args;
@@ -581,8 +600,6 @@ namespace lygos {
                 }
                 Eat();
 
-                if(is_macro)
-                    return MakeRef<AST::MacroCall>(callee->GetValue(), args);
                 return MakeRef<AST::CallExpr>(callee, args);
             }
             return callee;
@@ -699,6 +716,12 @@ namespace lygos {
                 }
                 case TokenType::String: {
                     return MakeRef<AST::StringLiteral>(Eat().value);
+                }
+                case TokenType::Dollar: {
+                    if(PEEK(1).type != TokenType::Id)
+                        Log::Logger::Warn(Eat(), "unknown token found");
+                    Eat();
+                    return MakeRef<AST::MacroVar>(Eat().value);
                 }
                 default:
                     Log::Logger::Warn(Eat(), "unknown token found");

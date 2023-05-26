@@ -3,6 +3,7 @@
 #include "access.h"
 #include "assignment.h"
 #include "ast.h"
+#include "call.h"
 #include "literals.h"
 #include "mod.h"
 #include "function.h"
@@ -40,7 +41,10 @@ namespace lygos {
                     exprs.push_back(MakeRef<VarDecl>(decl->Id(), false, decl->Type(), nullptr));
                     lhs_value = MakeRef<Identifier>(decl->Id());
                 } break;
-                //TODO: make this work on ret instr directly
+                /*case ASTType::ReturnExpr: {
+                    auto ret = (ReturnExpr *)parent;
+                    ret.
+                } break;*/
                 default: Log::Logger::Warn("invalid lhs to initializer list");
             }
 

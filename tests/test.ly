@@ -1,24 +1,30 @@
-//fn malloc(size: u64) -> *i8;
+macro bar {
+    () -> {
+        "test\n";
+    }
+}
 
-struct Foo { x: i32; };
+macro foo {
+    () -> {
+        let x = 10;
+    }
+    (x: $) -> {
+        $x;
+    }
 
-struct Vec<T, E> {
-    data: *T;
-    data1: E;
-};
+    (x: $, y: $) -> {
+        let x: $x = $y;
+        printf(bar$());
+    }
 
-//impl Vec<T> {
-//    fn new(size: u32) -> Vec<T> {
-//        let this: Vec<T> = {
-//            .data = malloc((:u64)(size * 4)),
-//            .len = 0,
-//            .cap = size,
-//        };
-//        return this;
-//    }
-//}
+    (x: $, y: $[]) -> {
+        $x;
+        $y;
+        printf("Hello, World\n");
+    }
+}
 
 fn main() -> i32 {
-    let mut test: Vec<i32, Foo>;
+    foo$(u32, 1);
     return 0;
 }

@@ -1,4 +1,5 @@
 # IMPORTANT
+* redo macro system to use tokenstreams instead
 * sanatize AST lowering (void Expr::Sanatize() & integrety of Mod::Insert()/Replace())
 
 # TODO/FIXME

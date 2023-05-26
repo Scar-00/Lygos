@@ -14,7 +14,8 @@ namespace lygos {
                 Var,
             };
             using Cond = std::tuple<std::string, ArgType>;
-            using Arm = std::tuple<std::vector<Cond>, Block>;
+            //using Arm = std::tuple<std::vector<Cond>, Block>;
+            using Arm = std::tuple<std::vector<Cond>, std::vector<Token>>;
             public:
                 Macro(std::string name, std::vector<Arm> arms);
                 std::string &GetName() { return name; }
@@ -29,10 +30,9 @@ namespace lygos {
                 std::vector<Arm> arms;
         };
 
-        struct MacroCall : public AST {
+        struct MacroVar : public AST {
             public:
-                MacroCall(std::string name, std::vector<Ref<AST>> args);
-                std::vector<Ref<AST>> &GetArgs() { return args; }
+                MacroVar(std::string name);
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -40,7 +40,20 @@ namespace lygos {
                 void Sanatize() override;
             private:
                 std::string name;
-                std::vector<Ref<AST>> args;
+        };
+
+        struct MacroCall : public AST {
+            public:
+                MacroCall(std::string name, std::vector<std::vector<Token>> args);
+                std::vector<std::vector<Token>> &GetArgs() { return args; }
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower(AST *parent) override;
+                void Sanatize() override;
+            private:
+                std::string name;
+                std::vector<std::vector<Token>> args;
         };
 
         struct MacroInclude : public AST {
