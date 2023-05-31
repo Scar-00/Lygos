@@ -212,6 +212,5 @@ fn main(argc: i32, argv: **i8) -> i32 {
     lexer.next_token();
     let tok = lexer.next_token();
     printf("tok -> %s\n", tok.value.data);
-    println$();
     return 0;
 }

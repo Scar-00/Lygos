@@ -16,7 +16,7 @@ namespace lygos {
         struct Mod : public AST {
             public:
                 Mod();
-                std::vector<Ref<AST>> &Body() { return body.Body(); }
+                Block &Body() { return body; }
                 void Insert(Ref<AST> &expr);
                 void Insert(Block::Content &exprs);
                 void Replace(Ref<AST> &expr);

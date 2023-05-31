@@ -12,7 +12,7 @@ namespace lygos {
             using Arg = std::tuple<std::string, Ref<Type::Type>>;
             public:
                 Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, Block body, Ref<Type::Type> ret_type, bool is_def);
-                std::vector<Ref<AST>> &Body() { return body.Body(); }
+                Block &Body() { return body; }
                 std::string &GetName() { return name; }
                 bool IsMember() { return obj.get() != nullptr && std::get<0>(args[0]) == "self"; }
                 std::vector<Arg> GetArgs() { return args; }

@@ -73,6 +73,7 @@ namespace lygos {
             std::vector<Token> tokens;
             Ref<AST::Impl> current_impl = nullptr;
             Ref<AST::Trait::Trait> current_trait = nullptr;
+            AST::Block *current_block = nullptr;
             s32 index;
         };
     }

@@ -2,6 +2,7 @@
 #define _LYGOS_CONTAINERS_H_
 
 #include <concepts>
+#include <fmt/core.h>
 #include <iostream>
 #include <iterator>
 #include <string>
@@ -85,14 +86,10 @@ namespace lygos {
 
     template<typename T>
     void VecReplaceAt(std::vector<T> &vec, s32 index, std::vector<T> &elems) {
+        vec.erase(vec.begin() + index);
         for(u32 i = 0; i < elems.size(); i++) {
-            if(i == 0) {
-                //vec[index] = std::move(elems[0]);
-                vec[index] = elems[0];
-            }else {
-                //vec.insert(vec.begin() + index + i, std::move(elems[i]));
-                vec.insert(vec.begin() + index + i, elems[i]);
-            }
+            //vec.insert(vec.begin() + index + i, std::move(elems[i]));
+            vec.insert(vec.begin() + index + i, elems[i]);
         }
     }
 

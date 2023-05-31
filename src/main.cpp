@@ -7,6 +7,7 @@
 #include "lex/lexer.h"
 #include "parser/parser.h"
 #include "util/io.h"
+#include <memory>
 
 namespace lygos {
     namespace Test {
@@ -16,7 +17,7 @@ namespace lygos {
     llvm::Module *mod;
     llvm::IRBuilder<> *builder;
     llvm::TargetMachine *target_machine;
-    AST::Mod *ast_root = nullptr;
+    Ref<AST::Mod> ast_root = nullptr;
 
     void init_llvm(std::string mod_name) {
         llvm::InitializeAllTargetInfos();
@@ -70,7 +71,7 @@ int main(int argc, char **argv) {
     lygos::Lexer lexer(file_content);
     lygos::Parser::Parser parser(lexer);
     auto root = parser.BuildAst();
-    lygos::ast_root = (lygos::AST::Mod *)root.get();
+    lygos::ast_root = std::static_pointer_cast<lygos::AST::Mod>(root);
     assert(lygos::ast_root && "ast root cannot be null");
     std::cout << "original:\n" << lygos::AST::Print(root.get()).str() << std::endl;
     root->Lower(nullptr);

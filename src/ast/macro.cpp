@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <fmt/core.h>
 #include <memory>
 #include <vector>
 
@@ -132,24 +133,76 @@ namespace lygos {
                             }
                         }
                     }
+                    if(tokens[i + 1].type == TokenType::Hash) {
+                        if(tokens[i + 2].type == TokenType::Hash) {
+                            if(i > 0 && tokens[i].type != TokenType::Id)
+                                Log::Logger::Warn(tokens[i], "expected `identifier` as prefix");
+                            tokens.erase(tokens.begin() + i + 1);
+                            tokens.erase(tokens.begin() + i + 1);
+                            if(tokens[i + 1].type == TokenType::Dollar) {
+                                if(tokens.size() >= i + 1 && tokens[i + 2].type == TokenType::Id) {
+                                    if(tokens[i + 2].value == name) {
+                                        std::vector<Token> toks = args[j];
+                                        tokens.erase(tokens.begin() + i + 1);
+                                        if(type == Macro::ArgType::Var) {
+                                            tokens.erase(tokens.begin() + i);
+                                            for(size_t k = j; k < args.size(); k++){
+                                                Token tok{",", TokenType::Comma, 0};
+                                                VecInsertAt(tokens, i, tok);
+                                                VecInsertAt(tokens, i, args[k]);
+                                            }
+                                            break;
+                                        }else {
+                                            VecReplaceAt(tokens, i + 1, toks);
+                                        }
+                                    }
+                                }
+                            }
+                            tokens[i].value.append(tokens[i + 1].value);
+                            tokens.erase(tokens.begin() + i + 1);
+                        }else {
+                            if(tokens[i + 1].type == TokenType::Dollar) {
+                                if(tokens.size() >= i + 1 && tokens[i + 2].type == TokenType::Id) {
+                                    if(tokens[i + 2].value == name) {
+                                        std::vector<Token> toks = args[j];
+                                        tokens.erase(tokens.begin() + i + 1);
+                                        if(type == Macro::ArgType::Var) {
+                                            tokens.erase(tokens.begin() + i);
+                                            for(size_t k = j; k < args.size(); k++){
+                                                Token tok{",", TokenType::Comma, 0};
+                                                VecInsertAt(tokens, i, tok);
+                                                VecInsertAt(tokens, i, args[k]);
+                                            }
+                                            break;
+                                        }else {
+                                            VecReplaceAt(tokens, i + 1, toks);
+                                        }
+                                    }
+                                }
+                            }
+                            tokens.erase(tokens.begin() + i + 1);
+                            tokens[i - 1].type = TokenType::Id;
+                        }
+                    }
                 }
             }
 
             for(const auto &token : tokens) {
                 std::cout << token << "\n";
             }
+            //Log::Logger::Warn("test");
 
-            Mod *root_original = ast_root;
+            Ref<Mod> root_original = ast_root;
             tokens.push_back({"", TokenType::Eof, 0});
             Parser::Parser parser{tokens};
             Ref<AST> root = parser.BuildAst();
-            ast_root = (Mod *)root.get();
+            ast_root = std::static_pointer_cast<Mod>(root);
             ast_root->GetFunctions() = root_original->GetFunctions();
             ast_root->GetMacros() = root_original->GetMacros();
             ast_root->GetTraits() = root_original->GetTraits();
             root->Lower(nullptr);
             ast_root = root_original;
-            ast_root->Replace(((Mod *)root.get())->Body());
+            ast_root->Replace(((Mod *)root.get())->Body().Body());
         }
 
         void MacroCall::Sanatize() {
@@ -180,8 +233,9 @@ namespace lygos {
             Lexer lexer(file_content);
             Parser::Parser parser(lexer);
             auto ast = parser.BuildAst();
-            Ref<AST> root = ast;
-            ast_root->Replace(((Mod *)root.get())->Body());
+            Ref<Mod> root = std::static_pointer_cast<Mod>(ast);
+            //Log::Logger::Warn("test");
+            ast_root->Replace(root->Body().Body());
         }
 
         void MacroInclude::Sanatize() {

@@ -2,6 +2,7 @@
 #include "../error/log.h"
 #include <cstddef>
 #include <cstdlib>
+#include <fmt/core.h>
 #include <memory>
 #include <vector>
 
@@ -12,7 +13,7 @@ namespace lygos {
         Ref<AST::AST> Parser::BuildAst() {
             Ref<AST::Mod> program = MakeRef<AST::Mod>();
             while (At().type != TokenType::Eof) {
-                program->Body().push_back(ParseGlobals());
+                program->Body().Body().push_back(ParseGlobals());
             }
             return program;
         }
@@ -56,11 +57,12 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{`");
 
-            auto impl = MakeRef<AST::Impl>(id.value, std::vector<Ref<AST::AST>>(), trait);
+            auto impl = MakeRef<AST::Impl>(id.value, AST::Block{}, trait);
 
             current_impl = impl;
+            current_block = &impl->Body();
             while (At().type != TokenType::CurlyRight) {
-                impl->Body().push_back(ParseFunc());
+                impl->Body().Body().push_back(ParseFunc());
             }
 
             if(Eat().type != TokenType::CurlyRight)
@@ -83,6 +85,7 @@ namespace lygos {
 
             auto trait = MakeRef<AST::Trait::Trait>(id.value, AST::Block{});
             current_trait = trait;
+            current_block = &trait->Functions();
             while (At().type != TokenType::CurlyRight) {
                 trait->Functions().Body().push_back(ParseFunc());
             }
@@ -147,11 +150,18 @@ namespace lygos {
                     Log::Logger::Warn(PEEK(-1), "expected `->` after arm decl");
 
                 if(Eat().type != TokenType::CurlyLeft)
-                    Log::Logger::Warn(PEEK(-1), "expected `{` after macro name");
+                    Log::Logger::Warn(PEEK(-1), "expected `{` after macro arm delimiter");
 
-                //u32 braces = 0;
-                while (At().type != TokenType::CurlyRight) {
+                u32 braces = 0;
+                while (true) {
+                    Token tok = At();
+                    if(tok.type == TokenType::CurlyLeft)
+                        braces++;
+                    if(tok.type == TokenType::CurlyRight)
+                        braces--;
                     block.push_back(Eat());
+                    if(At().type == TokenType::CurlyRight && braces == 0)
+                        break;
                 }
                 Eat();
                 arms.push_back({conds, block});
@@ -334,23 +344,25 @@ namespace lygos {
 
             if(At().type == TokenType::Semi) {
                 Eat();
-                return MakeRef<AST::Function>(id.value, current_impl, args, std::vector<Ref<AST::AST>>(), ret_type, false);
+                return MakeRef<AST::Function>(id.value, current_impl, args, AST::Block{}, ret_type, false);
             }
 
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after function signature");
 
-            std::vector<Ref<AST::AST>> body;
+            AST::Block body;
+            current_block = &body;
             while (At().type != TokenType::CurlyRight) {
-                body.push_back(ParseStmt());
+                body.Body().push_back(ParseStmt());
             }
             Eat();
-
             return MakeRef<AST::Function>(id.value, current_impl, args, body, ret_type, true);
         }
 
         Ref<AST::AST> Parser::ParseRetExpr() {
             Eat();
+            LYGOS_ASSERT(current_block && "current block CANNOT be NULL at this point");
+            current_block->SetReturn(true);
             if (At().type == TokenType::Semi) {
                 return MakeRef<AST::ReturnExpr>(nullptr);
             }
@@ -364,9 +376,10 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
 
-            std::vector<Ref<AST::AST>> then_branch;
+            AST::Block then_branch;
+            current_block = &then_branch;
             while (At().type != TokenType::CurlyRight) {
-                then_branch.push_back(ParseStmt());
+                then_branch.Body().push_back(ParseStmt());
             }
             Eat();
 
@@ -375,9 +388,10 @@ namespace lygos {
                 if(Eat().type != TokenType::CurlyLeft)
                     Log::Logger::Warn(PEEK(-1), "expected `{` after else statement");
 
-                std::vector<Ref<AST::AST>> else_branch;
+                AST::Block else_branch;
+                current_block = &else_branch;
                 while(At().type != TokenType::CurlyRight) {
-                    else_branch.push_back(ParseStmt());
+                    else_branch.Body().push_back(ParseStmt());
                 }
                 Eat();
                 return MakeRef<AST::IfStmt>(cond, then_branch, else_branch, true);
@@ -399,9 +413,10 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after if statement");
 
-            std::vector<Ref<AST::AST>> body;
+            AST::Block body;
+            current_block = &body;
             while (At().type != TokenType::CurlyRight) {
-                body.push_back(ParseStmt());
+                body.Body().push_back(ParseStmt());
             }
             Eat();
 
@@ -417,9 +432,9 @@ namespace lygos {
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after case identifier");
 
-            std::vector<Ref<AST::AST>> body;
+            AST::Block body;
             while (At().type != TokenType::CurlyRight) {
-                body.push_back(ParseStmt());
+                body.Body().push_back(ParseStmt());
             }
             Eat();
 
@@ -590,9 +605,9 @@ namespace lygos {
 
             if(At().type == TokenType::ParanLeft) {
                 Eat();
-                std::vector<Ref<AST::AST>> args;
+                AST::Block args;
                 while (At().type != TokenType::ParanRight) {
-                    args.push_back(ParseExpr());
+                    args.Body().push_back(ParseExpr());
                     if(At().type == TokenType::ParanRight)
                         break;
 
@@ -601,7 +616,7 @@ namespace lygos {
                 }
                 Eat();
 
-                return MakeRef<AST::CallExpr>(callee, args);
+                return MakeRef<AST::CallExpr>(callee, args.Body());
             }
             return callee;
         }

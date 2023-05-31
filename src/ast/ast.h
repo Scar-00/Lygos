@@ -59,19 +59,21 @@ namespace lygos {
         struct Block {
         using Content = std::vector<Ref<AST>>;
         public:
-            Block() {}
+            Block();
             Block(Content body);
             Content &Body() { return body; }
             const Content &Body() const { return body; }
             void Increment() { index++; }
+            s64 GetIndex() { return index; }
             void Insert(Content &exprs);
             void Insert(Ref<AST> &expr);
             void Replace(Content &exprs);
             void Replace(Ref<AST> &expr);
             bool Returns() { return returns; }
+            void SetReturn(bool ret) { returns = ret; }
         private:
             Content body;
-            u64 index;
+            s64 index;
             bool returns;
         };
 

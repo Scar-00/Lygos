@@ -11,10 +11,12 @@
 #include "vardecl.h"
 #include "casting.h"
 #include "struct.h"
+#include <fmt/core.h>
 #include <sstream>
 
 namespace lygos {
     namespace AST {
+        Block::Block(): body({}), index(0) {}
         Block::Block(Content body): body(body), index(0) {}
 
         void Block::Insert(Content &exprs) {
@@ -90,12 +92,12 @@ namespace lygos {
             switch (node->type) {
                 case ASTType::Mod: {
                     ss << ":" << node->GetValue() << '\n';
-                    for(const auto &n : ((Mod *)node)->Body())
+                    for(const auto &n : ((Mod *)node)->Body().Body())
                         ss << Print(n.get(), depth + 1).str();
                 } break;
                 case ASTType::Function: {
                     ss << ": " << node->GetValue() << "\n";
-                    for(const auto &n : static_cast<Function *>(node)->Body())
+                    for(const auto &n : static_cast<Function *>(node)->Body().Body())
                         ss << Print(n.get(), depth + 1).str();
                 } break;
                 case ASTType::VarDecl: {
@@ -137,7 +139,7 @@ namespace lygos {
                 } break;
                 case ASTType::Impl: {
                     ss << ": " << node->GetValue() << "\n";
-                    for(const auto &item : ((Impl *)node)->Body())
+                    for(const auto &item : ((Impl *)node)->Body().Body())
                         ss << Print(item.get(), depth + 1).str();
                 } break;
                 case ASTType::Id: {

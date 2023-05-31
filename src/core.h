@@ -42,7 +42,7 @@ namespace lygos {
     namespace AST {
         struct Mod;
     }
-    extern AST::Mod *ast_root;
+    extern Ref<AST::Mod> ast_root;
 }
 
 #ifdef LYGOS_DEBUG
