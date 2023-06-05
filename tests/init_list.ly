@@ -4,10 +4,11 @@ struct Foo {
 };
 
 fn test() -> Foo {
-    //return {
-    //    .x = 200,
-    //    .y = 300
-    //};
+    let this: Foo = {
+        .x = 200,
+        .y = 300
+    };
+    return this;
 }
 
 fn main() -> i32 {

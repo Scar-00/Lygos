@@ -54,14 +54,6 @@ namespace lygos {
                 idx++;
             }*/
             ast_root->DeclMacro(this);
-            /*for(size_t j = 0; j < arms.size(); j++) {
-                auto body = std::get<1>(arms[j]);
-                for(size_t i = 0; i < body.Body().size(); i++) {
-                    ast_root->SetCurrentBlock(&body);
-                    body.Body()[i]->Lower(this);
-                    body.Increment();
-                }
-            }*/
         }
 
         void Macro::Sanatize() {
@@ -79,11 +71,15 @@ namespace lygos {
 
         llvm::Value *MacroCall::GenCode(Scope *scope) {
             (void)scope;
-            Log::Logger::Warn("macro call should have been expanded before code generation");
+            Log::Logger::Warn("macro should have been expanded before code generation");
             return nullptr;
         }
 
         void MacroCall::Lower(AST *parent) {
+            if (intrinsic_macros.contains(name)) {
+                intrinsic_macros.at(name)(this);
+                return;
+            }
             auto macro = ast_root->GetMacro(name);
             auto arms = macro->GetArms();
             size_t arm = 0;
@@ -108,7 +104,6 @@ namespace lygos {
                     Log::Logger::Warn("insufficient args supplied to macro");
 
                 arm = i;
-                //handle var
             }
             auto &[conds, tokens] = arms[arm];
             for(size_t j = 0; j < conds.size(); j++) {
@@ -120,6 +115,7 @@ namespace lygos {
                                 std::vector<Token> toks = args[j];
                                 tokens.erase(tokens.begin() + i + 1);
                                 if(type == Macro::ArgType::Var) {
+                                    //this does not allways expand properly
                                     tokens.erase(tokens.begin() + i);
                                     for(size_t k = j; k < args.size(); k++){
                                         Token tok{",", TokenType::Comma, 0};
@@ -187,10 +183,9 @@ namespace lygos {
                 }
             }
 
-            for(const auto &token : tokens) {
-                std::cout << token << "\n";
-            }
-            //Log::Logger::Warn("test");
+            //for(const auto &token : tokens) {
+            //    std::cout << token << "\n";
+            //}
 
             Ref<Mod> root_original = ast_root;
             tokens.push_back({"", TokenType::Eof, 0});
@@ -234,7 +229,6 @@ namespace lygos {
             Parser::Parser parser(lexer);
             auto ast = parser.BuildAst();
             Ref<Mod> root = std::static_pointer_cast<Mod>(ast);
-            //Log::Logger::Warn("test");
             ast_root->Replace(root->Body().Body());
         }
 

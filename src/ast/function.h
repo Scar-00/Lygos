@@ -17,6 +17,8 @@ namespace lygos {
                 bool IsMember() { return obj.get() != nullptr && std::get<0>(args[0]) == "self"; }
                 std::vector<Arg> GetArgs() { return args; }
                 Ref<Type::Type> GetRetType() { return ret_type; }
+                void SetRetBlock(llvm::BasicBlock *block);
+                llvm::BasicBlock * GetRetBlock() { return return_block; }
             public:
                 std::string GetValue() override{ return name; }
                 llvm::Value *GenCode(Scope *scope) override;
@@ -31,6 +33,7 @@ namespace lygos {
                 Ref<Type::Type> ret_type;
                 bool is_definition;
                 bool is_var_arg = false;
+                llvm::BasicBlock *return_block = nullptr;
         };
 
         struct Closure : public AST {

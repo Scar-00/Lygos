@@ -3,6 +3,7 @@
 #include "call.h"
 #include "literals.h"
 #include <fmt/core.h>
+#include <llvm/IR/Value.h>
 
 namespace lygos {
     namespace AST {
@@ -20,6 +21,7 @@ namespace lygos {
             if(deref)
                 obj = LoadOrIgnore(obj);
 
+            //FIXME: function chain callin;g
             //check if function is actually a member and not static
             if(member->type == ASTType::CallExpr) {
                 std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
@@ -31,7 +33,7 @@ namespace lygos {
                         fn_name = struct_name + "_" + fn_name;
                     } break;
                     default:
-                        std::cout << "????" << std::endl;
+                        LYGOS_ASSERT(false && "?????");
                     break;
                 }
                 return member->GenCode(scope);

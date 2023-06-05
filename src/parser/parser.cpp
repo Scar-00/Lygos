@@ -622,7 +622,6 @@ namespace lygos {
         }
 
         Ref<AST::AST> Parser::ParseMemberExpr() {
-            //auto obj = ParseResolutionExpr();
             auto obj = ParseCallExpr();
             while(At().type == TokenType::Dot
                 ||At().type == TokenType::Arrow) {

@@ -12,7 +12,6 @@ namespace lygos {
         namespace Trait {
             struct Trait;
         }
-        typedef void (*MacroIntrinsicCallBack)();
         struct Mod : public AST {
             public:
                 Mod();

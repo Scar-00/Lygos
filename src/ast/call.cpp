@@ -52,7 +52,7 @@ namespace lygos {
                 /*if(ShouldLoad(arg.get()))
                     if(!is_ptr && (!(i == 0 && fn->IsMember()) || (i == 0 && deref_self)))
                         val = LoadOrIgnore(val);*/
-                //add implicit casting
+                //add implicit casting & typecheck args
                 arg_values.push_back(val);
                 i++;
             }
@@ -90,8 +90,8 @@ namespace lygos {
 
         llvm::Value *ReturnExpr::GenCode(Scope *scope) {
             if(value == NULL) {
-                //if(scope->GetRetBlock() != nullptr)
-                //    builder->CreateBr(scope->GetRetBlock());
+                if(ast_root->GetCurrentFunction()->GetRetBlock() != nullptr)
+                    builder->CreateBr(ast_root->GetCurrentFunction()->GetRetBlock());
                 return NULL;
             }
 
@@ -103,9 +103,9 @@ namespace lygos {
             if(!scope->HasRetValue())
                 Log::Logger::Warn(fmt::format("invalid return type `{}` for function with return type `void`", PrintType(val->getType())));
 
-            if(scope->GetRetBlock() != nullptr) {
+            if(ast_root->GetCurrentFunction()->GetRetBlock() != nullptr) {
                 auto store = builder->CreateStore(val, scope->GetRet());
-                builder->CreateBr(scope->GetRetBlock());
+                builder->CreateBr(ast_root->GetCurrentFunction()->GetRetBlock());
                 return store;
             }
 

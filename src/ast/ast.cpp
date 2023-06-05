@@ -73,6 +73,7 @@ namespace lygos {
                 case ASTType::Macro: os << "Macro"; break;
                 case ASTType::MacroCall: os << "MacroCall"; break;
                 case ASTType::Trait: os << "Trait"; break;
+                case ASTType::MacroInclude: os << "MacroInclude"; break;
             }
             return os;
         }
@@ -157,6 +158,12 @@ namespace lygos {
                     ss << ": " << node->GetValue() << "\n";
                 } break;
                 case ASTType::NumberLiteral: {
+                    ss << ": " << node->GetValue() << "\n";
+                } break;
+                case ASTType::StringLiteral: {
+                    ss << ": " << node->GetValue() << "\n";
+                } break;
+                case ASTType::MacroInclude: {
                     ss << ": " << node->GetValue() << "\n";
                 } break;
                 default: ss << "\n"; break;

@@ -11,8 +11,15 @@ declare i32 @printf(i8*, ...)
 
 define dso_local %Foo @test() {
   %1 = alloca %Foo, align 8
-  %2 = load %Foo, %Foo* %1, align 4
-  ret %Foo %2
+  %2 = alloca %Foo, align 8
+  %3 = bitcast %Foo* %2 to i32*
+  store i32 200, i32* %3, align 4
+  %4 = getelementptr inbounds %Foo, %Foo* %2, i32 0, i32 1
+  store i32 300, i32* %4, align 4
+  %5 = load %Foo, %Foo* %2, align 4
+  store %Foo %5, %Foo* %1, align 4
+  %6 = load %Foo, %Foo* %1, align 4
+  ret %Foo %6
 }
 
 define dso_local i32 @main() {

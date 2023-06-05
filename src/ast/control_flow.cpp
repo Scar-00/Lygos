@@ -2,7 +2,9 @@
 #include "ast.h"
 #include "scope.h"
 #include "mod.h"
+#include "function.h"
 #include <llvm/ADT/Twine.h>
+#include <llvm/Support/raw_ostream.h>
 #include <vector>
 
 namespace lygos {
@@ -20,13 +22,13 @@ namespace lygos {
         llvm::Value *IfStmt::GenCode(Scope *scope) {
             llvm::Function *fn = builder->GetInsertBlock()->getParent();
 
-            if(has_else_brach)
-                scope->SetRetBlock(llvm::BasicBlock::Create(*ctx, "", fn));
-            auto ret_block = scope->GetRetBlock();
+            if(then_body.Returns() || else_body.Returns())
+                ast_root->GetCurrentFunction()->SetRetBlock(llvm::BasicBlock::Create(*ctx, "ret", fn));
+            auto ret_block = ast_root->GetCurrentFunction()->GetRetBlock();
 
-            auto true_block = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
-            auto false_block = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
-            auto merge = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
+            auto true_block = llvm::BasicBlock::Create(*ctx, "if.then", fn, ret_block);
+            auto false_block = llvm::BasicBlock::Create(*ctx, "if.else", fn, ret_block);
+            auto merge = llvm::BasicBlock::Create(*ctx, "if.end", fn, ret_block);
             builder->CreateCondBr(cond->GenCode(scope), true_block, has_else_brach ? false_block : merge);
 
             builder->SetInsertPoint(true_block);
@@ -51,7 +53,8 @@ namespace lygos {
             }
 
             //maybe try and remove merge block and all of its children
-            //if(!merge->hasNUses(0))
+            if(merge->hasNUses(0))
+                merge->removeFromParent();
             builder->SetInsertPoint(merge);
 
             return nullptr;
@@ -90,24 +93,26 @@ namespace lygos {
         llvm::Value *ForStmt::GenCode(Scope *scope) {
             llvm::Function *fn = builder->GetInsertBlock()->getParent();
 
-            auto entry = llvm::BasicBlock::Create(*ctx, "", fn);
-            auto block = llvm::BasicBlock::Create(*ctx, "", fn);
-            //auto cond = llvm::BasicBlock::Create(*ctx, "", fn);
-            auto merge = llvm::BasicBlock::Create(*ctx, "", fn);
+            auto cond = llvm::BasicBlock::Create(*ctx, "for.cond", fn);
+            auto loop_body = llvm::BasicBlock::Create(*ctx, "for.block", fn);
+            auto merge = llvm::BasicBlock::Create(*ctx, "for.end", fn);
 
             //builder->CreateCondBr(this->cond->GenCode(scope), block, merge);
 
             Scope loop_scope{scope};
             var->GenCode(&loop_scope);
-            builder->CreateCondBr(this->cond->GenCode(&loop_scope), block, merge);
-            //this->var->GenCode(&loop_scope);
-            builder->SetInsertPoint(entry);
-            builder->CreateCondBr(this->cond->GenCode(&loop_scope), block, merge);
-            builder->SetInsertPoint(block);
+            builder->CreateBr(cond);
+
+            //cond block
+            builder->SetInsertPoint(cond);
+            builder->CreateCondBr(this->cond->GenCode(&loop_scope), loop_body, merge);
+            //body
+            builder->SetInsertPoint(loop_body);
             for(const auto &expr : body.Body())
                 expr->GenCode(&loop_scope);
-            builder->CreateBr(entry);
+            builder->CreateBr(cond);
 
+            //end
             builder->SetInsertPoint(merge);
 
             return nullptr;

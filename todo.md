@@ -1,14 +1,11 @@
 # IMPORTANT
-* redo macro system to use tokenstreams instead
+* [control-flow]: remove ret-block if control-flow structure is last item in function
 * sanatize AST lowering (void Expr::Sanatize() & integrety of Mod::Insert()/Replace())
 
 # TODO/FIXME
-* fix macros/include (ast replacement[re set block after expr is lowered])
-* rethink macro args
 * compare types at assignment, decl, ...
 * add var-arg as special function type
 * rewrite return instructions (return block)
-* redo initializers parsing
 
 #AST building
 - Expr <--------|

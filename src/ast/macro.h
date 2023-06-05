@@ -2,10 +2,18 @@
 #define _LYGOS_AST_MACRO_H_
 
 #include "ast.h"
+#include "../intrinsics.h"
 #include <vector>
 
 namespace lygos {
     namespace AST {
+        struct MacroCall;
+        typedef void (*MacroIntrinsicCallBack)(MacroCall *macro);
+
+        static std::map<std::string, MacroIntrinsicCallBack> intrinsic_macros = {
+            {"format", Intrinsics::macro_format_intrinsic},
+        };
+
         struct Macro : public AST {
             public:
             enum class ArgType {
@@ -14,7 +22,6 @@ namespace lygos {
                 Var,
             };
             using Cond = std::tuple<std::string, ArgType>;
-            //using Arm = std::tuple<std::vector<Cond>, Block>;
             using Arm = std::tuple<std::vector<Cond>, std::vector<Token>>;
             public:
                 Macro(std::string name, std::vector<Arm> arms);

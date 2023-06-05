@@ -8,11 +8,11 @@ namespace lygos {
     struct Location {
     public:
         Location(size_t line): line(line) {};
-        Location(size_t line, size_t start, size_t end): line(line), start(start), end(end) {}
+        Location(size_t line, size_t start): line(line), start(start) {}
         size_t &GetLine() { return line; }
     private:
         size_t line;
-        size_t start, end;
+        size_t start;
     };
 
     class Token {

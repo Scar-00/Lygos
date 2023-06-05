@@ -171,6 +171,7 @@ impl Lexer {
                 return token;
             }
         }
+        return Token::new(String::from(""), 0);
     }
 }
 
@@ -209,7 +210,7 @@ fn main(argc: i32, argv: **i8) -> i32 {
 
     let lexer = Lexer::new("let x = 10;", 11);
     printf("%s\n", lexer.src);
-    lexer.next_token();
+    //lexer.next_token();
     let tok = lexer.next_token();
     printf("tok -> %s\n", tok.value.data);
     return 0;

@@ -1,25 +1,20 @@
-macro foo {
+macro println {
     () -> {
-        let x = 10;
+        printf("\n");
     }
-    (x: $) -> {
-        x;
-    }
-
-    (x: $, y: $) -> {
-        x;
-        y;
-        printf("Test\n");
+    (string: $) -> {
+        printf("%s\n", $string);
     }
 
-    (x: $, y: $[]) -> {
-        x;
-        y;
-        printf("Hello, World\n");
+    (fmt: $, args: $[]) -> {
+        printf($fmt, $args);
+        printf("\n");
     }
 }
 
 fn main() -> i32 {
-    foo$(let x = 10, 1);
+    println$("Hello, World!");
+    println$();
+    println$("Hello, %s!", "world");
     return 0;
 }

@@ -45,7 +45,7 @@ namespace lygos {
             return parent->GetRet();
         }
 
-        void Scope::SetRetBlock(llvm::BasicBlock *block) {
+        /*void Scope::SetRetBlock(llvm::BasicBlock *block) {
             if(ret_block != nullptr)
                 return;
 
@@ -60,7 +60,7 @@ namespace lygos {
                 return ret_block;
 
             return parent->GetRetBlock();
-        }
+        }*/
 
         bool Scope::HasRetValue() {
             if(ret != nullptr)

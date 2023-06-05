@@ -1,11 +1,12 @@
 #ifndef _LYGOS_INTRINSICS_H_
 #define _LYGOS_INTRINSICS_H_
 
-#include "ast/mod.h"
-
 namespace lygos {
+    namespace AST {
+        struct MacroCall;
+    }
     namespace Intrinsics {
-        void declare(Ref<AST::Mod> root);
+        void macro_format_intrinsic(AST::MacroCall *macro);
     }
 }
 

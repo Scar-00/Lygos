@@ -11,6 +11,12 @@ namespace lygos {
 
         }
 
+        void Function::SetRetBlock(llvm::BasicBlock *block) {
+            if(return_block)
+                return;
+            return_block = block;
+        }
+
         llvm::Value *Function::GenCode(Scope *scope) {
             Scope curr_scope{scope};
 
@@ -60,8 +66,8 @@ namespace lygos {
             for(const auto &node : body.Body())
                 node->GenCode(&curr_scope);
 
-            if(curr_scope.GetRetBlock() != nullptr)
-                builder->SetInsertPoint(curr_scope.GetRetBlock());
+            if(return_block != nullptr)
+                builder->SetInsertPoint(return_block);
             curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
 
             llvm::verifyFunction(*fn, &llvm::errs());

@@ -1,4 +1,3 @@
-
 macro println {
     () -> {
         printf("\n");
@@ -13,39 +12,12 @@ macro println {
     }
 }
 
-macro decl {
-    (typ: $) -> {
-        struct Vec##$typ {
-            data: *$typ;
-            cap: i32;
-            len: i32;
-        };
-
-        impl Vec##$typ {
-            fn new() -> Vec##$typ {
-                let this: Vec##$typ = {
-                    .cap = 0,
-                    .len = 0,
-                };
-                return this;
-            }
-
-            fn from_parts(data: *$typ, cap: i32, len: i32) -> Vec##$typ {
-                let this: Vec##$typ = {
-                    .data = data,
-                    .cap = cap,
-                    .len = len,
-                };
-                return this;
-            }
+fn main(argc: i32) -> i32 {
+    for let i = 0 in i < 10 {
+        if argc == 5 {
+            return 100;
         }
+        i = i + 1;
     }
-}
-
-decl$(i32);
-decl$(f32);
-
-fn main() -> i32 {
-    let test = Veci32::new();
     return 0;
 }
