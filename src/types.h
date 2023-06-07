@@ -97,6 +97,8 @@ namespace lygos {
         KwMatch,
         KwTrait,
         KwMacro,
+        KwEnum,
+        KwSizeOf,
 
         Eof,
     };
@@ -120,6 +122,8 @@ namespace lygos {
         {"match", TokenType::KwMatch},
         {"trait", TokenType::KwTrait},
         {"macro", TokenType::KwMacro},
+        {"enum", TokenType::KwEnum},
+        {"sizeof", TokenType::KwSizeOf},
     };
 
     static std::set<std::string> base_types = {
@@ -174,6 +178,8 @@ namespace lygos {
     std::string &MangleName(std::string &name, std::string &obj, std::string &spec);
 
     namespace Type {
+        Ref<struct Type> FromLLVMType(llvm::Type *type);
+
         struct Generic {
             std::string name;
             std::vector<Ref<struct Type>> constraints;
@@ -203,6 +209,12 @@ namespace lygos {
             Function GetFunction(std::string name);
             void RegisterTraitImpl(std::string trait);
             bool ImplementsTrait(std::string trait) { return traits.contains(trait); }
+        };
+
+        struct EnumType {
+            std::string name;
+            std::vector<std::string> variants;
+            Ref<struct Type> type;
         };
 
         struct Macro {

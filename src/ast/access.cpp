@@ -3,12 +3,18 @@
 #include "call.h"
 #include "literals.h"
 #include <fmt/core.h>
+#include <llvm/IR/Constants.h>
 #include <llvm/IR/Value.h>
 
 namespace lygos {
     namespace AST {
         MemberExpr::MemberExpr(Ref<AST> obj, Ref<AST> member, bool deref):
             AST(ASTType::MemberExpr), obj(obj), member(member), deref(deref) {
+
+        }
+
+        MemberExpr::MemberExpr(Ref<AST> obj, u32 index):
+            AST(ASTType::MemberExpr), obj(obj), member(nullptr), deref(false), use_index(true), index(index) {
 
         }
 
@@ -39,16 +45,22 @@ namespace lygos {
                 return member->GenCode(scope);
             }
 
-            size_t index;
+            size_t index = 100000;
             std::string type_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
             auto struct_fields = scope->GetStruct(type_name).fields;
-            std::string member_name = member->GetValue();
-            if(!VecContains(struct_fields, member_name)) {
-                Log::Logger::Warn(fmt::format("unknown field `{}` in struct `{}`", member_name, type_name));
+            if(!use_index) {
+                std::string member_name = member->GetValue();
+                if(!VecContains(struct_fields, member_name)) {
+                    Log::Logger::Warn(fmt::format("unknown field `{}` in struct `{}`", member_name, type_name));
+                }
+                for(size_t i = 0; i < struct_fields.size(); i++)
+                    if(struct_fields[i] == member_name)
+                       index = i;
+
+            }else {
+                index = this->index;
+                LYGOS_ASSERT(index <= struct_fields.size() && "out of bounds index in strcut gep");
             }
-            for(size_t i = 0; i < struct_fields.size(); i++)
-                if(struct_fields[i] == member_name)
-                    index = i;
 
             if(member->type != ASTType::Id)
                 member->GenCode(scope);
@@ -78,11 +90,11 @@ namespace lygos {
             //TODO: do not allow this!!
             //let z = f[0];
             auto obj = this->obj->GenCode(scope);
-            if(!IsArrayType(obj->getType()) && !IsStructType(obj->getType()))
+            if(!IsArrayType(obj->getType())/* && !IsStructType(obj->getType())*/)
                 obj = LoadOrIgnore(obj);
 
-             if(IsStructType(obj->getType()))
-                return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, std::atoi(index->GetValue().c_str()));
+             //if(IsStructType(obj->getType()))
+             //   return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, std::atoi(index->GetValue().c_str()));
 
             auto index = this->index->GenCode(scope);
             if(ShouldLoad(this->index.get()))
@@ -116,6 +128,16 @@ namespace lygos {
 
         //check for static -> cant call static functions on an object
         llvm::Value *ResolutionExpr::GenCode(Scope *scope) {
+            if (scope->GetEnum(obj->GetValue()).IsSome()) {
+                Type::EnumType e = scope->GetEnum(obj->GetValue()).Unwrap();
+                for(size_t i = 0; i < e.variants.size(); i++) {
+                    if(e.variants[i] == this->member->GetValue()){
+                        return llvm::ConstantInt::get(scope->GetType(e.type.get()), i);
+                    }
+                }
+                Log::Logger::Warn(fmt::format("unknown enum variant `{}`", member->GetValue()));
+            }
+
             auto fn = (CallExpr *)member.get();
             ((Identifier *)fn->GetCaller().get())->GetId() = scope->GetStruct(obj->GetValue()).GetFunction(fn->GetCaller()->GetValue()).name_mangeled;
             //std::string fn_name = obj->GetValue() + "_" + fn->GetCaller()->GetValue();

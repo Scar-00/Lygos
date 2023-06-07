@@ -1,11 +1,12 @@
 fn test(x: i32) {
-    if x == 10 {
-        printf("True\n");
+    match x {
+        1 -> { printf("arm 1\n"); }
+        2 -> { printf("arm 2\n"); }
+        3 -> { printf("arm 3\n"); }
     }
-    printf("Test\n");
 }
 
 fn main(argc: i32, argv: **i8) -> i32 {
-    test(10);
+    test(2);
     return 0;
 }

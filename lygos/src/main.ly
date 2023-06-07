@@ -18,10 +18,11 @@ fn strlen(str: *i8) -> i32;
 fn exit(code: i32);
 
 fn malloc(size: u32) -> *i8;
+fn realloc(ptr: *i8, size: u32) -> *i8;
+fn free(block: *i8);
 fn memcpy(dest: *i8, src: *i8, size: u32) -> *i8;
 fn strlen(str: *i8) -> u32;
 fn strcpy(dest: *i8, src: *i8) -> *i8;
-fn realloc(ptr: *i8, size: i32) -> *i8;
 
 macro println {
     () -> {
@@ -34,6 +35,45 @@ macro println {
     (fmt: $, args: $[]) -> {
         printf($fmt, $args);
         printf("\n");
+    }
+}
+
+macro Vec {
+    (typ: $) -> {
+        struct Vec##$typ {
+            data: *$typ;
+            cap: u32;
+            len: u32;
+        };
+
+        impl Vec##$typ {
+            fn new() -> Vec##$typ {
+                let this: Vec##$typ = {
+                    .cap = 0,
+                    .len = 0,
+                };
+                return this;
+            }
+
+            fn may_grow(&mut self) {
+                if self->cap == self->len {
+                    self->cap = self->cap * 2;
+                    let size: i32 = sizeof($typ);
+                    realloc((:*i8)self->data, self->cap * size);
+                }
+            }
+
+            fn push(&mut self, value: $typ) {
+                self->may_grow();
+                self->data[self->len] = value;
+                self->len = self->len + 1;
+            }
+
+            fn pop(&mut self) -> $typ {
+                self->len = self->len - 1;
+                return self->data[self->len];
+            }
+        }
     }
 }
 
@@ -70,21 +110,105 @@ impl String {
         }
         self->data[self->len] = (:i8)0;
     }
+
+    fn eq(&self, other: String) -> bool {
+        if self->len != other.len {
+            return (:bool)0;
+        }
+        for let i = 0 in i < self->len {
+            if self->data[i] != other.data[i] {
+                return (:bool)0;
+            }
+        }
+        return (:bool)1;
+    }
+}
+
+Vec$(String);
+
+enum TokenType {
+    String,
+    Integer,
+    Float,
+    Id,
+    Char,
+
+    Equals,
+    Arrow,
+    Dot,
+    Comma,
+    Semi,
+    Colon,
+    Ampercent,
+    Hash,
+    Dollar,
+    Pipe,
+    Bang,
+
+    OpPlus,
+    OpMinus,
+    OpMul,
+    OpDiv,
+    OpMod,
+
+    OpEqEq,
+    OpNeEq,
+    OpLeEq,
+    OpGrEq,
+    OpOr,
+    OpAnd,
+
+    OpScope,
+    OpVarArg,
+
+    BraceLeft,
+    BraceRight,
+    CurlyLeft,
+    CurlyRight,
+    AngleLeft,
+    AngleRight,
+    ParanLeft,
+    ParanRight,
+
+    KwLet,
+    KwMut,
+    KwConst,
+    KwStruct,
+    KwIf,
+    KwElse,
+    KwFor,
+    KwWhile,
+    KwFn,
+    KwRet,
+    KwIn,
+    KwInclude,
+    KwImpl,
+    KwType,
+    KwStatic,
+    KwMatch,
+    KwTrait,
+    KwMacro,
+    KwEnum,
+
+    Eof,
 }
 
 struct Token {
-    typ: u32;
+    typ: TokenType;
     value: String;
 };
 
 impl Token {
     fn new(value: String, typ: u32) -> Token {
-        let mut this: Token;
-        this.value = value;
-        this.typ = typ;
+        let mut this: Token = {
+            .value = value,
+            .typ = typ,
+        };
         return this;
     }
 }
+
+Vec$(Token);
 
 struct Lexer {
     src: *i8;
@@ -121,17 +245,17 @@ impl Lexer {
             str.push(self->curr);
             self->advance();
         }
-        return Token::new(str, 1);
+        return Token::new(str, TokenType::Integer);
     }
 
     fn lex_string(&self) -> Token {
         let start = self->index;
-        let mut str = String::new(2);
+        let mut str = String::new(0);
         for let curr = self->curr in self->curr != (:i8)34 {
             str.push(self->curr);
             self->advance();
         }
-        return Token::new(str, 0);
+        return Token::new(str, TokenType::String);
     }
 
     fn lex_char(&self) -> Token {
@@ -146,7 +270,7 @@ impl Lexer {
             str.push(self->curr);
             self->advance();
         }
-        return Token::new(str, 4);
+        return Token::new(str, TokenType::Id);
     }
 
     fn next_token(&mut self) -> Token {
@@ -155,23 +279,93 @@ impl Lexer {
                 self->advance();
             }
 
-            let mut token: Token;
-            if self->curr == '='{
-                token = self->advance_token(Token::new(String::from("="), 5));
+            if self -> curr == '.' { return self->advance_token(Token::new(String::from("."), TokenType::Dot)); }
+            if self -> curr == ',' { return self->advance_token(Token::new(String::from(","), TokenType::Comma)); }
+            if self -> curr == ';' { return self->advance_token(Token::new(String::from(";"), TokenType::Semi)); }
+            if self -> curr == ':' {
+                if self->src[self->index + 1] == ':' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from("::"), TokenType::OpScope));
+                }
+                return self->advance_token(Token::new(String::from(":"), TokenType::Colon));
+            }
+            if self -> curr == '+' { return self->advance_token(Token::new(String::from("+"), TokenType::OpPlus)); }
+            if self -> curr == '-' {
+                if self->src[self->index + 1] == '>' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from("->"), TokenType::Arrow));
+                }
+                return self->advance_token(Token::new(String::from("-"), TokenType::OpMinus));
+            }
+            if self -> curr == '*' { return self->advance_token(Token::new(String::from("*"), TokenType::OpMul)); }
+            if self -> curr == '/' {
+                if self->src[self->index + 1] == '/' {
+                    //TODO:
+                    //for w in self->curr != '\n' {
+                    //    self->advance();
+                    //}
+                }
+                return self->advance_token(Token::new(String::from("/"), TokenType::OpDiv));
+            }
+            if self -> curr == '%' { return self->advance_token(Token::new(String::from("%"), TokenType::OpMod)); }
+            if self -> curr == '[' { return self->advance_token(Token::new(String::from("["), TokenType::BraceLeft)); }
+            if self -> curr == ']' { return self->advance_token(Token::new(String::from("]"), TokenType::BraceRight)); }
+            if self -> curr == '{' { return self->advance_token(Token::new(String::from("{"), TokenType::CurlyLeft)); }
+            if self -> curr == '}' { return self->advance_token(Token::new(String::from("}"), TokenType::CurlyRight)); }
+            if self -> curr == '(' { return self->advance_token(Token::new(String::from("("), TokenType::ParanLeft)); }
+            if self -> curr == ')' { return self->advance_token(Token::new(String::from(")"), TokenType::ParanRight)); }
+            if self -> curr == '#' { return self->advance_token(Token::new(String::from("#"), TokenType::Hash)); }
+            if self -> curr == '$' { return self->advance_token(Token::new(String::from("$"), TokenType::Dollar)); }
+            if self -> curr == '<' {
+                if self->src[self->index + 1] == '=' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from("<="), TokenType::OpLeEq));
+                }
+                return self->advance_token(Token::new(String::from("<"), TokenType::AngleLeft));
+            }
+            if self -> curr == '>' {
+                if self->src[self->index + 1] == '=' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from(">="), TokenType::OpGrEq));
+                }
+                return self->advance_token(Token::new(String::from(">"), TokenType::AngleRight));
+            }
+            if self -> curr == '&' {
+                if self->src[self->index + 1] == '&' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from("&&"), TokenType::OpAnd));
+                }
+                return self->advance_token(Token::new(String::from("&"), TokenType::Ampercent));
+            }
+            if self -> curr == '|' {
+                if self->src[self->index + 1] == '|' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from("||"), TokenType::OpOr));
+                }
+                return self->advance_token(Token::new(String::from("|"), TokenType::Pipe));
+            }
+            if self -> curr == '!' {
+                if self->src[self->index + 1] == '=' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from("!="), TokenType::OpNeEq));
+                }
+                return self->advance_token(Token::new(String::from("!"), TokenType::Bang));
+            }
+            if self -> curr == '=' {
+                if self->src[self->index + 1] == '=' {
+                    self->advance();
+                    return self->advance_token(Token::new(String::from("=="), TokenType::OpEqEq));
+                }
+                return self->advance_token(Token::new(String::from("="), TokenType::Equals));
             }
             if isdigit((:i32)self->curr) != 0 {
-                token = self->lex_number();
+                return self->lex_number();
             }
             if isalpha((:i32)self->curr) != 0 {
-                printf("[info]: lexing id\n");
-                token = self->lex_id();
-                printf("[info]: token -> %s\n", token.value.data);
-            }
-            if (:bool)1 {
-                return token;
+                return self->lex_id();
             }
         }
-        return Token::new(String::from(""), 0);
+        return Token::new(String::from(""), TokenType::Eof);
     }
 }
 
@@ -180,6 +374,7 @@ struct Ctx {
     ctx: *i8;
     mod: *i8;
     builder: *i8;
+    key_words: VecString;
 };
 
 impl Ctx {
@@ -189,6 +384,8 @@ impl Ctx {
         this.ctx = LLVMContextCreate();
         this.mod = LLVMModuleCreateWithNameInContext(name, this.ctx);
         this.builder = LLVMCreateBuilderInContext(this.ctx);
+        this.key_words = VecString::new();
+
         return this;
     }
 
@@ -210,8 +407,9 @@ fn main(argc: i32, argv: **i8) -> i32 {
 
     let lexer = Lexer::new("let x = 10;", 11);
     printf("%s\n", lexer.src);
-    //lexer.next_token();
-    let tok = lexer.next_token();
-    printf("tok -> %s\n", tok.value.data);
+    for let mut tok = lexer.next_token() in tok.typ != TokenType::Eof {
+        println$("tok -> %s", tok.value.data);
+        tok = lexer.next_token();
+    }
     return 0;
 }

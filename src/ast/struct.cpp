@@ -30,7 +30,7 @@ namespace lygos {
                 false
             );
 
-            scope->AddType(id, {id, struct_type, struct_fields, {}, {}, {}});
+            scope->AddStructType(id, {id, struct_type, struct_fields, {}, {}, {}});
             return nullptr;
         }
 
@@ -43,5 +43,28 @@ namespace lygos {
         void StructDef::Sanatize() {
 
         }
+
+        EnumDef::EnumDef(std::string id, std::vector<std::string> variants, Ref<Type::Type> type):
+            AST(ASTType::EnumDef), id(id), variants(variants), type(type) {
+
+        }
+
+        std::string EnumDef::GetValue() {
+            return id;
+        }
+
+        llvm::Value *EnumDef::GenCode(Scope *scope) {
+            scope->AddEnumType(id, {id, variants, type});
+            return nullptr;
+        }
+
+        void EnumDef::Lower(AST *parent) {
+
+        }
+
+        void EnumDef::Sanatize() {
+
+        }
+
     }
 }

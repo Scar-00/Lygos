@@ -140,7 +140,7 @@ namespace lygos {
                 }
                 case '!': {
                     switch (src[index + 1]) {
-                        case '=': Advance(); return AdvanceToken({"!=", TokenType::OpEqEq, line});
+                        case '=': Advance(); return AdvanceToken({"!=", TokenType::OpNeEq, line});
                         default: return AdvanceToken({"!", TokenType::Bang, line});
                     }
                 }

@@ -15,31 +15,28 @@ define dso_local i32 @main(i32 %0, i8** %1) {
   %5 = alloca i32, align 4
   %6 = alloca i32, align 4
   store i32 0, i32* %6, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.block, %2
   %7 = load i32, i32* %6, align 4
   %8 = load i32, i32* %3, align 4
   %9 = icmp slt i32 %7, %8
-  br i1 %9, label %.preheader, label %22
+  br i1 %9, label %for.block, label %for.end
 
-.preheader:                                       ; preds = %2
-  br label %10
+for.block:                                        ; preds = %for.cond
+  %10 = load i32, i32* %6, align 4
+  %11 = load i8**, i8*** %4, align 8
+  %12 = load i32, i32* %6, align 4
+  %13 = getelementptr inbounds i8*, i8** %11, i32 %12
+  %14 = load i8*, i8** %13, align 8
+  %15 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @0, i32 0, i32 0), i32 %10, i8* %14)
+  %16 = load i32, i32* %6, align 4
+  %17 = add i32 %16, 1
+  store i32 %17, i32* %6, align 4
+  br label %for.cond
 
-10:                                               ; preds = %.preheader, %10
-  %11 = load i32, i32* %6, align 4
-  %12 = load i8**, i8*** %4, align 8
-  %13 = load i32, i32* %6, align 4
-  %14 = getelementptr inbounds i8*, i8** %12, i32 %13
-  %15 = load i8*, i8** %14, align 8
-  %16 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @0, i32 0, i32 0), i32 %11, i8* %15)
-  %17 = load i32, i32* %6, align 4
-  %18 = add i32 %17, 1
-  store i32 %18, i32* %6, align 4
-  %19 = load i32, i32* %6, align 4
-  %20 = load i32, i32* %3, align 4
-  %21 = icmp slt i32 %19, %20
-  br i1 %21, label %10, label %22
-
-22:                                               ; preds = %10, %2
+for.end:                                          ; preds = %for.cond
   store i32 0, i32* %5, align 4
-  %23 = load i32, i32* %5, align 4
-  ret i32 %23
+  %18 = load i32, i32* %5, align 4
+  ret i32 %18
 }

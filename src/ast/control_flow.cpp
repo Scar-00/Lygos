@@ -22,7 +22,7 @@ namespace lygos {
         llvm::Value *IfStmt::GenCode(Scope *scope) {
             llvm::Function *fn = builder->GetInsertBlock()->getParent();
 
-            if(then_body.Returns() || else_body.Returns())
+            if((then_body.Returns() || else_body.Returns()) && ast_root->GetCurrentFunction()->GetRetBlock() == nullptr)
                 ast_root->GetCurrentFunction()->SetRetBlock(llvm::BasicBlock::Create(*ctx, "ret", fn));
             auto ret_block = ast_root->GetCurrentFunction()->GetRetBlock();
 

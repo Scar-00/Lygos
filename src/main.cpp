@@ -6,6 +6,7 @@
 #include "cli/options.h"
 #include "lex/lexer.h"
 #include "parser/parser.h"
+#include "types.h"
 #include "util/io.h"
 #include <memory>
 

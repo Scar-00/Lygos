@@ -9,6 +9,7 @@ namespace lygos {
         struct MemberExpr : public AST {
             public:
                 MemberExpr(Ref<AST> obj, Ref<AST> member, bool deref);
+                MemberExpr(Ref<AST> obj, u32 index);
                 Ref<AST> Member() { return member; }
                 Ref<AST> Obj() { return obj; }
                 bool Deref() { return deref; }
@@ -21,6 +22,8 @@ namespace lygos {
                 Ref<AST> obj;
                 Ref<AST> member;
                 bool deref;
+                bool use_index = false;
+                u32 index;
         };
 
         struct AccessExpr : public AST {

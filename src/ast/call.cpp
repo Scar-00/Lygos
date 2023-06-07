@@ -4,6 +4,7 @@
 #include "mod.h"
 #include "function.h"
 #include "access.h"
+#include <algorithm>
 #include <fmt/core.h>
 #include <ios>
 #include <llvm/IR/DerivedTypes.h>
@@ -44,11 +45,17 @@ namespace lygos {
                     Log::Logger::Warn(fmt::format("function `{}` expected `{}` args but only `{}` were supplied", fn_name, callee->arg_size(), args.size()));
 
             std::vector<llvm::Value *> arg_values;
-            u64 i = 0;
+            size_t i = 0;
             for(const auto &arg : args) {
                 auto val = arg->GenCode(scope);
                 if(ShouldLoad(arg.get()) && (!(i == 0 && fn->IsMember()) || (i == 0 && deref_self)))
                     val = LoadOrIgnore(val);
+
+                if(i < fn->GetArgs().size()) {
+                    auto type_dest = scope->GetType(std::get<1>(fn->GetArgs().at(i)).get());
+                    builder->CreateCast(GetCastOp(val->getType(), type_dest), val, type_dest);
+                }
+
                 /*if(ShouldLoad(arg.get()))
                     if(!is_ptr && (!(i == 0 && fn->IsMember()) || (i == 0 && deref_self)))
                         val = LoadOrIgnore(val);*/

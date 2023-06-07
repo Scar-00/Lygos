@@ -74,6 +74,11 @@ namespace lygos {
 
     //static void IsImplicityCastable(llvm::Type *src);
 
+    /*Ref<Type::Type> Type::FromLLVMType(llvm::Type *type) {
+        if(type->isPointerTy())
+            return MakeRef<Pointer>(Ref<Type> type, );
+    }*/
+
     void Type::StructType::AddFunction(Function function) {
         //Log::Logger::Warn(fmt::format("name {}", this->name));
         if(this->functions.contains(function.name))

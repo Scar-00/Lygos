@@ -5,6 +5,7 @@
 #include <fmt/core.h>
 #include <iostream>
 #include <iterator>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <algorithm>

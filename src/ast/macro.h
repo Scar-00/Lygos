@@ -11,7 +11,6 @@ namespace lygos {
         typedef void (*MacroIntrinsicCallBack)(MacroCall *macro);
 
         static std::map<std::string, MacroIntrinsicCallBack> intrinsic_macros = {
-            {"format", Intrinsics::macro_format_intrinsic},
         };
 
         struct Macro : public AST {
@@ -61,6 +60,18 @@ namespace lygos {
                 void Sanatize() override;
             private:
                 std::string file;
+        };
+
+        struct MacroSizeOf : public AST {
+            public:
+                MacroSizeOf(Ref<Type::Type> type);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower(AST *parent) override;
+                void Sanatize() override;
+            private:
+                Ref<Type::Type> type;
         };
     }
 }

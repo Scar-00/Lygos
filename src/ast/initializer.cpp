@@ -52,7 +52,7 @@ namespace lygos {
             u32 idx = 0;
             for(const auto &[name, value] : initializers) {
                 Ref<AST> lhs = name == ""
-                    ? std::static_pointer_cast<AST>(MakeRef<AccessExpr>(lhs_value, MakeRef<NumberLiteral>(fmt::format("{}", idx), "Integer")))
+                    ? std::static_pointer_cast<AST>(MakeRef<MemberExpr>(lhs_value, idx))
                     : std::static_pointer_cast<AST>(MakeRef<MemberExpr>(lhs_value, MakeRef<Identifier>(name), false));
                 idx++;
                 exprs.push_back(MakeRef<AssignmentExpr>(lhs, value));

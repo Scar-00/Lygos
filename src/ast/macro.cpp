@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fmt/core.h>
+#include <llvm/IR/Constants.h>
 #include <memory>
 #include <vector>
 
@@ -233,6 +234,28 @@ namespace lygos {
         }
 
         void MacroInclude::Sanatize() {
+
+        }
+
+        MacroSizeOf::MacroSizeOf(Ref<Type::Type> type):
+            AST(ASTType::MacroSizeOf), type(type) {
+
+        }
+
+        std::string MacroSizeOf::GetValue() {
+            return {};
+        }
+
+        llvm::Value *MacroSizeOf::GenCode(Scope *scope) {
+            llvm::Type *type = scope->GetType(this->type.get());
+            return llvm::ConstantInt::get(type, type->getPrimitiveSizeInBits().getFixedSize() / 8);
+        }
+
+        void MacroSizeOf::Lower(AST *parent) {
+
+        }
+
+        void MacroSizeOf::Sanatize() {
 
         }
     }

@@ -21,7 +21,7 @@ namespace lygos {
                 return alloca;
             }
             auto val = value->GenCode(scope);
-            if(ShouldLoad(value.get()) /*&& value->type != ASTType::UnaryExpr()*/)
+            if(ShouldLoad(value.get()))
                 val = LoadOrIgnore(val);
 
             if(type.get()) {

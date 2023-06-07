@@ -30,11 +30,13 @@ namespace lygos {
 
             //literals
             StructDef,
+            EnumDef,
             Impl,
             Trait,
             Macro,
             MacroCall,
             MacroInclude,
+            MacroSizeOf,
             NumberLiteral,
             StringLiteral,
             InitializerList,

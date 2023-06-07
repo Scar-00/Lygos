@@ -12,12 +12,11 @@ macro println {
     }
 }
 
+static glob: i32;
+
 fn main(argc: i32) -> i32 {
-    for let i = 0 in i < 10 {
-        if argc == 5 {
-            return 100;
-        }
-        i = i + 1;
+    if argc == 10 || argc < 5 {
+        println$("Hello World");
     }
     return 0;
 }

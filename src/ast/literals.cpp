@@ -1,7 +1,5 @@
 #include "literals.h"
 #include "assignment.h"
-#include <llvm/IR/GlobalValue.h>
-#include <llvm/IR/GlobalVariable.h>
 #include <regex>
 
 namespace lygos {
@@ -76,9 +74,8 @@ namespace lygos {
 
         }
 
-        StaticLiterial::StaticLiterial(Ref<AST> value):
-            AST(ASTType::StaticLiterial), value(value) {
-            name = ((AssignmentExpr *)value.get())->Lhs()->GetValue();
+        StaticLiterial::StaticLiterial(std::string name, Ref<Type::Type> type):
+            AST(ASTType::StaticLiterial), name(name), type(type) {
         }
 
         std::string StaticLiterial::GetValue() {
@@ -86,8 +83,12 @@ namespace lygos {
         }
 
         llvm::Value *StaticLiterial::GenCode(Scope *scope) {
-            Log::Logger::Warn("unimplemented [Statics]");
-            return nullptr;
+            //auto glob = new llvm::GlobalVariable(scope->GetType(type.get()), false, llvm::GlobalVariable::InternalLinkage);
+            //Log::Logger::Warn("unimplemented [Statics]");
+            mod->getOrInsertGlobal(name, scope->GetType(type.get()));
+            //mod->getNamedGlobal(name)->setLinkage(llvm::GlobalVariable::InternalLinkage);
+            scope->DeclVar(this->name, false, {type, (llvm::AllocaInst *)mod->getNamedGlobal(name)});
+            return mod->getNamedGlobal(name);
         }
 
         void StaticLiterial::Lower(AST *parent) {

@@ -46,10 +46,12 @@ namespace lygos {
             Ref<AST::AST> ParseStmt();
             AST::StructDef::Field ParseFieldDecl();
             Ref<AST::AST> ParseStructDecl();
+            Ref<AST::AST> ParseEnumDecl();
             Ref<AST::AST> ParseVarDecl();
             AST::Function::Arg ParseFuncArg();
             Ref<AST::AST> ParseFunc();
             Ref<AST::AST> ParseRetExpr();
+            Ref<AST::AST> ParseSizeOfExpr();
             Ref<AST::AST> ParseIfExpr();
             Ref<AST::AST> ParseForExpr();
             AST::MatchStmt::Case ParseMatchCase();

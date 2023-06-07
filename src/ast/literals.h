@@ -45,7 +45,7 @@ namespace lygos {
 
         struct StaticLiterial : public AST {
             public:
-                StaticLiterial(Ref<AST> value);
+                StaticLiterial(std::string name, Ref<Type::Type> type);
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -53,7 +53,7 @@ namespace lygos {
                 void Sanatize() override;
             private:
                 std::string name;
-                Ref<AST> value;
+                Ref<Type::Type> type;
         };
     }
 }

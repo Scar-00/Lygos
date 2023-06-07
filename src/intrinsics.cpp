@@ -1,4 +1,5 @@
 #include "ast/ast.h"
+#include "ast/mod.h"
 #include "ast/macro.h"
 #include "core.h"
 #include "error/log.h"
@@ -10,7 +11,7 @@
 
 namespace lygos {
     namespace Intrinsics {
-        void macro_format_intrinsic(AST::MacroCall *macro) {
+        void macro_format_intrinsic(AST::MacroCall *macro, AST::Scope *scope) {
             std::vector<Token> &args = macro->GetArgs()[0];
             LYGOS_ASSERT(args[0].type == TokenType::String);
             std::string format = args[0].value;

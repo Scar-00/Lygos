@@ -27,17 +27,30 @@ namespace lygos {
                 case TokenType::KwTrait: return ParseTrait();
                 case TokenType::KwMacro: return ParseMacro();
                 case TokenType::Hash: return ParsePoundStmt();
+                case TokenType::KwEnum: return ParseEnumDecl();
                 default: return ParseStmt();
             }
         }
 
         Ref<AST::AST> Parser::ParseStatic() {
             Eat();
-            auto assignemnt = ParseAssignmentExpr();
-            auto type = ((AST::AssignmentExpr *)assignemnt.get())->Rhs()->type;
-            if(!(type == AST::ASTType::StringLiteral || type == AST::ASTType::NumberLiteral))
-                Log::Logger::Warn("can only assign literal values to static declarations");
-            return MakeRef<AST::StaticLiterial>(assignemnt);
+            //auto assignemnt = ParseAssignmentExpr();
+            //auto type = ((AST::AssignmentExpr *)assignemnt.get())->Rhs()->type;
+            //if(!(type == AST::ASTType::StringLiteral || type == AST::ASTType::NumberLiteral))
+            //    Log::Logger::Warn("can only assign literal values to static declarations");
+            auto id = Eat();
+            if (id.type != TokenType::Id)
+                Log::Logger::Warn(id, "expected `identifier` after keyword `static`");
+
+            if(Eat().type != TokenType::Colon)
+                Log::Logger::Warn(PEEK(-1), "expected type for static item");
+
+            auto type = ParseTypeSpec();
+
+            if(Eat().type != TokenType::Semi)
+                Log::Logger::Warn(PEEK(-1), "expected `;` at the end of expression");
+
+            return MakeRef<AST::StaticLiterial>(id.value, type);
         }
 
         Ref<AST::AST> Parser::ParseImpl() {
@@ -252,7 +265,6 @@ namespace lygos {
                 }
             }
 
-
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{` after struct identifier");
 
@@ -267,6 +279,44 @@ namespace lygos {
                 Log::Logger::Warn(PEEK(-1), "expected, `;` after struct declaration");
 
             return MakeRef<AST::StructDef>(struct_id.value, fields, generics);
+        }
+
+        Ref<AST::AST> Parser::ParseEnumDecl() {
+            Eat();
+
+            auto enum_id = Eat();
+
+            if(enum_id.type != TokenType::Id)
+                Log::Logger::Warn(enum_id, "expected identifier after keyword `enum`");
+
+            Ref<Type::Type> type{nullptr};
+            if(At().type == TokenType::Colon) {
+                Eat();
+                type = ParseTypeSpec();
+                if(type->kind != Type::Kind::path)
+                    Log::Logger::Warn(fmt::format("enums may only contain primitive types but has {}", type->GetName()));
+            }
+
+            if(Eat().type != TokenType::CurlyLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `{` after struct identifier");
+
+            std::vector<std::string> variants;
+
+            //TODO: make variants assignable
+            while (At().type != TokenType::CurlyRight) {
+                if(At().type != TokenType::Id)
+                    Log::Logger::Warn(At(), "expected identifier in enum declaration");
+
+                variants.push_back(Eat().value);
+
+                if(Eat().type != TokenType::Comma)
+                    Log::Logger::Warn(PEEK(-1), "enum variants need to be comma `,` seperated");
+            }
+            Eat();
+
+            if(type == nullptr)
+                type = MakeRef<Type::Path>("u32");
+            return MakeRef<AST::EnumDef>(enum_id.value, variants, type);
         }
 
         AST::Function::Arg Parser::ParseFuncArg() {
@@ -367,6 +417,16 @@ namespace lygos {
                 return MakeRef<AST::ReturnExpr>(nullptr);
             }
             return MakeRef<AST::ReturnExpr>(ParseExpr());
+        }
+
+        Ref<AST::AST> Parser::ParseSizeOfExpr() {
+            Eat();
+            if(Eat().type != TokenType::ParanLeft)
+                Log::Logger::Warn(PEEK(-1), "expected `(` after keyword `sizeof`");
+            auto type = ParseTypeSpec();
+            if(Eat().type != TokenType::ParanRight)
+                Log::Logger::Warn(PEEK(-1), "expected `)` after type");
+            return MakeRef<AST::MacroSizeOf>(type);
         }
 
         Ref<AST::AST> Parser::ParseIfExpr() {
@@ -502,6 +562,7 @@ namespace lygos {
             switch (At().type) {
                 case TokenType::KwLet: return ParseVarDecl();
                 case TokenType::KwRet: return ParseRetExpr();
+                case TokenType::KwSizeOf: return ParseSizeOfExpr();
                 default: return ParseCondExpr();
             }
         }

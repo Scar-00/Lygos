@@ -74,6 +74,7 @@ namespace lygos {
                 case ASTType::MacroCall: os << "MacroCall"; break;
                 case ASTType::Trait: os << "Trait"; break;
                 case ASTType::MacroInclude: os << "MacroInclude"; break;
+                case ASTType::EnumDef: os << "EnumDef"; break;
             }
             return os;
         }
@@ -164,6 +165,9 @@ namespace lygos {
                     ss << ": " << node->GetValue() << "\n";
                 } break;
                 case ASTType::MacroInclude: {
+                    ss << ": " << node->GetValue() << "\n";
+                } break;
+                case ASTType::EnumDef: {
                     ss << ": " << node->GetValue() << "\n";
                 } break;
                 default: ss << "\n"; break;

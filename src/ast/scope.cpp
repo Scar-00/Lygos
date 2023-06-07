@@ -7,6 +7,7 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <memory>
 
 
 namespace lygos {
@@ -45,23 +46,6 @@ namespace lygos {
             return parent->GetRet();
         }
 
-        /*void Scope::SetRetBlock(llvm::BasicBlock *block) {
-            if(ret_block != nullptr)
-                return;
-
-            ret_block = block;
-        }
-
-        llvm::BasicBlock *Scope::GetRetBlock() {
-            if(ret_block != nullptr)
-                return ret_block;
-
-            if(parent == nullptr)
-                return ret_block;
-
-            return parent->GetRetBlock();
-        }*/
-
         bool Scope::HasRetValue() {
             if(ret != nullptr)
                 return true;
@@ -92,11 +76,18 @@ namespace lygos {
             return functions.at(name);
         }
 
-        void Scope::AddType(std::string id, Type::StructType struct_type) {
+        void Scope::AddStructType(std::string id, Type::StructType struct_type) {
             auto scope = this->Resolve(id.c_str());
             if(scope->struct_types.contains(id))
-                Log::Logger::Warn(fmt::format("cannot redeclare `%s`", id));
+                Log::Logger::Warn(fmt::format("cannot redeclare type `%s`", id));
             this->struct_types.insert({id, struct_type});
+        }
+
+        void Scope::AddEnumType(std::string id, Type::EnumType enum_type) {
+            auto scope = this->Resolve(id.c_str());
+            if(scope->enum_types.contains(id))
+                Log::Logger::Warn(fmt::format("cannot redeclare type `%s`", id));
+            this->enum_types.insert({id, enum_type});
         }
 
         llvm::Type *Scope::GetType(Type::Type *type) {
@@ -113,6 +104,8 @@ namespace lygos {
                         }
                         return typ.llvm_type;
                     }
+                    if(scope->enum_types.contains(path))
+                        return GetType(scope->enum_types.at(path).type.get());
                 } break;
                 case Type::Kind::ptr:
                     return llvm::PointerType::get(GetType(static_cast<Type::Pointer *>(type)->GetType().get()), 0);
@@ -152,6 +145,13 @@ namespace lygos {
             std::exit(1);
         }
 
+        Option<Type::EnumType> Scope::GetEnum(std::string type) {
+            Scope *scope = this->Resolve(type.c_str());
+            if(scope->enum_types.contains(type))
+                return Some(scope->enum_types.at(type));
+            return None;
+        }
+
         Scope *Scope::Resolve(std::string var) {
             if(vars.contains(var))
                 return this;
@@ -163,7 +163,7 @@ namespace lygos {
         }
 
         Scope *Scope::Resolve(const char *type) {
-            if(this->struct_types.contains({type}))
+            if(this->struct_types.contains({type}) || this->enum_types.contains({type}))
                 return this;
 
             if(!this->parent)
