@@ -28,6 +28,7 @@ namespace lygos {
                 case TokenType::KwMacro: return ParseMacro();
                 case TokenType::Hash: return ParsePoundStmt();
                 case TokenType::KwEnum: return ParseEnumDecl();
+                case TokenType::KwType: return ParseTypeDef();
                 default: return ParseStmt();
             }
         }
@@ -194,6 +195,24 @@ namespace lygos {
             }
             Log::Logger::Warn(PEEK(-1), fmt::format("invalid value `{}` after `#`", action));
             std::exit(1);
+        }
+
+        Ref<AST::AST> Parser::ParseTypeDef() {
+            Eat();
+
+            auto id = Eat();
+            if(id.type != TokenType::Id)
+                Log::Logger::Warn(id, "expected identifier after keyword `type`");
+
+            if(Eat().type != TokenType::Equals)
+                Log::Logger::Warn(PEEK(-1), "expected `=` after type identifier");
+
+            auto type = ParseTypeSpec();
+
+            if(Eat().type != TokenType::Semi)
+                Log::Logger::Warn(PEEK(-1), "expected `;` at the end of expression");
+
+            return MakeRef<AST::TypeAlias>(id.value, type);
         }
 
         Ref<AST::AST> Parser::ParseStmt() {

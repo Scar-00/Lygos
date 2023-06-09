@@ -98,5 +98,26 @@ namespace lygos {
         void StaticLiterial::Sanatize() {
 
         }
+
+        TypeAlias::TypeAlias(std::string name, Ref<Type::Type> ref_type):
+            AST(ASTType::TypeAlias), name(name), ref_type(ref_type) {
+        }
+
+        std::string TypeAlias::GetValue() {
+            return name;
+        }
+
+        llvm::Value *TypeAlias::GenCode(Scope *scope) {
+            scope->AddTypeAlias(name, ref_type);
+            return nullptr;
+        }
+
+        void TypeAlias::Lower(AST *parent) {
+
+        }
+
+        void TypeAlias::Sanatize() {
+
+        }
     }
 }

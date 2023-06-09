@@ -12,11 +12,10 @@ macro println {
     }
 }
 
-static glob: i32;
+type a = i32;
+type int = a;
 
 fn main(argc: i32) -> i32 {
-    if argc == 10 || argc < 5 {
-        println$("Hello World");
-    }
+    let x: int = 10;
     return 0;
 }

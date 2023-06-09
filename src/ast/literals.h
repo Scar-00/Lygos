@@ -55,6 +55,19 @@ namespace lygos {
                 std::string name;
                 Ref<Type::Type> type;
         };
+
+        struct TypeAlias : public AST {
+            public:
+                TypeAlias(std::string name, Ref<Type::Type> ref_type);
+            public:
+                std::string GetValue() override;
+                llvm::Value *GenCode(Scope *scope) override;
+                void Lower(AST *parent) override;
+                void Sanatize() override;
+            private:
+                std::string name;
+                Ref<Type::Type> ref_type;
+        };
     }
 }
 

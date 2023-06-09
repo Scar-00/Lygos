@@ -79,15 +79,22 @@ namespace lygos {
         void Scope::AddStructType(std::string id, Type::StructType struct_type) {
             auto scope = this->Resolve(id.c_str());
             if(scope->struct_types.contains(id))
-                Log::Logger::Warn(fmt::format("cannot redeclare type `%s`", id));
+                Log::Logger::Warn(fmt::format("cannot redeclare type `{}`", id));
             this->struct_types.insert({id, struct_type});
         }
 
         void Scope::AddEnumType(std::string id, Type::EnumType enum_type) {
             auto scope = this->Resolve(id.c_str());
             if(scope->enum_types.contains(id))
-                Log::Logger::Warn(fmt::format("cannot redeclare type `%s`", id));
+                Log::Logger::Warn(fmt::format("cannot redeclare type `{}`", id));
             this->enum_types.insert({id, enum_type});
+        }
+
+        void Scope::AddTypeAlias(std::string name, Ref<Type::Type> ref_type) {
+            Scope *scope = this->Resolve(name.c_str());
+            if(scope->type_aliases.contains(name))
+                Log::Logger::Warn(fmt::format("cannot redeclare type alias `{}`", name));
+            scope->type_aliases.insert({name, ref_type});
         }
 
         llvm::Type *Scope::GetType(Type::Type *type) {
@@ -106,6 +113,8 @@ namespace lygos {
                     }
                     if(scope->enum_types.contains(path))
                         return GetType(scope->enum_types.at(path).type.get());
+                    if(scope->type_aliases.contains(path))
+                        return GetType(scope->type_aliases.at(path).get());
                 } break;
                 case Type::Kind::ptr:
                     return llvm::PointerType::get(GetType(static_cast<Type::Pointer *>(type)->GetType().get()), 0);
@@ -163,7 +172,7 @@ namespace lygos {
         }
 
         Scope *Scope::Resolve(const char *type) {
-            if(this->struct_types.contains({type}) || this->enum_types.contains({type}))
+            if(this->struct_types.contains({type}) || this->enum_types.contains({type}) || type_aliases.contains({type}))
                 return this;
 
             if(!this->parent)

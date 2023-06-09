@@ -43,6 +43,7 @@ namespace lygos {
             Ref<AST::AST> ParseTrait();
             Ref<AST::AST> ParseMacro();
             Ref<AST::AST> ParsePoundStmt();
+            Ref<AST::AST> ParseTypeDef();
             Ref<AST::AST> ParseStmt();
             AST::StructDef::Field ParseFieldDecl();
             Ref<AST::AST> ParseStructDecl();

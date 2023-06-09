@@ -23,6 +23,7 @@ namespace lygos {
                 Type::Function GetFunction(std::string name);
                 void AddStructType(std::string id, Type::StructType struct_type);
                 void AddEnumType(std::string id, Type::EnumType enum_type);
+                void AddTypeAlias(std::string name, Ref<Type::Type> ref_type);
                 llvm::Type *GetType(Type::Type *type);
                 Type::StructType &GetStruct(std::string);
                 Option<Type::EnumType> GetEnum(std::string);
@@ -37,6 +38,7 @@ namespace lygos {
                 std::unordered_map<std::string, Type::StructType> struct_types;
                 std::unordered_map<std::string, Type::EnumType> enum_types;
                 std::unordered_map<std::string, Type::Function> functions;
+                std::unordered_map<std::string, Ref<Type::Type>> type_aliases;
                 Scope *parent = nullptr;
                 llvm::Value *ret = nullptr;
         };

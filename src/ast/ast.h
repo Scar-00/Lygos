@@ -37,6 +37,7 @@ namespace lygos {
             MacroCall,
             MacroInclude,
             MacroSizeOf,
+            TypeAlias,
             NumberLiteral,
             StringLiteral,
             InitializerList,

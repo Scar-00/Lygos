@@ -367,6 +367,15 @@ impl Lexer {
         }
         return Token::new(String::from(""), TokenType::Eof);
     }
+
+    fn collect_tokens(&mut self) -> VecToken {
+        let tokens = VecToken::new();
+        for let mut tok = self->next_token() in tok.typ != TokenType::Eof {
+            tokens.push(tok);
+            tok = self->next_token();
+        }
+        return tokens;
+    }
 }
 
 struct Ctx {
@@ -374,7 +383,6 @@ struct Ctx {
     ctx: *i8;
     mod: *i8;
     builder: *i8;
-    key_words: VecString;
 };
 
 impl Ctx {
@@ -384,7 +392,6 @@ impl Ctx {
         this.ctx = LLVMContextCreate();
         this.mod = LLVMModuleCreateWithNameInContext(name, this.ctx);
         this.builder = LLVMCreateBuilderInContext(this.ctx);
-        this.key_words = VecString::new();
 
         return this;
     }

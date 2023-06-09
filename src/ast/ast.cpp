@@ -74,7 +74,9 @@ namespace lygos {
                 case ASTType::MacroCall: os << "MacroCall"; break;
                 case ASTType::Trait: os << "Trait"; break;
                 case ASTType::MacroInclude: os << "MacroInclude"; break;
+                case ASTType::MacroSizeOf: os << "MacroSizeOf"; break;
                 case ASTType::EnumDef: os << "EnumDef"; break;
+                case ASTType::TypeAlias: os << "TypeAlias"; break;
             }
             return os;
         }
