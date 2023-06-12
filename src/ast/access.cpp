@@ -5,6 +5,7 @@
 #include <fmt/core.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Value.h>
+#include <tuple>
 
 namespace lygos {
     namespace AST {
@@ -50,11 +51,17 @@ namespace lygos {
             auto struct_fields = scope->GetStruct(type_name).fields;
             if(!use_index) {
                 std::string member_name = member->GetValue();
-                if(!VecContains(struct_fields, member_name)) {
-                    Log::Logger::Warn(fmt::format("unknown field `{}` in struct `{}`", member_name, type_name));
+                bool contains = false;
+                for(size_t i = 0; i < struct_fields.size(); i++) {
+                    if(std::get<0>(struct_fields[i]) == member_name) {
+                        contains = true;
+                        break;
+                    }
                 }
+                if(!contains)
+                    Log::Logger::Warn(fmt::format("unknown field `{}` in struct `{}`", member_name, type_name));
                 for(size_t i = 0; i < struct_fields.size(); i++)
-                    if(struct_fields[i] == member_name)
+                    if(std::get<0>(struct_fields[i]) == member_name)
                        index = i;
 
             }else {
@@ -66,6 +73,18 @@ namespace lygos {
                 member->GenCode(scope);
 
             return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, index);
+        }
+
+        Ref<Type::Type> MemberExpr::GetType(Scope *scope) {
+            auto type = obj->GetType(scope);
+            auto struct_fields = scope->GetStruct(type->GetName()).fields;
+            size_t index = 0;
+            for(size_t i = 0; i < struct_fields.size(); i++)
+                if(std::get<0>(struct_fields[i]) == member->GetValue())
+                    index = i;
+            if(member->type != ASTType::Id)
+                return member->GetType(scope);
+            return std::get<1>(struct_fields.at(index));
         }
 
         void MemberExpr::Lower(AST *parent) {
@@ -109,6 +128,10 @@ namespace lygos {
             return builder->CreateGEP(TryGetPointerBase(obj->getType()), obj, idx_list, "", true);
         }
 
+        Ref<Type::Type> AccessExpr::GetType(Scope *scope) {
+            return obj->GetType(scope);
+        }
+
         void AccessExpr::Lower(AST *parent) {
 
         }
@@ -140,9 +163,11 @@ namespace lygos {
 
             auto fn = (CallExpr *)member.get();
             ((Identifier *)fn->GetCaller().get())->GetId() = scope->GetStruct(obj->GetValue()).GetFunction(fn->GetCaller()->GetValue()).name_mangeled;
-            //std::string fn_name = obj->GetValue() + "_" + fn->GetCaller()->GetValue();
-            //((Identifier *)fn->GetCaller().get())->GetId() = fn_name;
             return member->GenCode(scope);
+        }
+
+        Ref<Type::Type> ResolutionExpr::GetType(Scope *scope) {
+            return member->GetType(scope);
         }
 
         void ResolutionExpr::Lower(AST *parent) {

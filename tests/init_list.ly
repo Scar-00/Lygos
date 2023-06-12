@@ -14,12 +14,7 @@ fn test() -> Foo {
 fn main() -> i32 {
     let x = 10;
     let y = 20;
-    let foo: Foo = {
-        .x = y,
-        .y = x
-    };
-    let f: Foo = { x, y };
-    let z = f[0];
-    printf("foo -> %d | %d\n", foo.x, foo.y);
+    let f: Foo = { .x = x, .y = y };
+    printf("foo -> %d | %d\n", f.x, f.y);
     return 0;
 }

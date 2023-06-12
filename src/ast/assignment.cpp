@@ -21,9 +21,14 @@ namespace lygos {
                 val = LoadOrIgnore(val);
 
             //type check
+            //builder->CreateCast(GetCastOp(val->getType(), var->getType()), val, var->getType());
 
             builder->CreateStore(val, var);
             return var;
+        }
+
+        Ref<Type::Type> AssignmentExpr::GetType(Scope *scope) {
+            return assignee->GetType(scope);
         }
 
         void AssignmentExpr::Lower(AST *parent) {

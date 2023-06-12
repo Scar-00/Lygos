@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <memory>
 #include <vector>
 
@@ -29,6 +30,8 @@ namespace lygos {
             //Log::Logger::Warn("macro should have been expanded before code generation");
             return nullptr;
         }
+
+        Ref<Type::Type> Macro::GetType(Scope *scope) { return nullptr; }
 
         /*static const char *type_str[] = {
             "None",
@@ -75,6 +78,8 @@ namespace lygos {
             Log::Logger::Warn("macro should have been expanded before code generation");
             return nullptr;
         }
+
+        Ref<Type::Type> MacroCall::GetType(Scope *scope) { return nullptr; }
 
         void MacroCall::Lower(AST *parent) {
             if (intrinsic_macros.contains(name)) {
@@ -158,6 +163,7 @@ namespace lygos {
                             tokens[i].value.append(tokens[i + 1].value);
                             tokens.erase(tokens.begin() + i + 1);
                         }else {
+                            tokens.erase(tokens.begin() + i + 1);
                             if(tokens[i + 1].type == TokenType::Dollar) {
                                 if(tokens.size() >= i + 1 && tokens[i + 2].type == TokenType::Id) {
                                     if(tokens[i + 2].value == name) {
@@ -177,8 +183,8 @@ namespace lygos {
                                     }
                                 }
                             }
-                            tokens.erase(tokens.begin() + i + 1);
-                            tokens[i - 1].type = TokenType::Id;
+                            //tokens.erase(tokens.begin() + i);
+                            tokens[i].type = TokenType::Id;
                         }
                     }
                 }
@@ -220,6 +226,8 @@ namespace lygos {
             return nullptr;
         }
 
+        Ref<Type::Type> MacroInclude::GetType(Scope *scope) { return nullptr; }
+
         void MacroInclude::Lower(AST *parent) {
             std::filesystem::path curr = std::filesystem::current_path();
             auto file_content = IO::ReadFile(curr / file);
@@ -248,8 +256,11 @@ namespace lygos {
 
         llvm::Value *MacroSizeOf::GenCode(Scope *scope) {
             llvm::Type *type = scope->GetType(this->type.get());
-            return llvm::ConstantInt::get(type, type->getPrimitiveSizeInBits().getFixedSize() / 8);
+            auto size = mod->getDataLayout().getTypeAllocSizeInBits(type).getFixedSize();
+            return llvm::ConstantInt::get(*ctx, llvm::APInt(64, size / 8));
         }
+
+        Ref<Type::Type> MacroSizeOf::GetType(Scope *scope) { return type; }
 
         void MacroSizeOf::Lower(AST *parent) {
 

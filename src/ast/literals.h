@@ -12,6 +12,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
+                Ref<Type::Type> GetType(Scope *scope) override;
                 void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
@@ -24,6 +25,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
+                Ref<Type::Type> GetType(Scope *scope) override;
                 void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
@@ -36,6 +38,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
+                Ref<Type::Type> GetType(Scope *scope) override;
                 void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
@@ -49,6 +52,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
+                Ref<Type::Type> GetType(Scope *scope) override;
                 void Lower(AST *parent) override;
                 void Sanatize() override;
             private:
@@ -62,6 +66,7 @@ namespace lygos {
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
+                Ref<Type::Type> GetType(Scope *scope) override;
                 void Lower(AST *parent) override;
                 void Sanatize() override;
             private:

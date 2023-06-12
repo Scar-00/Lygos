@@ -54,7 +54,7 @@ namespace lygos {
         void Logger::Warn(Token &token, std::string format) {
             auto &stream = logger->ostream;
             stream << RED << "error: " << RESET << format << "\n";
-            stream << CYAN << "--> " << RESET << mod->getSourceFileName() << ":" << token.loc.GetLine() << "\n";
+            stream << CYAN << "--> " << RESET << mod->getSourceFileName() << ":" << token.loc.GetLine() << ":" << token.loc.GetStart() << "\n";
             stream << CYAN << "|\n" << RESET;
             stream << CYAN << "|\t" << RESET << "found: " << token.value << "\n";
             stream << CYAN << "|\n\n" << RESET;

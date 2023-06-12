@@ -27,6 +27,8 @@ namespace lygos {
             return nullptr;
         }
 
+        Ref<Type::Type> InitializerList::GetType(Scope *scope) { return nullptr; }
+
         void InitializerList::Lower(AST *parent) {
             std::vector<Ref<AST>> exprs;
             Ref<AST> lhs_value = nullptr;
@@ -54,6 +56,7 @@ namespace lygos {
                 Ref<AST> lhs = name == ""
                     ? std::static_pointer_cast<AST>(MakeRef<MemberExpr>(lhs_value, idx))
                     : std::static_pointer_cast<AST>(MakeRef<MemberExpr>(lhs_value, MakeRef<Identifier>(name), false));
+                //fmt::print("idx -> {}\n", idx);
                 idx++;
                 exprs.push_back(MakeRef<AssignmentExpr>(lhs, value));
             }

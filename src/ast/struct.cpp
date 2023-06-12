@@ -1,5 +1,6 @@
 #include "struct.h"
 #include "ast.h"
+#include <unordered_map>
 #include <vector>
 
 namespace lygos {
@@ -16,11 +17,11 @@ namespace lygos {
         llvm::Value *StructDef::GenCode(Scope *scope) {
             //scope->AddType(id, {});
             std::vector<llvm::Type *> field_types;
-            std::vector<std::string> struct_fields;
+            std::vector<std::tuple<std::string, Ref<Type::Type>>> struct_fields;
             for(const auto &field : fields) {
                 //check that is type is self it is a pointer
                 field_types.push_back(scope->GetType(field.type.get()));
-                struct_fields.push_back(field.id);
+                struct_fields.push_back({field.id, field.type});
             }
 
             auto struct_type = llvm::StructType::create(

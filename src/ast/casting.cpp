@@ -21,8 +21,8 @@ namespace lygos {
                     Log::Logger::Warn(fmt::format("cannot deref non pointer"));
                 return this->obj->type == ASTType::MemberExpr ? obj :  builder->CreateLoad(TryGetPointerBase(obj->getType()), obj);
             }
-            if(op == "&")
-                return obj;
+            if(op == "&") return obj;
+                //return builder->CreateBitCast(obj, llvm::PointerType::get(obj->getType(), 0));
             if(op == "!") {
                 if(ShouldLoad(this->obj.get()))
                     obj = LoadOrIgnore(obj);
@@ -31,6 +31,15 @@ namespace lygos {
                 return builder->CreateXor(ne, true);
             }
 
+            Log::Logger::Warn(fmt::format("unknown unary operator `{}`", op));
+            std::exit(1);
+        }
+
+        Ref<Type::Type> UnaryExpr::GetType(Scope *scope) {
+            auto type = obj->GetType(scope);
+            if(op == "*") { return ((Type::Pointer *)type.get())->GetType(); }
+            if(op == "&") { return MakeRef<Type::Pointer>(type, false); }
+            if(op == "!") { return MakeRef<Type::Path>("bool"); }
             Log::Logger::Warn(fmt::format("unknown unary operator `{}`", op));
             std::exit(1);
         }
@@ -64,6 +73,10 @@ namespace lygos {
             //if(TryGetPointerBase(src_type)->isArrayTy() && dest_type->isPointerTy())
             //    return builder->CreateConstGEP1_32(TryGetPointerBase(obj->getType()), obj, 0);
             return builder->CreateCast(GetCastOp(src_type, dest_type), obj, dest_type);
+        }
+
+        Ref<Type::Type> CastExpr::GetType(Scope *scope) {
+            return target_type;
         }
 
         void CastExpr::Lower(AST *parent) {

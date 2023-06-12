@@ -12,10 +12,24 @@ macro println {
     }
 }
 
-type a = i32;
-type int = a;
+struct Foo {
+    x: i32;
+};
 
-fn main(argc: i32) -> i32 {
-    let x: int = 10;
-    return 0;
+trait Copy {
+    fn copy(&self) -> Self;
+}
+
+impl Copy for Foo {
+    fn copy(&self) -> Self {
+        let this: Foo = {
+            .x = self->x,
+        };
+        return this;
+    }
+}
+
+fn main(argc: i32, argv: **i8) -> i32 {
+    let x = 10;
+    return x;
 }

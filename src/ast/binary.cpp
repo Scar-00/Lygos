@@ -39,6 +39,10 @@ namespace lygos {
             std::exit(1);
         }
 
+        Ref<Type::Type> BinaryExpr::GetType(Scope *scope) {
+            return lhs->GetType(scope);
+        }
+
         void BinaryExpr::Lower(AST *parent) {
 
         }

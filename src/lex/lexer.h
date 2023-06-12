@@ -10,6 +10,7 @@ namespace lygos {
         Location(size_t line): line(line) {};
         Location(size_t line, size_t start): line(line), start(start) {}
         size_t &GetLine() { return line; }
+        size_t &GetStart() { return start; }
     private:
         size_t line;
         size_t start;
@@ -30,7 +31,7 @@ namespace lygos {
         Lexer(const char *program);
         std::vector<Token> GetTokens();
     private:
-        void Advance() { index++; curr = src[index]; }
+        void Advance() { index++; curr = src[index]; line_index++; }
         Token LexNumber();
         Token LexString();
         Token LexChar();
@@ -41,6 +42,7 @@ namespace lygos {
         char curr;
         s32 index;
         size_t line;
+        size_t line_index;
     };
 }
 

@@ -68,6 +68,11 @@ namespace lygos {
             return builder->CreateCall(callee, arg_values);
         }
 
+        Ref<Type::Type> CallExpr::GetType(Scope *scope) {
+            auto fn_name = caller->GetValue();
+            return ast_root->GetFunction(fn_name)->GetRetType();
+        }
+
         void CallExpr::Lower(AST *parent) {
             if(parent->type == ASTType::MemberExpr) {
                 deref_self = ((MemberExpr *)parent)->Deref();
@@ -117,6 +122,10 @@ namespace lygos {
             }
 
             return builder->CreateStore(val, scope->GetRet());
+        }
+
+        Ref<Type::Type> ReturnExpr::GetType(Scope *scope) {
+            LYGOS_ASSERT(false && "cannot ever call this");
         }
 
         void ReturnExpr::Lower(AST *parent) {

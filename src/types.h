@@ -201,7 +201,7 @@ namespace lygos {
         struct StructType {
             std::string name;
             llvm::StructType *llvm_type;
-            std::vector<std::string> fields;
+            std::vector<std::tuple<std::string, Ref<struct Type>>> fields;
             std::unordered_map<std::string, Function> functions;
             std::unordered_map<std::string, Generic> generics;
             std::set<std::string> traits;
@@ -233,6 +233,7 @@ namespace lygos {
             Kind kind;
             bool Matches(Ref<Type> other);
             std::string &GetName();
+            std::string GetFullName();
         };
 
         struct Path : public Type {

@@ -21,6 +21,7 @@ namespace lygos {
             Scope curr_scope{scope};
 
             auto fn = mod->getFunction(name);
+            //check if function is already defined
             if(!fn) {
                 std::vector<llvm::Type *> arg_types;
                 for(const auto &[name, type] : args)
@@ -66,6 +67,8 @@ namespace lygos {
             for(const auto &node : body.Body())
                 node->GenCode(&curr_scope);
 
+            //fmt::print("? -> {}\n", curr_scope.LookupVar("x").alloca->canBeFreed());
+
             if(return_block != nullptr)
                 builder->SetInsertPoint(return_block);
             curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
@@ -74,6 +77,10 @@ namespace lygos {
             //curr_scope.Print();
             scope->RegisterFunction({name, {}, this->args, ret_type});
             return nullptr;
+        }
+
+        Ref<Type::Type> Function::GetType(Scope *scope) {
+            return ret_type;
         }
 
         void Function::Lower(AST *parent) {

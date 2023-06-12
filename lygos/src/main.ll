@@ -7,8 +7,9 @@ target triple = "x86_64-pc-linux-gnu"
 %VecString = type { %String*, i32, i32 }
 %Token = type { i32, %String }
 %VecToken = type { %Token*, i32, i32 }
+%Loc = type { %String*, i64, i64, i64 }
 %Lexer = type { i8*, i32, i8, i32 }
-%Ctx = type { i8*, i8*, i8*, i8*, %VecString }
+%Ctx = type { i8*, i8*, i8*, i8* }
 
 @0 = private unnamed_addr constant [29 x i8] c"unimplemented [`lex_char()`]\00", align 1
 @1 = private unnamed_addr constant [2 x i8] c".\00", align 1
@@ -43,13 +44,15 @@ target triple = "x86_64-pc-linux-gnu"
 @30 = private unnamed_addr constant [3 x i8] c"==\00", align 1
 @31 = private unnamed_addr constant [2 x i8] c"=\00", align 1
 @32 = private unnamed_addr constant [1 x i8] zeroinitializer, align 1
-@33 = private unnamed_addr constant [20 x i8] c"x86_64-pc-linux-gnu\00", align 1
-@34 = private unnamed_addr constant [5 x i8] c"test\00", align 1
+@33 = private unnamed_addr constant [4 x i8] c"EOF\00", align 1
+@34 = private unnamed_addr constant [20 x i8] c"x86_64-pc-linux-gnu\00", align 1
 @35 = private unnamed_addr constant [5 x i8] c"test\00", align 1
-@36 = private unnamed_addr constant [12 x i8] c"let x = 10;\00", align 1
-@37 = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
-@38 = private unnamed_addr constant [10 x i8] c"tok -> %s\00", align 1
+@36 = private unnamed_addr constant [5 x i8] c"test\00", align 1
+@37 = private unnamed_addr constant [12 x i8] c"let x = 10;\00", align 1
+@38 = private unnamed_addr constant [10 x i8] c"src -> %s\00", align 1
 @39 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+@40 = private unnamed_addr constant [10 x i8] c"tok -> %s\00", align 1
+@41 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -77,8 +80,6 @@ declare i32 @isalpha(i32)
 
 declare i32 @isspace(i32)
 
-declare i32 @strlen(i8*)
-
 declare void @exit(i32)
 
 declare i8* @malloc(i32)
@@ -89,26 +90,32 @@ declare void @free(i8*)
 
 declare i8* @memcpy(i8*, i8*, i32)
 
+declare i32 @strlen(i8*)
+
 declare i8* @strcpy(i8*, i8*)
 
 define dso_local %String @String_new(i32 %0) {
   %2 = alloca i32, align 4
   store i32 %0, i32* %2, align 4
   %3 = alloca %String, align 8
-  %4 = alloca %String, align 8
-  %5 = bitcast %String* %4 to i8**
-  %6 = load i32, i32* %2, align 4
-  %7 = call i8* @malloc(i32 %6)
-  store i8* %7, i8** %5, align 8
-  %8 = getelementptr inbounds %String, %String* %4, i32 0, i32 1
-  store i32 0, i32* %8, align 4
-  %9 = getelementptr inbounds %String, %String* %4, i32 0, i32 2
-  %10 = load i32, i32* %2, align 4
-  store i32 %10, i32* %9, align 4
-  %11 = load %String, %String* %4, align 8
-  store %String %11, %String* %3, align 8
-  %12 = load %String, %String* %3, align 8
-  ret %String %12
+  %4 = alloca i32, align 4
+  store i32 1, i32* %4, align 4
+  %5 = alloca %String, align 8
+  %6 = bitcast %String* %5 to i8**
+  %7 = load i32, i32* %2, align 4
+  %8 = load i32, i32* %4, align 4
+  %9 = mul i32 %7, %8
+  %10 = call i8* @malloc(i32 %9)
+  store i8* %10, i8** %6, align 8
+  %11 = getelementptr inbounds %String, %String* %5, i32 0, i32 1
+  store i32 0, i32* %11, align 4
+  %12 = getelementptr inbounds %String, %String* %5, i32 0, i32 2
+  %13 = load i32, i32* %2, align 4
+  store i32 %13, i32* %12, align 4
+  %14 = load %String, %String* %5, align 8
+  store %String %14, %String* %3, align 8
+  %15 = load %String, %String* %3, align 8
+  ret %String %15
 }
 
 define dso_local %String @String_from(i8* %0) {
@@ -136,63 +143,160 @@ define dso_local %String @String_from(i8* %0) {
   ret %String %17
 }
 
+define dso_local void @String_grow(%String* %0) {
+  %2 = alloca %String*, align 8
+  store %String* %0, %String** %2, align 8
+  %3 = load %String*, %String** %2, align 8
+  %4 = getelementptr inbounds %String, %String* %3, i32 0, i32 2
+  %5 = load i32, i32* %4, align 4
+  %6 = icmp eq i32 %5, 0
+  br i1 %6, label %if.then, label %if.end
+
+if.then:                                          ; preds = %1
+  %7 = load %String*, %String** %2, align 8
+  %8 = getelementptr inbounds %String, %String* %7, i32 0, i32 2
+  store i32 1, i32* %8, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %1
+  %9 = load %String*, %String** %2, align 8
+  %10 = getelementptr inbounds %String, %String* %9, i32 0, i32 2
+  %11 = load %String*, %String** %2, align 8
+  %12 = getelementptr inbounds %String, %String* %11, i32 0, i32 2
+  %13 = load i32, i32* %12, align 4
+  %14 = mul i32 %13, 2
+  store i32 %14, i32* %10, align 4
+  %15 = alloca i32, align 4
+  store i32 1, i32* %15, align 4
+  %16 = load %String*, %String** %2, align 8
+  %17 = bitcast %String* %16 to i8**
+  %18 = load %String*, %String** %2, align 8
+  %19 = bitcast %String* %18 to i8**
+  %20 = load i8*, i8** %19, align 8
+  %21 = load %String*, %String** %2, align 8
+  %22 = getelementptr inbounds %String, %String* %21, i32 0, i32 2
+  %23 = load i32, i32* %22, align 4
+  %24 = load i32, i32* %15, align 4
+  %25 = mul i32 %23, %24
+  %26 = call i8* @realloc(i8* %20, i32 %25)
+  store i8* %26, i8** %17, align 8
+  ret void
+}
+
 define dso_local void @String_push(%String* %0, i8 %1) {
   %3 = alloca %String*, align 8
   store %String* %0, %String** %3, align 8
   %4 = alloca i8, align 1
   store i8 %1, i8* %4, align 1
   %5 = load %String*, %String** %3, align 8
-  %6 = bitcast %String* %5 to i8**
-  %7 = load i8*, i8** %6, align 8
-  %8 = load %String*, %String** %3, align 8
-  %9 = getelementptr inbounds %String, %String* %8, i32 0, i32 1
-  %10 = load i32, i32* %9, align 4
-  %11 = getelementptr inbounds i8, i8* %7, i32 %10
-  %12 = load i8, i8* %4, align 1
-  store i8 %12, i8* %11, align 1
-  %13 = load %String*, %String** %3, align 8
-  %14 = getelementptr inbounds %String, %String* %13, i32 0, i32 1
-  %15 = load %String*, %String** %3, align 8
-  %16 = getelementptr inbounds %String, %String* %15, i32 0, i32 1
-  %17 = load i32, i32* %16, align 4
-  %18 = add i32 %17, 1
-  store i32 %18, i32* %14, align 4
-  %19 = load %String*, %String** %3, align 8
-  %20 = getelementptr inbounds %String, %String* %19, i32 0, i32 1
-  %21 = load %String*, %String** %3, align 8
-  %22 = getelementptr inbounds %String, %String* %21, i32 0, i32 2
-  %23 = load i32, i32* %20, align 4
-  %24 = load i32, i32* %22, align 4
-  %25 = icmp eq i32 %23, %24
-  br i1 %25, label %if.then, label %if.end
+  %6 = getelementptr inbounds %String, %String* %5, i32 0, i32 1
+  %7 = load %String*, %String** %3, align 8
+  %8 = getelementptr inbounds %String, %String* %7, i32 0, i32 2
+  %9 = load i32, i32* %6, align 4
+  %10 = load i32, i32* %8, align 4
+  %11 = icmp eq i32 %9, %10
+  br i1 %11, label %if.then, label %if.end
 
 if.then:                                          ; preds = %2
-  %26 = load %String*, %String** %3, align 8
-  %27 = getelementptr inbounds %String, %String* %26, i32 0, i32 2
-  %28 = load %String*, %String** %3, align 8
-  %29 = getelementptr inbounds %String, %String* %28, i32 0, i32 2
-  %30 = load i32, i32* %29, align 4
-  %31 = mul i32 %30, 2
-  store i32 %31, i32* %27, align 4
-  %32 = load %String*, %String** %3, align 8
-  %33 = bitcast %String* %32 to i8**
-  %34 = load i8*, i8** %33, align 8
-  %35 = load %String*, %String** %3, align 8
-  %36 = getelementptr inbounds %String, %String* %35, i32 0, i32 2
-  %37 = load i32, i32* %36, align 4
-  %38 = call i8* @realloc(i8* %34, i32 %37)
+  %12 = load %String*, %String** %3, align 8
+  %13 = load %String*, %String** %3, align 8
+  call void @String_grow(%String* %13)
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %2
-  %39 = load %String*, %String** %3, align 8
-  %40 = bitcast %String* %39 to i8**
-  %41 = load i8*, i8** %40, align 8
-  %42 = load %String*, %String** %3, align 8
-  %43 = getelementptr inbounds %String, %String* %42, i32 0, i32 1
-  %44 = load i32, i32* %43, align 4
-  %45 = getelementptr inbounds i8, i8* %41, i32 %44
-  store i8 0, i8* %45, align 1
+  %14 = load %String*, %String** %3, align 8
+  %15 = bitcast %String* %14 to i8**
+  %16 = load i8*, i8** %15, align 8
+  %17 = load %String*, %String** %3, align 8
+  %18 = getelementptr inbounds %String, %String* %17, i32 0, i32 1
+  %19 = load i32, i32* %18, align 4
+  %20 = getelementptr inbounds i8, i8* %16, i32 %19
+  %21 = load i8, i8* %4, align 1
+  store i8 %21, i8* %20, align 1
+  %22 = load %String*, %String** %3, align 8
+  %23 = getelementptr inbounds %String, %String* %22, i32 0, i32 1
+  %24 = load %String*, %String** %3, align 8
+  %25 = getelementptr inbounds %String, %String* %24, i32 0, i32 1
+  %26 = load i32, i32* %25, align 4
+  %27 = add i32 %26, 1
+  store i32 %27, i32* %23, align 4
+  %28 = load %String*, %String** %3, align 8
+  %29 = bitcast %String* %28 to i8**
+  %30 = load i8*, i8** %29, align 8
+  %31 = load %String*, %String** %3, align 8
+  %32 = getelementptr inbounds %String, %String* %31, i32 0, i32 1
+  %33 = load i32, i32* %32, align 4
+  %34 = getelementptr inbounds i8, i8* %30, i32 %33
+  store i8 0, i8* %34, align 1
   ret void
+}
+
+define dso_local void @String_push_str(%String* %0, %String %1) {
+  %3 = alloca %String*, align 8
+  store %String* %0, %String** %3, align 8
+  %4 = alloca %String, align 8
+  store %String %1, %String* %4, align 8
+  %5 = alloca i32, align 4
+  store i32 0, i32* %5, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.block, %2
+  %6 = getelementptr inbounds %String, %String* %4, i32 0, i32 1
+  %7 = load i32, i32* %5, align 4
+  %8 = load i32, i32* %6, align 4
+  %9 = icmp slt i32 %7, %8
+  br i1 %9, label %for.block, label %for.end
+
+for.block:                                        ; preds = %for.cond
+  %10 = load %String*, %String** %3, align 8
+  %11 = load %String*, %String** %3, align 8
+  %12 = bitcast %String* %4 to i8**
+  %13 = load i8*, i8** %12, align 8
+  %14 = load i32, i32* %5, align 4
+  %15 = getelementptr inbounds i8, i8* %13, i32 %14
+  %16 = load i8, i8* %15, align 1
+  call void @String_push(%String* %11, i8 %16)
+  %17 = load i32, i32* %5, align 4
+  %18 = add i32 %17, 1
+  store i32 %18, i32* %5, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  ret void
+}
+
+define dso_local %String @String_copy(%String* %0) {
+  %2 = alloca %String*, align 8
+  store %String* %0, %String** %2, align 8
+  %3 = alloca %String, align 8
+  %4 = load %String*, %String** %2, align 8
+  %5 = getelementptr inbounds %String, %String* %4, i32 0, i32 2
+  %6 = load i32, i32* %5, align 4
+  %7 = call %String @String_new(i32 %6)
+  %8 = alloca %String, align 8
+  store %String %7, %String* %8, align 8
+  %9 = alloca i32, align 4
+  store i32 1, i32* %9, align 4
+  %10 = getelementptr inbounds %String, %String* %8, i32 0, i32 1
+  %11 = load %String*, %String** %2, align 8
+  %12 = getelementptr inbounds %String, %String* %11, i32 0, i32 1
+  %13 = load i32, i32* %12, align 4
+  store i32 %13, i32* %10, align 4
+  %14 = bitcast %String* %8 to i8**
+  %15 = load i8*, i8** %14, align 8
+  %16 = load %String*, %String** %2, align 8
+  %17 = bitcast %String* %16 to i8**
+  %18 = load i8*, i8** %17, align 8
+  %19 = load %String*, %String** %2, align 8
+  %20 = getelementptr inbounds %String, %String* %19, i32 0, i32 1
+  %21 = load i32, i32* %9, align 4
+  %22 = load i32, i32* %20, align 4
+  %23 = mul i32 %21, %22
+  %24 = call i8* @memcpy(i8* %15, i8* %18, i32 %23)
+  %25 = load %String, %String* %8, align 8
+  store %String %25, %String* %3, align 8
+  %26 = load %String, %String* %3, align 8
+  ret %String %26
 }
 
 define dso_local i1 @String_eq(%String* %0, %String %1) {
@@ -254,54 +358,182 @@ for.end:                                          ; preds = %for.cond
   br label %ret
 }
 
+define dso_local i1 @String_contains(%String* %0, i8 %1) {
+  %3 = alloca %String*, align 8
+  store %String* %0, %String** %3, align 8
+  %4 = alloca i8, align 1
+  store i8 %1, i8* %4, align 1
+  %5 = alloca i1, align 1
+  %6 = alloca i32, align 4
+  store i32 0, i32* %6, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %if.end, %2
+  %7 = load %String*, %String** %3, align 8
+  %8 = getelementptr inbounds %String, %String* %7, i32 0, i32 1
+  %9 = load i32, i32* %6, align 4
+  %10 = load i32, i32* %8, align 4
+  %11 = icmp slt i32 %9, %10
+  br i1 %11, label %for.block, label %for.end
+
+for.block:                                        ; preds = %for.cond
+  %12 = load %String*, %String** %3, align 8
+  %13 = bitcast %String* %12 to i8**
+  %14 = load i8*, i8** %13, align 8
+  %15 = load i32, i32* %6, align 4
+  %16 = getelementptr inbounds i8, i8* %14, i32 %15
+  %17 = load i8, i8* %16, align 1
+  %18 = load i8, i8* %4, align 1
+  %19 = icmp eq i8 %17, %18
+  br i1 %19, label %if.then, label %if.end
+
+for.end:                                          ; preds = %for.cond
+  store i1 false, i1* %5, align 1
+  br label %ret
+
+if.then:                                          ; preds = %for.block
+  store i1 true, i1* %5, align 1
+  br label %ret
+
+if.end:                                           ; preds = %for.block
+  %20 = load i32, i32* %6, align 4
+  %21 = add i32 %20, 1
+  store i32 %21, i32* %6, align 4
+  br label %for.cond
+
+ret:                                              ; preds = %for.end, %if.then
+  %22 = load i1, i1* %5, align 1
+  ret i1 %22
+}
+
+define dso_local void @String_drop(%String* %0) {
+  %2 = alloca %String*, align 8
+  store %String* %0, %String** %2, align 8
+  %3 = load %String*, %String** %2, align 8
+  %4 = bitcast %String* %3 to i8**
+  %5 = load i8*, i8** %4, align 8
+  %6 = icmp ne i8* %5, null
+  br i1 %6, label %if.then, label %if.end
+
+if.then:                                          ; preds = %1
+  %7 = load %String*, %String** %2, align 8
+  %8 = bitcast %String* %7 to i8**
+  %9 = load i8*, i8** %8, align 8
+  call void @free(i8* %9)
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %1
+  ret void
+}
+
 define dso_local %VecString @VecString_new() {
   %1 = alloca %VecString, align 8
-  %2 = alloca %VecString, align 8
-  %3 = getelementptr inbounds %VecString, %VecString* %2, i32 0, i32 1
-  store i32 0, i32* %3, align 4
-  %4 = getelementptr inbounds %VecString, %VecString* %2, i32 0, i32 2
-  store i32 0, i32* %4, align 4
-  %5 = load %VecString, %VecString* %2, align 8
-  store %VecString %5, %VecString* %1, align 8
-  %6 = load %VecString, %VecString* %1, align 8
-  ret %VecString %6
+  %2 = alloca i32, align 4
+  store i32 16, i32* %2, align 4
+  %3 = alloca %VecString, align 8
+  %4 = bitcast %VecString* %3 to %String**
+  store %String* null, %String** %4, align 8
+  %5 = getelementptr inbounds %VecString, %VecString* %3, i32 0, i32 1
+  store i32 0, i32* %5, align 4
+  %6 = getelementptr inbounds %VecString, %VecString* %3, i32 0, i32 2
+  store i32 0, i32* %6, align 4
+  %7 = load %VecString, %VecString* %3, align 8
+  store %VecString %7, %VecString* %1, align 8
+  %8 = load %VecString, %VecString* %1, align 8
+  ret %VecString %8
+}
+
+define dso_local %VecString @VecString_with_size(i32 %0) {
+  %2 = alloca i32, align 4
+  store i32 %0, i32* %2, align 4
+  %3 = alloca %VecString, align 8
+  %4 = alloca i32, align 4
+  store i32 16, i32* %4, align 4
+  %5 = alloca %VecString, align 8
+  %6 = bitcast %VecString* %5 to %String**
+  %7 = load i32, i32* %2, align 4
+  %8 = load i32, i32* %4, align 4
+  %9 = mul i32 %7, %8
+  %10 = call i8* @malloc(i32 %9)
+  %11 = bitcast i8* %10 to %String*
+  store %String* %11, %String** %6, align 8
+  %12 = getelementptr inbounds %VecString, %VecString* %5, i32 0, i32 1
+  %13 = load i32, i32* %2, align 4
+  store i32 %13, i32* %12, align 4
+  %14 = getelementptr inbounds %VecString, %VecString* %5, i32 0, i32 2
+  store i32 0, i32* %14, align 4
+  %15 = load %VecString, %VecString* %5, align 8
+  store %VecString %15, %VecString* %3, align 8
+  %16 = load %VecString, %VecString* %3, align 8
+  ret %VecString %16
 }
 
 define dso_local void @VecString_may_grow(%VecString* %0) {
   %2 = alloca %VecString*, align 8
   store %VecString* %0, %VecString** %2, align 8
-  %3 = load %VecString*, %VecString** %2, align 8
-  %4 = getelementptr inbounds %VecString, %VecString* %3, i32 0, i32 1
-  %5 = load %VecString*, %VecString** %2, align 8
-  %6 = getelementptr inbounds %VecString, %VecString* %5, i32 0, i32 2
-  %7 = load i32, i32* %4, align 4
-  %8 = load i32, i32* %6, align 4
-  %9 = icmp eq i32 %7, %8
-  br i1 %9, label %if.then, label %if.end
+  %3 = alloca i32, align 4
+  store i32 16, i32* %3, align 4
+  %4 = load %VecString*, %VecString** %2, align 8
+  %5 = getelementptr inbounds %VecString, %VecString* %4, i32 0, i32 1
+  %6 = load i32, i32* %5, align 4
+  %7 = icmp eq i32 %6, 0
+  br i1 %7, label %if.then, label %if.end
 
 if.then:                                          ; preds = %1
+  %8 = load %VecString*, %VecString** %2, align 8
+  %9 = getelementptr inbounds %VecString, %VecString* %8, i32 0, i32 1
+  store i32 1, i32* %9, align 4
   %10 = load %VecString*, %VecString** %2, align 8
-  %11 = getelementptr inbounds %VecString, %VecString* %10, i32 0, i32 1
+  %11 = bitcast %VecString* %10 to %String**
   %12 = load %VecString*, %VecString** %2, align 8
-  %13 = getelementptr inbounds %VecString, %VecString* %12, i32 0, i32 1
-  %14 = load i32, i32* %13, align 4
-  %15 = mul i32 %14, 2
-  store i32 %15, i32* %11, align 4
-  %16 = alloca i32, align 4
-  store i32 0, i32* %16, align 4
-  %17 = load %VecString*, %VecString** %2, align 8
-  %18 = bitcast %VecString* %17 to %String**
-  %19 = load %String*, %String** %18, align 8
-  %20 = bitcast %String* %19 to i8*
-  %21 = load %VecString*, %VecString** %2, align 8
-  %22 = getelementptr inbounds %VecString, %VecString* %21, i32 0, i32 1
-  %23 = load i32, i32* %22, align 4
-  %24 = load i32, i32* %16, align 4
-  %25 = mul i32 %23, %24
-  %26 = call i8* @realloc(i8* %20, i32 %25)
+  %13 = bitcast %VecString* %12 to %String**
+  %14 = load %String*, %String** %13, align 8
+  %15 = bitcast %String* %14 to i8*
+  %16 = load %VecString*, %VecString** %2, align 8
+  %17 = getelementptr inbounds %VecString, %VecString* %16, i32 0, i32 1
+  %18 = load i32, i32* %17, align 4
+  %19 = load i32, i32* %3, align 4
+  %20 = mul i32 %18, %19
+  %21 = call i8* @realloc(i8* %15, i32 %20)
+  %22 = bitcast i8* %21 to %String*
+  store %String* %22, %String** %11, align 8
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %1
+  %23 = load %VecString*, %VecString** %2, align 8
+  %24 = getelementptr inbounds %VecString, %VecString* %23, i32 0, i32 1
+  %25 = load %VecString*, %VecString** %2, align 8
+  %26 = getelementptr inbounds %VecString, %VecString* %25, i32 0, i32 2
+  %27 = load i32, i32* %24, align 4
+  %28 = load i32, i32* %26, align 4
+  %29 = icmp eq i32 %27, %28
+  br i1 %29, label %if.then1, label %if.end2
+
+if.then1:                                         ; preds = %if.end
+  %30 = load %VecString*, %VecString** %2, align 8
+  %31 = getelementptr inbounds %VecString, %VecString* %30, i32 0, i32 1
+  %32 = load %VecString*, %VecString** %2, align 8
+  %33 = getelementptr inbounds %VecString, %VecString* %32, i32 0, i32 1
+  %34 = load i32, i32* %33, align 4
+  %35 = mul i32 %34, 2
+  store i32 %35, i32* %31, align 4
+  %36 = load %VecString*, %VecString** %2, align 8
+  %37 = bitcast %VecString* %36 to %String**
+  %38 = load %VecString*, %VecString** %2, align 8
+  %39 = bitcast %VecString* %38 to %String**
+  %40 = load %String*, %String** %39, align 8
+  %41 = bitcast %String* %40 to i8*
+  %42 = load %VecString*, %VecString** %2, align 8
+  %43 = getelementptr inbounds %VecString, %VecString* %42, i32 0, i32 1
+  %44 = load i32, i32* %43, align 4
+  %45 = load i32, i32* %3, align 4
+  %46 = mul i32 %44, %45
+  %47 = call i8* @realloc(i8* %41, i32 %46)
+  %48 = bitcast i8* %47 to %String*
+  store %String* %48, %String** %37, align 8
+  br label %if.end2
+
+if.end2:                                          ; preds = %if.then1, %if.end
   ret void
 }
 
@@ -356,6 +588,59 @@ define dso_local %String @VecString_pop(%VecString* %0) {
   ret %String %18
 }
 
+define dso_local void @VecString_drop(%VecString* %0) {
+  %2 = alloca %VecString*, align 8
+  store %VecString* %0, %VecString** %2, align 8
+  %3 = load %VecString*, %VecString** %2, align 8
+  %4 = bitcast %VecString* %3 to %String**
+  %5 = load %String*, %String** %4, align 8
+  %6 = icmp ne %String* %5, null
+  br i1 %6, label %if.then, label %if.end
+
+if.then:                                          ; preds = %1
+  %7 = load %VecString*, %VecString** %2, align 8
+  %8 = bitcast %VecString* %7 to %String**
+  %9 = load %String*, %String** %8, align 8
+  %10 = bitcast %String* %9 to i8*
+  call void @free(i8* %10)
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %1
+  ret void
+}
+
+define dso_local %VecString @VecString_copy(%VecString* %0) {
+  %2 = alloca %VecString*, align 8
+  store %VecString* %0, %VecString** %2, align 8
+  %3 = alloca %VecString, align 8
+  %4 = alloca i32, align 4
+  store i32 16, i32* %4, align 4
+  %5 = load %VecString*, %VecString** %2, align 8
+  %6 = getelementptr inbounds %VecString, %VecString* %5, i32 0, i32 1
+  %7 = load i32, i32* %6, align 4
+  %8 = call %VecString @VecString_with_size(i32 %7)
+  %9 = alloca %VecString, align 8
+  store %VecString %8, %VecString* %9, align 8
+  %10 = bitcast %VecString* %9 to %String**
+  %11 = bitcast %VecString* %9 to %String**
+  %12 = load %String*, %String** %11, align 8
+  %13 = bitcast %String* %12 to i8*
+  %14 = load %VecString*, %VecString** %2, align 8
+  %15 = bitcast %VecString* %14 to %String**
+  %16 = load %String*, %String** %15, align 8
+  %17 = bitcast %String* %16 to i8*
+  %18 = load %VecString*, %VecString** %2, align 8
+  %19 = getelementptr inbounds %VecString, %VecString* %18, i32 0, i32 1
+  %20 = load i32, i32* %19, align 4
+  %21 = load i32, i32* %4, align 4
+  %22 = mul i32 %20, %21
+  %23 = call i8* @memcpy(i8* %13, i8* %17, i32 %22)
+  %24 = bitcast i8* %23 to %String*
+  store %String* %24, %String** %10, align 8
+  %25 = load %VecString, %VecString* %3, align 8
+  ret %VecString %25
+}
+
 define dso_local %Token @Token_new(%String %0, i32 %1) {
   %3 = alloca %String, align 8
   store %String %0, %String* %3, align 8
@@ -377,52 +662,112 @@ define dso_local %Token @Token_new(%String %0, i32 %1) {
 
 define dso_local %VecToken @VecToken_new() {
   %1 = alloca %VecToken, align 8
-  %2 = alloca %VecToken, align 8
-  %3 = getelementptr inbounds %VecToken, %VecToken* %2, i32 0, i32 1
-  store i32 0, i32* %3, align 4
-  %4 = getelementptr inbounds %VecToken, %VecToken* %2, i32 0, i32 2
-  store i32 0, i32* %4, align 4
-  %5 = load %VecToken, %VecToken* %2, align 8
-  store %VecToken %5, %VecToken* %1, align 8
-  %6 = load %VecToken, %VecToken* %1, align 8
-  ret %VecToken %6
+  %2 = alloca i32, align 4
+  store i32 24, i32* %2, align 4
+  %3 = alloca %VecToken, align 8
+  %4 = bitcast %VecToken* %3 to %Token**
+  store %Token* null, %Token** %4, align 8
+  %5 = getelementptr inbounds %VecToken, %VecToken* %3, i32 0, i32 1
+  store i32 0, i32* %5, align 4
+  %6 = getelementptr inbounds %VecToken, %VecToken* %3, i32 0, i32 2
+  store i32 0, i32* %6, align 4
+  %7 = load %VecToken, %VecToken* %3, align 8
+  store %VecToken %7, %VecToken* %1, align 8
+  %8 = load %VecToken, %VecToken* %1, align 8
+  ret %VecToken %8
+}
+
+define dso_local %VecToken @VecToken_with_size(i32 %0) {
+  %2 = alloca i32, align 4
+  store i32 %0, i32* %2, align 4
+  %3 = alloca %VecToken, align 8
+  %4 = alloca i32, align 4
+  store i32 24, i32* %4, align 4
+  %5 = alloca %VecToken, align 8
+  %6 = bitcast %VecToken* %5 to %Token**
+  %7 = load i32, i32* %2, align 4
+  %8 = load i32, i32* %4, align 4
+  %9 = mul i32 %7, %8
+  %10 = call i8* @malloc(i32 %9)
+  %11 = bitcast i8* %10 to %Token*
+  store %Token* %11, %Token** %6, align 8
+  %12 = getelementptr inbounds %VecToken, %VecToken* %5, i32 0, i32 1
+  %13 = load i32, i32* %2, align 4
+  store i32 %13, i32* %12, align 4
+  %14 = getelementptr inbounds %VecToken, %VecToken* %5, i32 0, i32 2
+  store i32 0, i32* %14, align 4
+  %15 = load %VecToken, %VecToken* %5, align 8
+  store %VecToken %15, %VecToken* %3, align 8
+  %16 = load %VecToken, %VecToken* %3, align 8
+  ret %VecToken %16
 }
 
 define dso_local void @VecToken_may_grow(%VecToken* %0) {
   %2 = alloca %VecToken*, align 8
   store %VecToken* %0, %VecToken** %2, align 8
-  %3 = load %VecToken*, %VecToken** %2, align 8
-  %4 = getelementptr inbounds %VecToken, %VecToken* %3, i32 0, i32 1
-  %5 = load %VecToken*, %VecToken** %2, align 8
-  %6 = getelementptr inbounds %VecToken, %VecToken* %5, i32 0, i32 2
-  %7 = load i32, i32* %4, align 4
-  %8 = load i32, i32* %6, align 4
-  %9 = icmp eq i32 %7, %8
-  br i1 %9, label %if.then, label %if.end
+  %3 = alloca i32, align 4
+  store i32 24, i32* %3, align 4
+  %4 = load %VecToken*, %VecToken** %2, align 8
+  %5 = getelementptr inbounds %VecToken, %VecToken* %4, i32 0, i32 1
+  %6 = load i32, i32* %5, align 4
+  %7 = icmp eq i32 %6, 0
+  br i1 %7, label %if.then, label %if.end
 
 if.then:                                          ; preds = %1
+  %8 = load %VecToken*, %VecToken** %2, align 8
+  %9 = getelementptr inbounds %VecToken, %VecToken* %8, i32 0, i32 1
+  store i32 1, i32* %9, align 4
   %10 = load %VecToken*, %VecToken** %2, align 8
-  %11 = getelementptr inbounds %VecToken, %VecToken* %10, i32 0, i32 1
+  %11 = bitcast %VecToken* %10 to %Token**
   %12 = load %VecToken*, %VecToken** %2, align 8
-  %13 = getelementptr inbounds %VecToken, %VecToken* %12, i32 0, i32 1
-  %14 = load i32, i32* %13, align 4
-  %15 = mul i32 %14, 2
-  store i32 %15, i32* %11, align 4
-  %16 = alloca i32, align 4
-  store i32 0, i32* %16, align 4
-  %17 = load %VecToken*, %VecToken** %2, align 8
-  %18 = bitcast %VecToken* %17 to %Token**
-  %19 = load %Token*, %Token** %18, align 8
-  %20 = bitcast %Token* %19 to i8*
-  %21 = load %VecToken*, %VecToken** %2, align 8
-  %22 = getelementptr inbounds %VecToken, %VecToken* %21, i32 0, i32 1
-  %23 = load i32, i32* %22, align 4
-  %24 = load i32, i32* %16, align 4
-  %25 = mul i32 %23, %24
-  %26 = call i8* @realloc(i8* %20, i32 %25)
+  %13 = bitcast %VecToken* %12 to %Token**
+  %14 = load %Token*, %Token** %13, align 8
+  %15 = bitcast %Token* %14 to i8*
+  %16 = load %VecToken*, %VecToken** %2, align 8
+  %17 = getelementptr inbounds %VecToken, %VecToken* %16, i32 0, i32 1
+  %18 = load i32, i32* %17, align 4
+  %19 = load i32, i32* %3, align 4
+  %20 = mul i32 %18, %19
+  %21 = call i8* @realloc(i8* %15, i32 %20)
+  %22 = bitcast i8* %21 to %Token*
+  store %Token* %22, %Token** %11, align 8
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %1
+  %23 = load %VecToken*, %VecToken** %2, align 8
+  %24 = getelementptr inbounds %VecToken, %VecToken* %23, i32 0, i32 1
+  %25 = load %VecToken*, %VecToken** %2, align 8
+  %26 = getelementptr inbounds %VecToken, %VecToken* %25, i32 0, i32 2
+  %27 = load i32, i32* %24, align 4
+  %28 = load i32, i32* %26, align 4
+  %29 = icmp eq i32 %27, %28
+  br i1 %29, label %if.then1, label %if.end2
+
+if.then1:                                         ; preds = %if.end
+  %30 = load %VecToken*, %VecToken** %2, align 8
+  %31 = getelementptr inbounds %VecToken, %VecToken* %30, i32 0, i32 1
+  %32 = load %VecToken*, %VecToken** %2, align 8
+  %33 = getelementptr inbounds %VecToken, %VecToken* %32, i32 0, i32 1
+  %34 = load i32, i32* %33, align 4
+  %35 = mul i32 %34, 2
+  store i32 %35, i32* %31, align 4
+  %36 = load %VecToken*, %VecToken** %2, align 8
+  %37 = bitcast %VecToken* %36 to %Token**
+  %38 = load %VecToken*, %VecToken** %2, align 8
+  %39 = bitcast %VecToken* %38 to %Token**
+  %40 = load %Token*, %Token** %39, align 8
+  %41 = bitcast %Token* %40 to i8*
+  %42 = load %VecToken*, %VecToken** %2, align 8
+  %43 = getelementptr inbounds %VecToken, %VecToken* %42, i32 0, i32 1
+  %44 = load i32, i32* %43, align 4
+  %45 = load i32, i32* %3, align 4
+  %46 = mul i32 %44, %45
+  %47 = call i8* @realloc(i8* %41, i32 %46)
+  %48 = bitcast i8* %47 to %Token*
+  store %Token* %48, %Token** %37, align 8
+  br label %if.end2
+
+if.end2:                                          ; preds = %if.then1, %if.end
   ret void
 }
 
@@ -475,6 +820,88 @@ define dso_local %Token @VecToken_pop(%VecToken* %0) {
   store %Token %17, %Token* %3, align 8
   %18 = load %Token, %Token* %3, align 8
   ret %Token %18
+}
+
+define dso_local void @VecToken_drop(%VecToken* %0) {
+  %2 = alloca %VecToken*, align 8
+  store %VecToken* %0, %VecToken** %2, align 8
+  %3 = load %VecToken*, %VecToken** %2, align 8
+  %4 = bitcast %VecToken* %3 to %Token**
+  %5 = load %Token*, %Token** %4, align 8
+  %6 = icmp ne %Token* %5, null
+  br i1 %6, label %if.then, label %if.end
+
+if.then:                                          ; preds = %1
+  %7 = load %VecToken*, %VecToken** %2, align 8
+  %8 = bitcast %VecToken* %7 to %Token**
+  %9 = load %Token*, %Token** %8, align 8
+  %10 = bitcast %Token* %9 to i8*
+  call void @free(i8* %10)
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %1
+  ret void
+}
+
+define dso_local %VecToken @VecToken_copy(%VecToken* %0) {
+  %2 = alloca %VecToken*, align 8
+  store %VecToken* %0, %VecToken** %2, align 8
+  %3 = alloca %VecToken, align 8
+  %4 = alloca i32, align 4
+  store i32 24, i32* %4, align 4
+  %5 = load %VecToken*, %VecToken** %2, align 8
+  %6 = getelementptr inbounds %VecToken, %VecToken* %5, i32 0, i32 1
+  %7 = load i32, i32* %6, align 4
+  %8 = call %VecToken @VecToken_with_size(i32 %7)
+  %9 = alloca %VecToken, align 8
+  store %VecToken %8, %VecToken* %9, align 8
+  %10 = bitcast %VecToken* %9 to %Token**
+  %11 = bitcast %VecToken* %9 to %Token**
+  %12 = load %Token*, %Token** %11, align 8
+  %13 = bitcast %Token* %12 to i8*
+  %14 = load %VecToken*, %VecToken** %2, align 8
+  %15 = bitcast %VecToken* %14 to %Token**
+  %16 = load %Token*, %Token** %15, align 8
+  %17 = bitcast %Token* %16 to i8*
+  %18 = load %VecToken*, %VecToken** %2, align 8
+  %19 = getelementptr inbounds %VecToken, %VecToken* %18, i32 0, i32 1
+  %20 = load i32, i32* %19, align 4
+  %21 = load i32, i32* %4, align 4
+  %22 = mul i32 %20, %21
+  %23 = call i8* @memcpy(i8* %13, i8* %17, i32 %22)
+  %24 = bitcast i8* %23 to %Token*
+  store %Token* %24, %Token** %10, align 8
+  %25 = load %VecToken, %VecToken* %3, align 8
+  ret %VecToken %25
+}
+
+define dso_local %Loc @Loc_new(%String* %0, i64 %1, i64 %2, i64 %3) {
+  %5 = alloca %String*, align 8
+  store %String* %0, %String** %5, align 8
+  %6 = alloca i64, align 8
+  store i64 %1, i64* %6, align 8
+  %7 = alloca i64, align 8
+  store i64 %2, i64* %7, align 8
+  %8 = alloca i64, align 8
+  store i64 %3, i64* %8, align 8
+  %9 = alloca %Loc, align 8
+  %10 = alloca %Loc, align 8
+  %11 = bitcast %Loc* %10 to %String**
+  %12 = load %String*, %String** %5, align 8
+  store %String* %12, %String** %11, align 8
+  %13 = getelementptr inbounds %Loc, %Loc* %10, i32 0, i32 1
+  %14 = load i64, i64* %6, align 8
+  store i64 %14, i64* %13, align 8
+  %15 = getelementptr inbounds %Loc, %Loc* %10, i32 0, i32 2
+  %16 = load i64, i64* %7, align 8
+  store i64 %16, i64* %15, align 8
+  %17 = getelementptr inbounds %Loc, %Loc* %10, i32 0, i32 3
+  %18 = load i64, i64* %8, align 8
+  store i64 %18, i64* %17, align 8
+  %19 = load %Loc, %Loc* %10, align 8
+  store %Loc %19, %Loc* %9, align 8
+  %20 = load %Loc, %Loc* %9, align 8
+  ret %Loc %20
 }
 
 define dso_local %Lexer @Lexer_new(i8* %0, i32 %1) {
@@ -581,11 +1008,24 @@ for.block:                                        ; preds = %for.cond
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
-  %25 = load %String, %String* %9, align 8
-  %26 = call %Token @Token_new(%String %25, i32 1)
-  store %Token %26, %Token* %3, align 8
-  %27 = load %Token, %Token* %3, align 8
-  ret %Token %27
+  %25 = call i1 @String_contains(%String* %9, i8 46)
+  br i1 %25, label %if.then, label %if.end
+
+if.then:                                          ; preds = %for.end
+  %26 = load %String, %String* %9, align 8
+  %27 = call %Token @Token_new(%String %26, i32 2)
+  store %Token %27, %Token* %3, align 8
+  br label %ret
+
+if.end:                                           ; preds = %for.end
+  %28 = load %String, %String* %9, align 8
+  %29 = call %Token @Token_new(%String %28, i32 1)
+  store %Token %29, %Token* %3, align 8
+  br label %ret
+
+ret:                                              ; preds = %if.end, %if.then
+  %30 = load %Token, %Token* %3, align 8
+  ret %Token %30
 }
 
 define dso_local %Token @Lexer_lex_string(%Lexer* %0) {
@@ -597,7 +1037,7 @@ define dso_local %Token @Lexer_lex_string(%Lexer* %0) {
   %6 = load i32, i32* %5, align 4
   %7 = alloca i32, align 4
   store i32 %6, i32* %7, align 4
-  %8 = call %String @String_new(i32 0)
+  %8 = call %String @String_new(i32 2)
   %9 = alloca %String, align 8
   store %String %8, %String* %9, align 8
   %10 = load %Lexer*, %Lexer** %2, align 8
@@ -1367,10 +1807,13 @@ for.block:                                        ; preds = %for.cond
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
-  %17 = load %VecToken, %VecToken* %5, align 8
-  store %VecToken %17, %VecToken* %3, align 8
-  %18 = load %VecToken, %VecToken* %3, align 8
-  ret %VecToken %18
+  %17 = call %String @String_from(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @33, i32 0, i32 0))
+  %18 = call %Token @Token_new(%String %17, i32 56)
+  call void @VecToken_push(%VecToken* %5, %Token %18)
+  %19 = load %VecToken, %VecToken* %5, align 8
+  store %VecToken %19, %VecToken* %3, align 8
+  %20 = load %VecToken, %VecToken* %3, align 8
+  ret %VecToken %20
 }
 
 define dso_local %Ctx @Ctx_init(i8* %0) {
@@ -1395,13 +1838,10 @@ define dso_local %Ctx @Ctx_init(i8* %0) {
   %16 = load i8*, i8** %15, align 8
   %17 = call i8* @LLVMCreateBuilderInContext(i8* %16)
   store i8* %17, i8** %14, align 8
-  %18 = getelementptr inbounds %Ctx, %Ctx* %4, i32 0, i32 4
-  %19 = call %VecString @VecString_new()
-  store %VecString %19, %VecString* %18, align 8
-  %20 = load %Ctx, %Ctx* %4, align 8
-  store %Ctx %20, %Ctx* %3, align 8
-  %21 = load %Ctx, %Ctx* %3, align 8
-  ret %Ctx %21
+  %18 = load %Ctx, %Ctx* %4, align 8
+  store %Ctx %18, %Ctx* %3, align 8
+  %19 = load %Ctx, %Ctx* %3, align 8
+  ret %Ctx %19
 }
 
 define dso_local i8* @Ctx_add_function(%Ctx* %0, i8* %1, i8* %2) {
@@ -1430,8 +1870,8 @@ define dso_local i32 @main(i32 %0, i8** %1) {
   store i8** %1, i8*** %4, align 8
   %5 = alloca i32, align 4
   %6 = alloca i8*, align 8
-  store i8* getelementptr inbounds ([20 x i8], [20 x i8]* @33, i32 0, i32 0), i8** %6, align 8
-  %7 = call %Ctx @Ctx_init(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @34, i32 0, i32 0))
+  store i8* getelementptr inbounds ([20 x i8], [20 x i8]* @34, i32 0, i32 0), i8** %6, align 8
+  %7 = call %Ctx @Ctx_init(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @35, i32 0, i32 0))
   %8 = alloca %Ctx, align 8
   store %Ctx %7, %Ctx* %8, align 8
   %9 = alloca [1 x i8*], align 8
@@ -1448,36 +1888,48 @@ define dso_local i32 @main(i32 %0, i8** %1) {
   %18 = alloca i8*, align 8
   store i8* %17, i8** %18, align 8
   %19 = load i8*, i8** %18, align 8
-  %20 = call i8* @Ctx_add_function(%Ctx* %8, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @35, i32 0, i32 0), i8* %19)
-  %21 = call %Lexer @Lexer_new(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @36, i32 0, i32 0), i32 11)
+  %20 = call i8* @Ctx_add_function(%Ctx* %8, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @36, i32 0, i32 0), i8* %19)
+  %21 = call %Lexer @Lexer_new(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @37, i32 0, i32 0), i32 11)
   %22 = alloca %Lexer, align 8
   store %Lexer %21, %Lexer* %22, align 8
   %23 = bitcast %Lexer* %22 to i8**
   %24 = load i8*, i8** %23, align 8
-  %25 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @37, i32 0, i32 0), i8* %24)
-  %26 = call %Token @Lexer_next_token(%Lexer* %22)
-  %27 = alloca %Token, align 8
-  store %Token %26, %Token* %27, align 8
+  %25 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @38, i32 0, i32 0), i8* %24)
+  %26 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @39, i32 0, i32 0))
+  %27 = call %VecToken @Lexer_collect_tokens(%Lexer* %22)
+  %28 = alloca %VecToken, align 8
+  store %VecToken %27, %VecToken* %28, align 8
+  %29 = alloca i32, align 4
+  store i32 0, i32* %29, align 4
   br label %for.cond
 
 for.cond:                                         ; preds = %for.block, %2
-  %28 = bitcast %Token* %27 to i32*
-  %29 = load i32, i32* %28, align 4
-  %30 = icmp ne i32 %29, 56
-  br i1 %30, label %for.block, label %for.end
+  %30 = getelementptr inbounds %VecToken, %VecToken* %28, i32 0, i32 2
+  %31 = load i32, i32* %29, align 4
+  %32 = load i32, i32* %30, align 4
+  %33 = icmp slt i32 %31, %32
+  br i1 %33, label %for.block, label %for.end
 
 for.block:                                        ; preds = %for.cond
-  %31 = getelementptr inbounds %Token, %Token* %27, i32 0, i32 1
-  %32 = bitcast %String* %31 to i8**
-  %33 = load i8*, i8** %32, align 8
-  %34 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @38, i32 0, i32 0), i8* %33)
-  %35 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @39, i32 0, i32 0))
-  %36 = call %Token @Lexer_next_token(%Lexer* %22)
-  store %Token %36, %Token* %27, align 8
+  %34 = bitcast %VecToken* %28 to %Token**
+  %35 = load %Token*, %Token** %34, align 8
+  %36 = load i32, i32* %29, align 4
+  %37 = getelementptr inbounds %Token, %Token* %35, i32 %36
+  %38 = load %Token, %Token* %37, align 8
+  %39 = alloca %Token, align 8
+  store %Token %38, %Token* %39, align 8
+  %40 = getelementptr inbounds %Token, %Token* %39, i32 0, i32 1
+  %41 = bitcast %String* %40 to i8**
+  %42 = load i8*, i8** %41, align 8
+  %43 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @40, i32 0, i32 0), i8* %42)
+  %44 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @41, i32 0, i32 0))
+  %45 = load i32, i32* %29, align 4
+  %46 = add i32 %45, 1
+  store i32 %46, i32* %29, align 4
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
   store i32 0, i32* %5, align 4
-  %37 = load i32, i32* %5, align 4
-  ret i32 %37
+  %47 = load i32, i32* %5, align 4
+  ret i32 %47
 }

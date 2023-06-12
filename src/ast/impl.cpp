@@ -1,6 +1,7 @@
 #include "impl.h"
 #include "function.h"
 #include "mod.h"
+#include "scope.h"
 #include "trait.h"
 #include <algorithm>
 #include <vector>
@@ -16,7 +17,9 @@ namespace lygos {
             return type;
         }
 
-        static void ValidateTraitImpl(Impl *impl, Trait::Trait *trait) {
+        static void ValidateTraitImpl(Impl *impl, Trait::Trait *trait, Scope *scope) {
+            if(scope->GetStruct(impl->Type()).ImplementsTrait(trait->GetValue()))
+                Log::Logger::Warn(fmt::format("type `{}` already implements `{}`", impl->Type(), trait->GetValue()));
             //TODO: find the excat function(s) that are not implemented and
             //check args/ret type
             /*(for(size_t i = 0; i < trait->Functions().Body().size(); i++) {
@@ -39,7 +42,7 @@ namespace lygos {
         llvm::Value *Impl::GenCode(Scope *scope) {
             auto &strct = scope->GetStruct(type);
             if(trait != "")
-                ValidateTraitImpl(this, ast_root->GetTrait(trait));
+                ValidateTraitImpl(this, ast_root->GetTrait(trait), scope);
             for(const auto &member : body.Body()) {
                 auto func = (Function *)member.get();
                 strct.AddFunction({func->GetName(), {this->type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType()});
@@ -48,6 +51,8 @@ namespace lygos {
             }
             return nullptr;
         }
+
+        Ref<Type::Type> Impl::GetType(Scope *scope) { return nullptr; }
 
         void Impl::Lower(AST *parent) {
             for(size_t i = 0; i < body.Body().size(); i++) {

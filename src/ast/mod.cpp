@@ -86,6 +86,10 @@ namespace lygos {
             return nullptr;
         }
 
+        Ref<Type::Type> Mod::GetType(Scope *scope) {
+            return nullptr;
+        }
+
         void Mod::Lower(AST *parent) {
             for(u64 i = 0; i < body.Body().size(); i++) {
                 ast_root->SetCurrentBlock(&body);
@@ -95,7 +99,7 @@ namespace lygos {
         }
 
         void Mod::Sanatize() {
-            LYGOS_ASSERT(name != "" && "Module name cannot be `\"\"`");
+            LYGOS_ASSERT(name != "" && "Module cannot be named `\"\"`");
             LYGOS_ASSERT(body.Body().size() > 0 && "Empty Module");
             LYGOS_ASSERT(current_func != NULL && "No Function in Module");
         }

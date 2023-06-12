@@ -612,9 +612,11 @@ namespace lygos {
             auto lhs = ParseAdditiveExpr();
 
             while(At().type == TokenType::OpEqEq
+            || At().type == TokenType::OpNeEq
             || At().type == TokenType::AngleRight
             || At().type == TokenType::AngleLeft
-            || At().type == TokenType::OpOr) {
+            || At().type == TokenType::OpLeEq
+            || At().type == TokenType::OpGrEq) {
                 auto op = Eat().value;
                 auto rhs = ParseAdditiveExpr();
                 lhs = MakeRef<AST::BinaryExpr>(lhs, rhs, op);
@@ -888,10 +890,17 @@ namespace lygos {
             if(At().type != TokenType::Id)
                 Log::Logger::Warn(At(), "expected type");
 
+            auto path = Eat().value;
+            if(path == "Self") {
+                if(!current_impl && !current_trait)
+                    Log::Logger::Warn("encountered type `Self` outside of `impl` or `trait` block");
+                if(current_impl)
+                    path = current_impl->Type();
+            }
             if(!spec) {
-                origin = MakeRef<Type::Path>(Eat().value);
+                origin = MakeRef<Type::Path>(path);
             }else {
-                static_cast<Type::Pointer *>(spec.get())->SetType(MakeRef<Type::Path>(Eat().value));
+                static_cast<Type::Pointer *>(spec.get())->SetType(MakeRef<Type::Path>(path));
             }
 
             if(At().type == TokenType::AngleLeft) {

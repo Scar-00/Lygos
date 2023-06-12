@@ -76,6 +76,7 @@ namespace lygos {
             return functions.at(name);
         }
 
+        //TODO: check in every function weather another type with the same name exists
         void Scope::AddStructType(std::string id, Type::StructType struct_type) {
             auto scope = this->Resolve(id.c_str());
             if(scope->struct_types.contains(id))

@@ -1,4 +1,5 @@
 #include "vardecl.h"
+#include "ast.h"
 #include "mod.h"
 #include "function.h"
 #include <llvm/IR/DerivedTypes.h>
@@ -30,11 +31,12 @@ namespace lygos {
             }
 
             if(val->getType()->isVoidTy())
-                Log::Logger::Warn("cannot assign `void` value to variable");
+                Log::Logger::Warn("cannot assign `void` value");
 
             auto alloca = builder->CreateAlloca(val->getType());
             builder->CreateStore(val, alloca);
-            scope->DeclVar(id, cnst, {type, alloca});
+            //fmt::print("type -> {}\n", PrintType(val->getType()));
+            scope->DeclVar(id, cnst, {this->value->GetType(scope), alloca});
             return alloca;
         }
 

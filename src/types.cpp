@@ -64,6 +64,7 @@ namespace lygos {
         }
         if(src->isIntegerTy()) {
             if(dest->isFloatTy()) return CastOps::SIToFP;
+            if(dest->isPointerTy()) return CastOps::IntToPtr;
         }
         if(src->isStructTy() && dest->isStructTy())
             if(((llvm::StructType *)src->canLosslesslyBitCastTo(dest)))
@@ -165,6 +166,19 @@ namespace lygos {
 
         if(kind == Kind::arr)
             return ((Array *)this)->GetType()->GetName();
+
+        assert(false && "Cannot get type name");
+    }
+
+    std::string Type::Type::GetFullName() {
+        if(kind == Kind::path)
+            return ((Path *)this)->GetPath();
+
+        if(kind == Kind::ptr)
+            return "*" + ((Pointer *)this)->GetType()->GetName();
+
+        if(kind == Kind::arr)
+            return "[" + ((Array *)this)->GetType()->GetName() + "]";
 
         assert(false && "Cannot get type name");
     }

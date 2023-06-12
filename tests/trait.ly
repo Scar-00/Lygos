@@ -13,6 +13,10 @@ trait Area {
     fn test(&self);
 }
 
+trait Copy {
+    fn copy(&self) -> Self;
+}
+
 impl Area for Triangle {
     fn area(&self) -> i32 {
         return self->width * self->height;
@@ -32,9 +36,9 @@ impl Area for Quad {
 }
 
 fn main() -> i32 {
-    let q: Quad = { 10, 5 };
-    let tri: Triangle = { 10, 5 };
-    let area = q.area();
-    printf("area -> %d\n", area);
+    let q: Quad = { .width = 10, .height = 5 };
+    //let tri: Triangle = { 10, 5 };
+    //let area = q.area();
+    //printf("area -> %d\n", area);
     return 0;
 }

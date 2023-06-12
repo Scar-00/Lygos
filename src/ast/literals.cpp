@@ -17,6 +17,10 @@ namespace lygos {
             return scope->LookupVar(id).alloca;
         }
 
+        Ref<Type::Type> Identifier::GetType(Scope *scope) {
+            return scope->LookupVar(id).type;
+        }
+
         void Identifier::Lower(AST *parent) {
 
         }
@@ -39,6 +43,10 @@ namespace lygos {
             auto unescaped = std::regex_replace(value, reg, "\n");
             return builder->CreateGlobalStringPtr(unescaped);
        }
+
+        Ref<Type::Type> StringLiteral::GetType(Scope *scope) {
+            return MakeRef<Type::Pointer>(MakeRef<Type::Path>("i8"), false);
+        }
 
         void StringLiteral::Lower(AST *parent) {
 
@@ -66,6 +74,10 @@ namespace lygos {
             return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*ctx), std::atof(value.c_str()));
         }
 
+        Ref<Type::Type> NumberLiteral::GetType(Scope *scope) {
+            return MakeRef<Type::Path>("i32");
+        }
+
         void NumberLiteral::Lower(AST *parent) {
 
         }
@@ -91,6 +103,10 @@ namespace lygos {
             return mod->getNamedGlobal(name);
         }
 
+        Ref<Type::Type> StaticLiterial::GetType(Scope *scope) {
+            return this->type;
+        }
+
         void StaticLiterial::Lower(AST *parent) {
 
         }
@@ -110,6 +126,10 @@ namespace lygos {
         llvm::Value *TypeAlias::GenCode(Scope *scope) {
             scope->AddTypeAlias(name, ref_type);
             return nullptr;
+        }
+
+        Ref<Type::Type> TypeAlias::GetType(Scope *scope) {
+            return this->ref_type;
         }
 
         void TypeAlias::Lower(AST *parent) {

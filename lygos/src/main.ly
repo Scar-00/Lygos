@@ -13,8 +13,6 @@ fn isdigit(c: i32) -> i32;
 fn isalpha(c: i32) -> i32;
 fn isspace(c: i32) -> i32;
 
-fn strlen(str: *i8) -> i32;
-
 fn exit(code: i32);
 
 fn malloc(size: u32) -> *i8;
@@ -24,6 +22,14 @@ fn memcpy(dest: *i8, src: *i8, size: u32) -> *i8;
 fn strlen(str: *i8) -> u32;
 fn strcpy(dest: *i8, src: *i8) -> *i8;
 
+trait Drop {
+    fn drop(&mut self);
+}
+
+trait Copy {
+    fn copy(&self) -> Self;
+}
+
 macro println {
     () -> {
         printf("\n");
@@ -31,7 +37,6 @@ macro println {
     (string: $) -> {
         printf("%s\n", $string);
     }
-
     (fmt: $, args: $[]) -> {
         printf($fmt, $args);
         printf("\n");
@@ -48,18 +53,34 @@ macro Vec {
 
         impl Vec##$typ {
             fn new() -> Vec##$typ {
+                let size: i32 = sizeof($typ);
                 let this: Vec##$typ = {
+                    .data = (:*$typ)0,
                     .cap = 0,
                     .len = 0,
                 };
                 return this;
             }
 
+            fn with_size(size: u32) -> Self {
+                let typ_size: i32 = sizeof($typ);
+                let this: Vec##$typ = {
+                    .data = (:*$typ)malloc(size * typ_size),
+                    .cap = size,
+                    .len = 0,
+                };
+                return this;
+            }
+
             fn may_grow(&mut self) {
+                let size: i32 = sizeof($typ);
+                if self->cap == 0 {
+                    self->cap = 1;
+                    self->data = (:*$typ)realloc((:*i8)self->data, self->cap * size);
+                }
                 if self->cap == self->len {
                     self->cap = self->cap * 2;
-                    let size: i32 = sizeof($typ);
-                    realloc((:*i8)self->data, self->cap * size);
+                    self->data = (:*$typ)realloc((:*i8)self->data, self->cap * size);
                 }
             }
 
@@ -74,6 +95,22 @@ macro Vec {
                 return self->data[self->len];
             }
         }
+
+        impl Drop for Vec##$typ {
+            fn drop(&mut self) {
+                if self->data != (:*$typ)0 {
+                    free((:*i8)self->data);
+                }
+            }
+        }
+
+        impl Copy for Vec##$typ {
+            fn copy(&self) -> Self {
+                let typ_size: i32 = sizeof($typ);
+                let this = Vec##$typ::with_size(self->cap);
+                this.data = (:*$typ)memcpy((:*i8)this.data, (:*i8)self->data, self->cap * typ_size);
+            }
+        }
     }
 }
 
@@ -85,8 +122,9 @@ struct String {
 
 impl String {
     fn new(size: i32) -> String {
+        let typ_size: i32 = sizeof(i8);
         let str: String = {
-            .data = malloc(size),
+            .data = malloc(size * typ_size),
             .len = 0,
             .cap = size,
         };
@@ -101,14 +139,38 @@ impl String {
         return str;
     }
 
+    fn grow(&mut self) {
+        if self->cap == 0 {
+            self->cap = 1;
+        }
+        self->cap = self->cap * 2;
+        let size: i32 = sizeof(i8);
+        self->data = realloc(self->data, self->cap * size);
+    }
+
     fn push(&mut self, char: i8) {
+        if self->len == self->cap {
+            self->grow();
+        }
         self->data[self->len] = char;
         self->len = self->len + 1;
-        if self->len == self->cap {
-            self->cap = self->cap * 2;
-            realloc(self->data, self->cap);
-        }
         self->data[self->len] = (:i8)0;
+    }
+
+    fn push_str(&mut self, other: String) {
+        for let i = 0 in i < other.len {
+            self->push(other.data[i]);
+            i = i + 1;
+        }
+        return;
+    }
+
+    fn copy(&self) -> String {
+        let mut this = String::new(self->cap);
+        let size: i32 = sizeof(i8);
+        this.len = self->len;
+        memcpy(this.data, self->data, size * self->len);
+        return this;
     }
 
     fn eq(&self, other: String) -> bool {
@@ -121,6 +183,24 @@ impl String {
             }
         }
         return (:bool)1;
+    }
+
+    fn contains(&self, matchee: i8) -> bool {
+        for let mut i = 0 in i < self->len {
+            if self->data[i] == matchee {
+                return (:bool)1;
+            }
+            i = i + 1;
+        }
+        return (:bool)0;
+    }
+}
+
+impl Drop for String {
+    fn drop(&mut self) {
+        if self->data != (:*i8)0 {
+            free(self->data);
+        }
     }
 }
 
@@ -210,6 +290,25 @@ impl Token {
 
 Vec$(Token);
 
+struct Loc {
+    file: &String;
+    line: u64;
+    start: u64;
+    end: u64;
+};
+
+impl Loc {
+    fn new(file: &String, line: u64, start: u64, end: u64) -> Loc {
+        let this: Loc = {
+            .file = file,
+            .line = line,
+            .start = start,
+            .end = end,
+        };
+        return this;
+    }
+}
+
 struct Lexer {
     src: *i8;
     len: u32;
@@ -245,12 +344,15 @@ impl Lexer {
             str.push(self->curr);
             self->advance();
         }
+        if str.contains('.') {
+            return Token::new(str, TokenType::Float);
+        }
         return Token::new(str, TokenType::Integer);
     }
 
     fn lex_string(&self) -> Token {
         let start = self->index;
-        let mut str = String::new(0);
+        let mut str = String::new(2);
         for let curr = self->curr in self->curr != (:i8)34 {
             str.push(self->curr);
             self->advance();
@@ -374,6 +476,7 @@ impl Lexer {
             tokens.push(tok);
             tok = self->next_token();
         }
+        tokens.push(Token::new(String::from("EOF"), TokenType::Eof));
         return tokens;
     }
 }
@@ -413,10 +516,12 @@ fn main(argc: i32, argv: **i8) -> i32 {
     ctx.add_function("test", fn_type);
 
     let lexer = Lexer::new("let x = 10;", 11);
-    printf("%s\n", lexer.src);
-    for let mut tok = lexer.next_token() in tok.typ != TokenType::Eof {
-        println$("tok -> %s", tok.value.data);
-        tok = lexer.next_token();
+    println$("src -> %s", lexer.src);
+    let tokens = lexer.collect_tokens();
+    for let mut index = 0 in index < tokens.len {
+        let t: Token = tokens.data[index];
+        println$("tok -> %s", t.value.data);
+        index = index + 1;
     }
     return 0;
 }

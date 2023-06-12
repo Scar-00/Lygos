@@ -54,7 +54,7 @@ namespace lygos {
             virtual ~AST() {}
             virtual std::string GetValue() { return "NONE"; }
             virtual llvm::Value *GenCode(Scope *scope) { return nullptr; }
-            //maybe pass Scope aswell to get type info
+            virtual Ref<Type::Type> GetType(Scope *scope) { return nullptr; }
             virtual void Lower(AST *parent) {}
             virtual void Sanatize() {}
         };
@@ -74,6 +74,7 @@ namespace lygos {
             void Replace(Ref<AST> &expr);
             bool Returns() { return returns; }
             void SetReturn(bool ret) { returns = ret; }
+            void AddDropTarget();
         private:
             Content body;
             s64 index;

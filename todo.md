@@ -3,9 +3,10 @@
 * sanatize AST lowering (void Expr::Sanatize() & integrety of Mod::Insert()/Replace())
 
 # TODO/FIXME
+* move parsing of index expr up in the call chain
 * compare types at assignment, decl, ...
 * add var-arg as special function type
-* rewrite return instructions (return block)
+* add RAII support
 
 #AST building
 - Expr <--------|

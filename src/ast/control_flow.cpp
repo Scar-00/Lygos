@@ -60,6 +60,8 @@ namespace lygos {
             return nullptr;
         }
 
+        Ref<Type::Type> IfStmt::GetType(Scope *scope) { return nullptr; }
+
         void IfStmt::Lower(AST *parent) {
             this->cond->Lower(this);
             for(size_t i = 0; i < then_body.Body().size(); i++) {
@@ -118,6 +120,8 @@ namespace lygos {
             return nullptr;
         }
 
+        Ref<Type::Type> ForStmt::GetType(Scope *scope) { return nullptr; }
+
         void ForStmt::Lower(AST *parent) {
             this->cond->Lower(this);
             this->var->Lower(this);
@@ -170,6 +174,8 @@ namespace lygos {
             builder->SetInsertPoint(merge);
             return nullptr;
         }
+
+        Ref<Type::Type> MatchStmt::GetType(Scope *scope) { return nullptr; }
 
         void MatchStmt::Lower(AST *parent) {
             value->Lower(this);
