@@ -41,8 +41,10 @@ namespace lygos {
 
         llvm::Value *Impl::GenCode(Scope *scope) {
             auto &strct = scope->GetStruct(type);
-            if(trait != "")
+            if(trait != "") {
                 ValidateTraitImpl(this, ast_root->GetTrait(trait), scope);
+                strct.RegisterTraitImpl(trait);
+            }
             for(const auto &member : body.Body()) {
                 auto func = (Function *)member.get();
                 strct.AddFunction({func->GetName(), {this->type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType()});

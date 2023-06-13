@@ -24,6 +24,11 @@ namespace lygos {
             if(ShouldLoad(this->rhs.get()))
                 rhs = LoadOrIgnore(rhs);
 
+            //if(this->lhs->GetType(scope)->IsConvertable(this->rhs->GetType(scope).get())){
+                //cast rhs to lhs type if possible
+            //}
+
+
             if(op == "+") return builder->CreateAdd(lhs, rhs);
             if(op == "-") return builder->CreateSub(lhs, rhs);
             if(op == "*") return builder->CreateMul(lhs, rhs);
@@ -35,6 +40,7 @@ namespace lygos {
             if(op == ">") return builder->CreateICmpSGT(lhs, rhs);
             if(op == ">=") return builder->CreateICmpSGE(lhs, rhs);
             if(op == "||") return builder->CreateOr(lhs, rhs);
+            if(op == "&&") return builder->CreateAnd(lhs, rhs);
             Log::Logger::Warn(fmt::format("unknow binary operator `{}`", op));
             std::exit(1);
         }

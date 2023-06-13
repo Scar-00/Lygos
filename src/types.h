@@ -231,9 +231,9 @@ namespace lygos {
 
         struct Type {
             Kind kind;
-            bool Matches(Ref<Type> other);
             std::string &GetName();
             std::string GetFullName();
+            bool IsConvertable(Type *dest);
         };
 
         struct Path : public Type {

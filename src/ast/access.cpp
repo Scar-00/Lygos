@@ -4,8 +4,10 @@
 #include "literals.h"
 #include <fmt/core.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Value.h>
 #include <tuple>
+#include <vector>
 
 namespace lygos {
     namespace AST {
@@ -25,10 +27,14 @@ namespace lygos {
 
         llvm::Value *MemberExpr::GenCode(Scope *scope) {
             auto obj = this->obj->GenCode(scope);
+            //if(this->GetType(scope)->kind == Type::Kind::ptr) {
+            //    Log::Logger::Warn(fmt::format("{} is a ptr", this->obj->GetValue()));
+            //}
+
             if(deref)
                 obj = LoadOrIgnore(obj);
 
-            //FIXME: function chain callin;g
+            //FIXME: function chain calling
             //check if function is actually a member and not static
             if(member->type == ASTType::CallExpr) {
                 std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
@@ -105,15 +111,34 @@ namespace lygos {
             return obj->GetValue();
         }
 
+            /*if(obj->getType()->isStructTy()) {
+                Log::Logger::Warn("DEBUG");
+                auto struct_name = ((llvm::StructType *)TryGetPointerBase(obj->getType()))->getName().data();
+                if(scope->GetStruct(struct_name).ImplementsTrait("Index")) {
+                    auto iden = MakeRef<Identifier>("index");
+                    std::vector<Ref<AST>> args = {index};
+                    auto expr = MemberExpr{this->obj, MakeRef<CallExpr>(iden, args), false};
+                    std::cout << "expr -> " << Print(&expr).str() << std::endl;
+                    Log::Logger::Warn("DEBUG");
+                    //return expr.GenCode(scope);
+                }
+            }*/
+
         llvm::Value *AccessExpr::GenCode(Scope *scope) {
-            //TODO: do not allow this!!
-            //let z = f[0];
             auto obj = this->obj->GenCode(scope);
-            if(!IsArrayType(obj->getType())/* && !IsStructType(obj->getType())*/)
+            if(!IsArrayType(obj->getType()))
                 obj = LoadOrIgnore(obj);
 
-             //if(IsStructType(obj->getType()))
-             //   return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, std::atoi(index->GetValue().c_str()));
+            if(obj->getType()->isStructTy()) {
+                auto struct_name = ((llvm::StructType *)obj->getType())->getName().data();
+                if(scope->GetStruct(struct_name).ImplementsTrait("Index")) {
+                    auto iden = MakeRef<Identifier>("index");
+                    std::vector<Ref<AST>> args = {index};
+                    auto expr = MemberExpr{this->obj, MakeRef<CallExpr>(iden, args), true};
+                    return expr.GenCode(scope);
+                }
+                Log::Logger::Warn(fmt::format("type `{}` does not implement `Index`", struct_name));
+            }
 
             auto index = this->index->GenCode(scope);
             if(ShouldLoad(this->index.get()))

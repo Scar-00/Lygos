@@ -26,8 +26,8 @@ trait Drop {
     fn drop(&mut self);
 }
 
-trait Copy {
-    fn copy(&self) -> Self;
+trait Clone {
+    fn clone(&self) -> Self;
 }
 
 macro println {
@@ -104,11 +104,13 @@ macro Vec {
             }
         }
 
-        impl Copy for Vec##$typ {
-            fn copy(&self) -> Self {
+        impl Clone for Vec##$typ {
+            fn clone(&self) -> Self {
                 let typ_size: i32 = sizeof($typ);
                 let this = Vec##$typ::with_size(self->cap);
                 this.data = (:*$typ)memcpy((:*i8)this.data, (:*i8)self->data, self->cap * typ_size);
+                this.len = self->len;
+                return this;
             }
         }
     }
@@ -119,6 +121,14 @@ struct String {
     len: u32;
     cap: u32;
 };
+
+impl Drop for String {
+    fn drop(&mut self) {
+        if self->data != (:*i8)0 {
+            free(self->data);
+        }
+    }
+}
 
 impl String {
     fn new(size: i32) -> String {
@@ -132,9 +142,10 @@ impl String {
     }
 
     fn from(ptr: *i8) -> String {
+        let typ_size: i32 = sizeof(i8);
         let len = strlen(ptr);
-        let str = String::new(len);
-        strcpy(str.data, ptr);
+        let str = String::new(len + 1);
+        memcpy(str.data, ptr, (len + 1) * typ_size);
         str.len = len;
         return str;
     }
@@ -165,14 +176,6 @@ impl String {
         return;
     }
 
-    fn copy(&self) -> String {
-        let mut this = String::new(self->cap);
-        let size: i32 = sizeof(i8);
-        this.len = self->len;
-        memcpy(this.data, self->data, size * self->len);
-        return this;
-    }
-
     fn eq(&self, other: String) -> bool {
         if self->len != other.len {
             return (:bool)0;
@@ -181,8 +184,16 @@ impl String {
             if self->data[i] != other.data[i] {
                 return (:bool)0;
             }
+            i = i + 1;
         }
         return (:bool)1;
+    }
+
+    fn eq_ptr(&self, ptr: *i8) -> bool {
+        let other = String::from(ptr);
+        let eq = self->eq(other);
+        other.drop();
+        return eq;
     }
 
     fn contains(&self, matchee: i8) -> bool {
@@ -196,15 +207,15 @@ impl String {
     }
 }
 
-impl Drop for String {
-    fn drop(&mut self) {
-        if self->data != (:*i8)0 {
-            free(self->data);
-        }
+impl Clone for String {
+    fn clone(&self) -> String {
+        let mut this = String::new(self->cap);
+        let size: i32 = sizeof(i8);
+        this.len = self->len;
+        strcpy(this.data, self->data);
+        return this;
     }
 }
-
-Vec$(String);
 
 enum TokenType {
     String,
@@ -273,23 +284,6 @@ enum TokenType {
     Eof,
 }
 
-struct Token {
-    typ: TokenType;
-    value: String;
-};
-
-impl Token {
-    fn new(value: String, typ: u32) -> Token {
-        let mut this: Token = {
-            .value = value,
-            .typ = typ,
-        };
-        return this;
-    }
-}
-
-Vec$(Token);
-
 struct Loc {
     file: &String;
     line: u64;
@@ -309,20 +303,45 @@ impl Loc {
     }
 }
 
+struct Token {
+    typ: TokenType;
+    value: String;
+    loc: Loc;
+};
+
+impl Token {
+    fn new(value: String, typ: u32, loc: Loc) -> Token {
+        let mut this: Token = {
+            .value = value,
+            .typ = typ,
+            .loc = loc,
+        };
+        return this;
+    }
+}
+
+Vec$(Token);
+
 struct Lexer {
+    file: String;
     src: *i8;
     len: u32;
     curr: i8;
     index: u32;
+    line: u64;
+    line_index: u64;
 };
 
 impl Lexer {
-    fn new(src: *i8, src_len: u32) -> Lexer {
+    fn new(src: *i8, src_len: u32, file: String) -> Lexer {
         let mut this: Lexer = {
+            .file = file,
             .src = src,
             .len = src_len,
-            .index = 0,
             .curr = src[0],
+            .index = 0,
+            .line = (:u64)0,
+            .line_index = (:u64)0,
         };
         return this;
     }
@@ -330,6 +349,7 @@ impl Lexer {
     fn advance(&mut self) {
         self->index = self->index + 1;
         self->curr = self->src[self->index];
+        self->line_index = self->line_index + (:u64)1;
     }
 
     fn advance_token(&mut self, token: Token) -> Token {
@@ -338,26 +358,26 @@ impl Lexer {
     }
 
     fn lex_number(&self) -> Token {
-        let start = self->index;
-        let mut str = String::new(2);
-        for let curr = self->curr in isdigit((:i32)self->curr) != 0 {
+        let mut str = String::new(0);
+        let loc = Loc::new(&self->file, self->line, self->line_index, (:u64)0);
+        for let curr = self->curr in isdigit((:i32)self->curr) != 0 || self->curr == '.' {
             str.push(self->curr);
             self->advance();
         }
         if str.contains('.') {
-            return Token::new(str, TokenType::Float);
+            return Token::new(str, TokenType::Float, loc);
         }
-        return Token::new(str, TokenType::Integer);
+        return Token::new(str, TokenType::Integer, loc);
     }
 
     fn lex_string(&self) -> Token {
-        let start = self->index;
-        let mut str = String::new(2);
+        let mut str = String::new(0);
+        let loc = Loc::new(&self->file, self->line, self->line_index, (:u64)0);
         for let curr = self->curr in self->curr != (:i8)34 {
             str.push(self->curr);
             self->advance();
         }
-        return Token::new(str, TokenType::String);
+        return Token::new(str, TokenType::String, loc);
     }
 
     fn lex_char(&self) -> Token {
@@ -366,99 +386,111 @@ impl Lexer {
     }
 
     fn lex_id(&self) -> Token {
-        let start = self->index;
-        let mut str = String::new(2);
+        let loc = Loc::new(&self->file, self->line, self->line_index, (:u64)0);
+        let mut str = String::new(0);
         for let curr = self->curr in isalpha((:i32)self->curr) != 0 {
             str.push(self->curr);
             self->advance();
         }
-        return Token::new(str, TokenType::Id);
+        if str.eq_ptr("let") { return Token::new(str, TokenType::KwLet, loc); }
+        return Token::new(str, TokenType::Id, loc);
     }
 
     fn next_token(&mut self) -> Token {
         for let w = 0 in self->index < self->len {
             for let l = 0 in isspace((:i32)self->curr) != 0 {
+                if self->curr == (:i8)10 {
+                    self->line = self->line + (:u64)1;
+                    self->line_index = (:u64)0;
+                }
                 self->advance();
             }
 
-            if self -> curr == '.' { return self->advance_token(Token::new(String::from("."), TokenType::Dot)); }
-            if self -> curr == ',' { return self->advance_token(Token::new(String::from(","), TokenType::Comma)); }
-            if self -> curr == ';' { return self->advance_token(Token::new(String::from(";"), TokenType::Semi)); }
-            if self -> curr == ':' {
+            if self->curr == '.' { return self->advance_token(Token::new(String::from("."), TokenType::Dot, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == ',' { return self->advance_token(Token::new(String::from(","), TokenType::Comma, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == ';' { return self->advance_token(Token::new(String::from(";"), TokenType::Semi, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == ':' {
                 if self->src[self->index + 1] == ':' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from("::"), TokenType::OpScope));
+                    return self->advance_token(Token::new(String::from("::"), TokenType::OpScope, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from(":"), TokenType::Colon));
+                return self->advance_token(Token::new(String::from(":"), TokenType::Colon, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '+' { return self->advance_token(Token::new(String::from("+"), TokenType::OpPlus)); }
-            if self -> curr == '-' {
+            if self->curr == '+' { return self->advance_token(Token::new(String::from("+"), TokenType::OpPlus, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '-' {
                 if self->src[self->index + 1] == '>' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from("->"), TokenType::Arrow));
+                    return self->advance_token(Token::new(String::from("->"), TokenType::Arrow, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from("-"), TokenType::OpMinus));
+                return self->advance_token(Token::new(String::from("-"), TokenType::OpMinus, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '*' { return self->advance_token(Token::new(String::from("*"), TokenType::OpMul)); }
-            if self -> curr == '/' {
+            if self->curr == '*' { return self->advance_token(Token::new(String::from("*"), TokenType::OpMul, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '/' {
                 if self->src[self->index + 1] == '/' {
                     //TODO:
                     //for w in self->curr != '\n' {
                     //    self->advance();
                     //}
                 }
-                return self->advance_token(Token::new(String::from("/"), TokenType::OpDiv));
+                return self->advance_token(Token::new(String::from("/"), TokenType::OpDiv, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '%' { return self->advance_token(Token::new(String::from("%"), TokenType::OpMod)); }
-            if self -> curr == '[' { return self->advance_token(Token::new(String::from("["), TokenType::BraceLeft)); }
-            if self -> curr == ']' { return self->advance_token(Token::new(String::from("]"), TokenType::BraceRight)); }
-            if self -> curr == '{' { return self->advance_token(Token::new(String::from("{"), TokenType::CurlyLeft)); }
-            if self -> curr == '}' { return self->advance_token(Token::new(String::from("}"), TokenType::CurlyRight)); }
-            if self -> curr == '(' { return self->advance_token(Token::new(String::from("("), TokenType::ParanLeft)); }
-            if self -> curr == ')' { return self->advance_token(Token::new(String::from(")"), TokenType::ParanRight)); }
-            if self -> curr == '#' { return self->advance_token(Token::new(String::from("#"), TokenType::Hash)); }
-            if self -> curr == '$' { return self->advance_token(Token::new(String::from("$"), TokenType::Dollar)); }
-            if self -> curr == '<' {
+            if self->curr == '%' { return self->advance_token(Token::new(String::from("%"), TokenType::OpMod, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '[' { return self->advance_token(Token::new(String::from("["), TokenType::BraceLeft, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == ']' { return self->advance_token(Token::new(String::from("]"), TokenType::BraceRight, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '{' { return self->advance_token(Token::new(String::from("{"), TokenType::CurlyLeft, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '}' { return self->advance_token(Token::new(String::from("}"), TokenType::CurlyRight, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '(' { return self->advance_token(Token::new(String::from("("), TokenType::ParanLeft, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == ')' { return self->advance_token(Token::new(String::from(")"), TokenType::ParanRight, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '#' { return self->advance_token(Token::new(String::from("#"), TokenType::Hash, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '$' { return self->advance_token(Token::new(String::from("$"), TokenType::Dollar, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
+            if self->curr == '<' {
                 if self->src[self->index + 1] == '=' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from("<="), TokenType::OpLeEq));
+                    return self->advance_token(Token::new(String::from("<="), TokenType::OpLeEq, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from("<"), TokenType::AngleLeft));
+                return self->advance_token(Token::new(String::from("<"), TokenType::AngleLeft, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '>' {
+            if self->curr == '>' {
                 if self->src[self->index + 1] == '=' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from(">="), TokenType::OpGrEq));
+                    return self->advance_token(Token::new(String::from(">="), TokenType::OpGrEq, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from(">"), TokenType::AngleRight));
+                return self->advance_token(Token::new(String::from(">"), TokenType::AngleRight, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '&' {
+            if self->curr == '&' {
                 if self->src[self->index + 1] == '&' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from("&&"), TokenType::OpAnd));
+                    return self->advance_token(Token::new(String::from("&&"), TokenType::OpAnd, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from("&"), TokenType::Ampercent));
+                return self->advance_token(Token::new(String::from("&"), TokenType::Ampercent, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '|' {
+            if self->curr == '|' {
                 if self->src[self->index + 1] == '|' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from("||"), TokenType::OpOr));
+                    return self->advance_token(Token::new(String::from("||"), TokenType::OpOr, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from("|"), TokenType::Pipe));
+                return self->advance_token(Token::new(String::from("|"), TokenType::Pipe, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '!' {
+            if self->curr == '!' {
                 if self->src[self->index + 1] == '=' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from("!="), TokenType::OpNeEq));
+                    return self->advance_token(Token::new(String::from("!="), TokenType::OpNeEq, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from("!"), TokenType::Bang));
+                return self->advance_token(Token::new(String::from("!"), TokenType::Bang, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
             }
-            if self -> curr == '=' {
+            if self->curr == '=' {
                 if self->src[self->index + 1] == '=' {
                     self->advance();
-                    return self->advance_token(Token::new(String::from("=="), TokenType::OpEqEq));
+                    return self->advance_token(Token::new(String::from("=="), TokenType::OpEqEq, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
                 }
-                return self->advance_token(Token::new(String::from("="), TokenType::Equals));
+                return self->advance_token(Token::new(String::from("="), TokenType::Equals, Loc::new(&self->file, self->line, self->line_index, (:u64)0)));
+            }
+            if self->curr == (:i8)39 {
+                self->advance();
+                return self->lex_char();
+            }
+            if self->curr == (:i8)0 {
+                return Token::new(String::from(""), TokenType::Eof, Loc::new(&self->file, self->line, self->line_index, (:u64)0));
             }
             if isdigit((:i32)self->curr) != 0 {
                 return self->lex_number();
@@ -467,7 +499,7 @@ impl Lexer {
                 return self->lex_id();
             }
         }
-        return Token::new(String::from(""), TokenType::Eof);
+        return Token::new(String::from(""), TokenType::Eof, Loc::new(&self->file, self->line, self->line_index, (:u64)0));
     }
 
     fn collect_tokens(&mut self) -> VecToken {
@@ -476,8 +508,69 @@ impl Lexer {
             tokens.push(tok);
             tok = self->next_token();
         }
-        tokens.push(Token::new(String::from("EOF"), TokenType::Eof));
         return tokens;
+    }
+}
+
+struct AST {};
+
+Vec$(AST);
+
+struct Block {
+    content: VecAST;
+    index: u64;
+    returns: bool;
+};
+
+impl Block {
+    fn new() -> Block {
+        let this: Block = {
+            .content = VecAST::new(),
+            .index = (:u64)0,
+            .returns = (:bool)0,
+        };
+        return this;
+    }
+
+    fn from(content: &VecAST) -> Block {
+        let this: Block = {
+            .content = content->clone(),
+            .index = (:u64)0,
+            .returns = (:bool)0,
+        };
+        return this;
+    }
+
+    fn increment(&mut self) {
+        self->index = self->index + (:u64)1;
+    }
+
+    fn insert(&mut self, other: &Block) {
+        println$("TODO: [Block::insert()]");
+        exit(1);
+    }
+}
+
+struct Parser {
+    tokens: VecToken;
+    index: u64;
+};
+
+impl Parser {
+    fn from_lexer(lexer: &Lexer) -> Parser {
+        let this: Parser = {
+            .tokens = lexer->collect_tokens(),
+            .index = (:u64)0,
+        };
+        return this;
+    }
+
+    fn from_tokens(tokens: &VecToken) -> Parser {
+        let this: Parser = {
+            .tokens = tokens->clone(),
+            .index = (:u64)0,
+        };
+        return this;
     }
 }
 
@@ -515,12 +608,12 @@ fn main(argc: i32, argv: **i8) -> i32 {
     let fn_type = LLVMFunctionType(LLVMInt32Type(), t, 1, false);
     ctx.add_function("test", fn_type);
 
-    let lexer = Lexer::new("let x = 10;", 11);
+    let lexer = Lexer::new("let x = 10;", 11, String::from("test.ly"));
     println$("src -> %s", lexer.src);
     let tokens = lexer.collect_tokens();
     for let mut index = 0 in index < tokens.len {
         let t: Token = tokens.data[index];
-        println$("tok -> %s", t.value.data);
+        printf("%s:%d:%d -> %d|%s\n", t.loc.file->data, t.loc.line, t.loc.start, t.typ, t.value.data);
         index = index + 1;
     }
     return 0;

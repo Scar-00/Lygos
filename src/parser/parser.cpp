@@ -620,6 +620,10 @@ namespace lygos {
                 auto op = Eat().value;
                 auto rhs = ParseAdditiveExpr();
                 lhs = MakeRef<AST::BinaryExpr>(lhs, rhs, op);
+                while(At().type == TokenType::OpAnd || At().type == TokenType::OpOr) {
+                    auto op = Eat().value;
+                    lhs = MakeRef<AST::BinaryExpr>(lhs, ParseCondExpr(), op);
+                }
             }
             return lhs;
         }

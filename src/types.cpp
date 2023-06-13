@@ -182,4 +182,8 @@ namespace lygos {
 
         assert(false && "Cannot get type name");
     }
+
+    bool Type::Type::IsConvertable(Type *dest) {
+        return false;
+    }
 }

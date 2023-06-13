@@ -38,6 +38,8 @@ namespace lygos {
         bool ShouldLoad(AST *ast) {
             if(ast->type == ASTType::MemberExpr && ((MemberExpr *)ast)->Member()->type == ASTType::CallExpr)
                 return false;
+            if(ast->type == ASTType::UnaryExpr && ((UnaryExpr *)ast)->Op() == "&")
+                return false;
             return ast->type == ASTType::Id
                 || ast->type == ASTType::MemberExpr
                 || ast->type == ASTType::AccessExpr
