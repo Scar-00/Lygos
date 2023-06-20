@@ -57,7 +57,7 @@ namespace lygos {
                 std::cout << "}\n";
                 idx++;
             }*/
-            ast_root->DeclMacro(this);
+            ast_root->GetCurrentBlock()->Scope().DeclMacro(this);
         }
 
         void Macro::Sanatize() {
@@ -86,8 +86,8 @@ namespace lygos {
                 intrinsic_macros.at(name)(this);
                 return;
             }
-            auto macro = ast_root->GetMacro(name);
-            auto arms = macro->GetArms();
+            auto macro = ast_root->GetCurrentBlock()->Scope().GetMacro(name);
+            auto arms = macro.GetArms();
             size_t arm = 0;
             for(size_t i = 0; i < arms.size(); i++) {
                 const auto &[conds, block] = arms[i];
@@ -135,7 +135,7 @@ namespace lygos {
                             }
                         }
                     }
-                    if(tokens[i + 1].type == TokenType::Hash) {
+                    while(tokens[i + 1].type == TokenType::Hash) {
                         if(tokens[i + 2].type == TokenType::Hash) {
                             if(i > 0 && tokens[i].type != TokenType::Id)
                                 Log::Logger::Warn(tokens[i], "expected `identifier` as prefix");
@@ -199,9 +199,10 @@ namespace lygos {
             Parser::Parser parser{tokens};
             Ref<AST> root = parser.BuildAst();
             ast_root = std::static_pointer_cast<Mod>(root);
-            ast_root->GetFunctions() = root_original->GetFunctions();
-            ast_root->GetMacros() = root_original->GetMacros();
-            ast_root->GetTraits() = root_original->GetTraits();
+            //FIXEM:
+            //ast_root->GetFunctions() = root_original->GetFunctions();
+            //ast_root->GetMacros() = root_original->GetMacros();
+            //ast_root->GetTraits() = root_original->GetTraits();
             root->Lower(nullptr);
             ast_root = root_original;
             ast_root->Replace(((Mod *)root.get())->Body().Body());

@@ -9,9 +9,6 @@ namespace lygos {
     namespace AST {
         struct Macro;
         struct Function;
-        namespace Trait {
-            struct Trait;
-        }
         struct Mod : public AST {
             public:
                 Mod();
@@ -21,18 +18,9 @@ namespace lygos {
                 void Replace(Ref<AST> &expr);
                 void Replace(Block::Content &exprs);
                 void SetCurrentBlock(Block *block);
-
+                Block *GetCurrentBlock() { return current_block; }
                 void SetCurrentFunction(Function *func);
                 Function *GetCurrentFunction();
-                Function *GetFunction(std::string &name);
-                void AddFunction(Function *func);
-                void DeclMacro(Macro *macro);
-                Macro *GetMacro(std::string &name);
-                void DeclTrait(Trait::Trait *trait);
-                Trait::Trait *GetTrait(std::string &name);
-                std::unordered_map<std::string, Function *> &GetFunctions() { return functions; }
-                std::unordered_map<std::string, Macro*> &GetMacros() { return macros; }
-                std::unordered_map<std::string, Trait::Trait *> &GetTraits() { return traits; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
@@ -44,10 +32,6 @@ namespace lygos {
                 Block body;
                 Block *current_block = &body;
                 Function *current_func = nullptr;
-                std::unordered_map<std::string, Function *> functions;
-                std::unordered_map<std::string, Macro*> macros;
-                std::unordered_map<std::string, Trait::Trait *> traits;
-                //std::unordered_map<std::string, MacroIntrinsicCallBack> macros_intrinsic;
         };
     }
 }

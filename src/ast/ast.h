@@ -66,6 +66,8 @@ namespace lygos {
             Block(Content body);
             Content &Body() { return body; }
             const Content &Body() const { return body; }
+            Scope &Scope() { return scope; }
+            void SetParent(struct Scope *parent) { scope.SetParent(parent); }
             void Increment() { index++; }
             s64 GetIndex() { return index; }
             void Insert(Content &exprs);
@@ -79,6 +81,7 @@ namespace lygos {
             Content body;
             s64 index;
             bool returns;
+            struct Scope scope;
         };
 
         bool ShouldLoad(AST *ast);

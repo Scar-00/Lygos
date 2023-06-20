@@ -14,6 +14,15 @@ namespace lygos {
         }
 
         llvm::Value *Identifier::GenCode(Scope *scope) {
+            /*Type::Variable var = scope->LookupVar(id);
+            if(var.type->kind == Type::Kind::ptr) {
+                if(((Type::Pointer *)var.type.get())->IsRef()) {
+                    Log::Logger::Warn(fmt::format("{} is a ref", id));
+                    return builder->CreateLoad(TryGetPointerBase(var.alloca->getType()), var.alloca);
+                }
+            }
+            fmt::print("{} -> {}\n", id, var.type->GetFullName());
+            return var.alloca;*/
             return scope->LookupVar(id).alloca;
         }
 

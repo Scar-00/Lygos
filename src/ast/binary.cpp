@@ -27,12 +27,11 @@ namespace lygos {
             //if(this->lhs->GetType(scope)->IsConvertable(this->rhs->GetType(scope).get())){
                 //cast rhs to lhs type if possible
             //}
-
-
             if(op == "+") return builder->CreateAdd(lhs, rhs);
             if(op == "-") return builder->CreateSub(lhs, rhs);
             if(op == "*") return builder->CreateMul(lhs, rhs);
             if(op == "/") return builder->CreateSDiv(lhs, rhs);
+            if(op == "%") return builder->CreateURem(lhs, rhs);
             if(op == "==") return builder->CreateICmpEQ(lhs, rhs);
             if(op == "!=") return builder->CreateICmpNE(lhs, rhs);
             if(op == "<") return builder->CreateICmpSLT(lhs, rhs);

@@ -2,12 +2,13 @@
 #define _LYGOS_AST_IMPL_H_
 
 #include "ast.h"
+#include <vector>
 
 namespace lygos {
     namespace AST {
         struct Impl : public AST {
             public:
-                Impl(std::string type, Block body, std::string trait = "");
+                Impl(std::string type, Block body, std::vector<Type::Generic> generics, std::string trait = "");
                 Block &Body() { return body; }
                 std::string &Type() { return type; }
             public:
@@ -19,6 +20,7 @@ namespace lygos {
             private:
                 std::string type;
                 Block body;
+                std::vector<Type::Generic> generics;
                 std::string trait;
         };
     }

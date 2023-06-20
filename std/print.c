@@ -1,13 +1,14 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-int printf_ln(const char *format, ...) {
+char buffer[1024];
+
+char *_format(const char *format, ...) {
     va_list args;
     va_start(args, format);
-    int res = vprintf(format, args);
-    printf("\n");
+    vsnprintf(buffer, 1024, format, args);
     va_end(args);
-    return res;
+    return buffer;
 }
 
 int print_int(int val) {

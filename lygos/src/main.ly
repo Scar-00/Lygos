@@ -19,6 +19,7 @@ fn malloc(size: u32) -> *i8;
 fn realloc(ptr: *i8, size: u32) -> *i8;
 fn free(block: *i8);
 fn memcpy(dest: *i8, src: *i8, size: u32) -> *i8;
+fn memmove(dest: *i8, src: *i8, len: u32) -> *i8;
 fn strlen(str: *i8) -> u32;
 fn strcpy(dest: *i8, src: *i8) -> *i8;
 
@@ -43,18 +44,30 @@ macro println {
     }
 }
 
+macro panic {
+    (string: $) -> {
+        printf("error: %s\n", $string);
+        exit(1);
+    }
+    (fmt: $, args: $[]) -> {
+        printf("error: ");
+        printf($fmt, $args);
+        printf("\n");
+    }
+}
+
 macro Vec {
-    (typ: $) -> {
-        struct Vec##$typ {
+    (name: $, typ: $) -> {
+        struct Vec##$name {
             data: *$typ;
             cap: u32;
             len: u32;
         };
 
-        impl Vec##$typ {
-            fn new() -> Vec##$typ {
+        impl Vec##$name {
+            fn new() -> Vec##$name {
                 let size: i32 = sizeof($typ);
-                let this: Vec##$typ = {
+                let this: Vec##$name = {
                     .data = (:*$typ)0,
                     .cap = 0,
                     .len = 0,
@@ -64,7 +77,7 @@ macro Vec {
 
             fn with_size(size: u32) -> Self {
                 let typ_size: i32 = sizeof($typ);
-                let this: Vec##$typ = {
+                let this: Vec##$name = {
                     .data = (:*$typ)malloc(size * typ_size),
                     .cap = size,
                     .len = 0,
@@ -94,9 +107,20 @@ macro Vec {
                 self->len = self->len - 1;
                 return self->data[self->len];
             }
+
+            fn insert(&mut self, index: u32, other: &Self) -> bool {
+                let typ_size: i32 = sizeof($typ);
+                self->may_grow();
+                if self->cap < (self->len + other->len) {
+                    self->cap = self->len + other->len;
+                    self->data = (:*$typ)realloc((:*i8)self->data, self->cap * typ_size);
+                }
+                self->data = (:*$typ)memmove((:*i8)&self->data[index + other->len], (:*i8)&self->data[index], other->len * typ_size);
+                self->data = (:*$typ)memcpy((:*i8)&self->data[index], (:*i8)other->data, other->len * typ_size);
+            }
         }
 
-        impl Drop for Vec##$typ {
+        impl Drop for Vec##$name {
             fn drop(&mut self) {
                 if self->data != (:*$typ)0 {
                     free((:*i8)self->data);
@@ -104,13 +128,121 @@ macro Vec {
             }
         }
 
-        impl Clone for Vec##$typ {
+        impl Clone for Vec##$name {
             fn clone(&self) -> Self {
                 let typ_size: i32 = sizeof($typ);
-                let this = Vec##$typ::with_size(self->cap);
+                let this = Vec##$name::with_size(self->cap);
                 this.data = (:*$typ)memcpy((:*i8)this.data, (:*i8)self->data, self->cap * typ_size);
                 this.len = self->len;
                 return this;
+            }
+        }
+    }
+}
+
+
+macro StringMap {
+    (name: $, typ: $) -> {
+        struct String##$name##MapNode {
+            key: String;
+            value: $typ;
+            next: *i8;
+        };
+
+        impl String##$name##MapNode {
+            fn new(key: String, value: $typ) -> *Self {
+                let this_size: i32 = sizeof(Self);
+                let this = (:*Self)malloc(this_size);
+                this->key = key;
+                this->value = value;
+                this->next = (:*i8)0;
+                return this;
+            }
+
+            fn set_next(&self, node: *Self) {
+                self->next = (:*i8)node;
+            }
+
+            fn get_next(&self) -> *Self {
+                return (:*Self)self->next;
+            }
+        }
+
+        struct String##$name##Map {
+            seed: size_t;
+            table: **String##$name##MapNode;
+            size: size_t;
+        };
+
+        impl String##$name##Map {
+            fn new(size: size_t) -> Self {
+                let typ_ptr_size = sizeof(*String##$name##MapNode);
+                let typ_size = sizeof(String##$name##MapNode);
+                let this: Self = {
+                    .seed = (:u64)16442353754,
+                    .table = (:**String##$name##MapNode)malloc((:i32)(size * typ_ptr_size)),
+                    .size = size,
+                };
+                memset((:*i8)this.table, 0, this.size * typ_ptr_size);
+                return this;
+            }
+
+            fn insert_helper(&mut self, hash_value: u64, prev: *String##$name##MapNode, entry: *String##$name##MapNode) {
+                if prev == (:*String##$name##MapNode)0 {
+                    self->table[hash_value] = entry;
+                }else {
+                    prev->set_next(entry);
+                }
+            }
+
+            fn insert(&mut self, key: String, value: $typ) {
+                let hash_value = hash_string(key.data, self->seed) % self->size;
+                let prev = (:*String##$name##MapNode)0;
+                let entry: *String##$name##MapNode = self->table[hash_value];
+
+                for let i = 0 in entry != (:*String##$name##MapNode)0 && entry->key.eq(key) != (:bool)1 {
+                    prev = entry;
+                    entry = entry->get_next();
+                }
+
+                if entry == (:*String##$name##MapNode)0 {
+                    entry = String##$name##MapNode::new(key, value);
+                    self->insert_helper(hash_value, prev, entry);
+                }else {
+                    entry->value = value;
+                }
+            }
+
+            fn at(&self, key: String) -> &$typ {
+                let hash_value = hash_string(key.data, self->seed) % self->size;
+                let prev = (:*String##$name##MapNode)0;
+                let entry: *String##$name##MapNode = self->table[hash_value];
+
+                for let i = 0 in entry != (:*String##$name##MapNode)0 && entry->key.eq(key) != (:bool)1 {
+                    prev = entry;
+                    entry = entry->get_next();
+                }
+
+                if entry == (:*String##$name##MapNode)0 {
+                    return (:*$typ)0;
+                }
+                return &entry->value;
+            }
+
+            fn contains(&self, key: String) -> bool {
+                let hash_value = hash_string(key.data, self->seed) % self->size;
+                let prev = (:*String##$name##MapNode)0;
+                let entry: *String##$name##MapNode = self->table[hash_value];
+
+                for let i = 0 in entry != (:*String##$name##MapNode)0 && entry->key.eq(key) != (:bool)1 {
+                    prev = entry;
+                    entry = entry->get_next();
+                }
+
+                if entry == (:*String##$name##MapNode)0 {
+                    return (:bool)0;
+                }
+                return (:bool)1;
             }
         }
     }
@@ -217,6 +349,21 @@ impl Clone for String {
     }
 }
 
+struct StringView {
+    data: *i8;
+    len: u32;
+};
+
+impl StringView {
+    fn new(src: &String) -> Self {
+        let this: StringView = {
+            .data = src->data,
+            .len = src->len,
+        };
+        return this;
+    }
+}
+
 enum TokenType {
     String,
     Integer,
@@ -280,6 +427,7 @@ enum TokenType {
     KwTrait,
     KwMacro,
     KwEnum,
+    KwSizeOf,
 
     Eof,
 }
@@ -320,7 +468,7 @@ impl Token {
     }
 }
 
-Vec$(Token);
+Vec$(Token, Token);
 
 struct Lexer {
     file: String;
@@ -393,6 +541,25 @@ impl Lexer {
             self->advance();
         }
         if str.eq_ptr("let") { return Token::new(str, TokenType::KwLet, loc); }
+        if str.eq_ptr("mut") { return Token::new(str, TokenType::KwMut, loc); }
+        if str.eq_ptr("const") { return Token::new(str, TokenType::KwConst, loc); }
+        if str.eq_ptr("struct") { return Token::new(str, TokenType::KwStruct, loc); }
+        if str.eq_ptr("if") { return Token::new(str, TokenType::KwIf, loc); }
+        if str.eq_ptr("else") { return Token::new(str, TokenType::KwElse, loc); }
+        if str.eq_ptr("for") { return Token::new(str, TokenType::KwFor, loc); }
+        if str.eq_ptr("while") { return Token::new(str, TokenType::KwWhile, loc); }
+        if str.eq_ptr("fn") { return Token::new(str, TokenType::KwFn, loc); }
+        if str.eq_ptr("return") { return Token::new(str, TokenType::KwRet, loc); }
+        if str.eq_ptr("in") { return Token::new(str, TokenType::KwIn, loc); }
+        if str.eq_ptr("include") { return Token::new(str, TokenType::KwInclude, loc); }
+        if str.eq_ptr("impl") { return Token::new(str, TokenType::KwImpl, loc); }
+        if str.eq_ptr("type") { return Token::new(str, TokenType::KwType, loc); }
+        if str.eq_ptr("static") { return Token::new(str, TokenType::KwStatic, loc); }
+        if str.eq_ptr("match") { return Token::new(str, TokenType::KwMatch, loc); }
+        if str.eq_ptr("trait") { return Token::new(str, TokenType::KwTrait, loc); }
+        if str.eq_ptr("macro") { return Token::new(str, TokenType::KwMacro, loc); }
+        if str.eq_ptr("enum") { return Token::new(str, TokenType::KwEnum, loc); }
+        if str.eq_ptr("sizeof") { return Token::new(str, TokenType::KwSizeOf, loc); }
         return Token::new(str, TokenType::Id, loc);
     }
 
@@ -512,9 +679,52 @@ impl Lexer {
     }
 }
 
-struct AST {};
+struct Scope {};
 
-Vec$(AST);
+enum ASTType {
+    //statements
+    Mod,
+    Function,
+    Closure,
+    VarDecl,
+
+    //expr
+    AssignmentExpr,
+    MemberExpr,
+    IfStmt,
+    ForStmt,
+    MatchStmt,
+    CallExpr,
+    AccessExpr,
+    UnaryExpr,
+    ResolutionExpr,
+    CastExpr,
+    ReturnExpr,
+
+    //literals
+    StructDef,
+    EnumDef,
+    Impl,
+    Trait,
+    Macro,
+    MacroCall,
+    MacroInclude,
+    MacroSizeOf,
+    TypeAlias,
+    NumberLiteral,
+    StringLiteral,
+    InitializerList,
+    StaticLiterial,
+    BinaryExpr,
+    Id,
+}
+
+struct AST {
+    typ: ASTType;
+    loc: Loc;
+};
+
+Vec$(AST, *AST);
 
 struct Block {
     content: VecAST;
@@ -546,8 +756,30 @@ impl Block {
     }
 
     fn insert(&mut self, other: &Block) {
-        println$("TODO: [Block::insert()]");
-        exit(1);
+        self->content.insert((:i32)self->index, &other->content);
+    }
+
+    fn push(&mut self, item: *AST) {
+        self->content.push(item);
+    }
+}
+
+struct Mod {
+    typ: ASTType;
+    loc: Loc;
+    body: Block;
+    current_block: *Block;
+};
+
+impl Mod {
+    fn new() -> *Mod {
+        let mod_size: i32 = sizeof(Mod);
+        let mod = (:*Mod)malloc(mod_size);
+        mod->typ = ASTType::Mod;
+        mod->loc = Loc::new((:&String)0, (:u64)0, (:u64)0, (:u64)0);
+        mod->body = Block::new();
+        mod->current_block = &mod->body;
+        return mod;
     }
 }
 
@@ -571,6 +803,33 @@ impl Parser {
             .index = (:u64)0,
         };
         return this;
+    }
+
+    fn at(&self) -> Token {
+        return self->tokens.data[self->index];
+    }
+
+    fn eat(&mut self) -> Token {
+        let tok = self->tokens.data[self->index];
+        self->index = self->index + (:u64)1;
+        return tok;
+    }
+
+    fn peek(&self, offset: u64) -> Token {
+        return self->tokens.data[self->index + offset];
+    }
+
+    fn parse_globals(&self) -> *AST {
+        return (:*AST)0;
+    }
+
+    fn build_ast(&self) -> *Mod {
+        let mod = Mod::new();
+        for let tok = self->at() in tok.typ != TokenType::Eof {
+            mod->body.push(self->parse_globals());
+            tok = self->at();
+        }
+        return mod;
     }
 }
 
@@ -613,7 +872,7 @@ fn main(argc: i32, argv: **i8) -> i32 {
     let tokens = lexer.collect_tokens();
     for let mut index = 0 in index < tokens.len {
         let t: Token = tokens.data[index];
-        printf("%s:%d:%d -> %d|%s\n", t.loc.file->data, t.loc.line, t.loc.start, t.typ, t.value.data);
+        printf("%s:%.3d:%.2d -> %.2d | %s\n", t.loc.file->data, t.loc.line, t.loc.start, t.typ, t.value.data);
         index = index + 1;
     }
     return 0;

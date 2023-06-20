@@ -1,15 +1,17 @@
 #include "impl.h"
+#include "ast.h"
 #include "function.h"
 #include "mod.h"
 #include "scope.h"
 #include "trait.h"
 #include <algorithm>
+#include <fmt/core.h>
 #include <vector>
 
 namespace lygos {
     namespace AST {
-        Impl::Impl(std::string type, Block body, std::string trait):
-            AST(ASTType::Impl), type(type), body(body), trait(trait) {
+        Impl::Impl(std::string type, Block body, std::vector<Type::Generic> generics, std::string trait):
+            AST(ASTType::Impl), type(type), body(body), generics(generics), trait(trait) {
 
         }
 
@@ -42,13 +44,13 @@ namespace lygos {
         llvm::Value *Impl::GenCode(Scope *scope) {
             auto &strct = scope->GetStruct(type);
             if(trait != "") {
-                ValidateTraitImpl(this, ast_root->GetTrait(trait), scope);
+                ValidateTraitImpl(this, &scope->GetTrait(trait), scope);
                 strct.RegisterTraitImpl(trait);
             }
             for(const auto &member : body.Body()) {
-                auto func = (Function *)member.get();
-                strct.AddFunction({func->GetName(), {this->type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType()});
-                func->GetName() = this->type + "_" + func->GetName();
+                //auto func = (Function *)member.get();
+                //strct.AddFunction({func->GetName(), {this->type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType(), func->IsMember()});
+                //func->GetName() = this->type + "_" + func->GetName();
                 member->GenCode(scope);
             }
             return nullptr;
@@ -57,7 +59,19 @@ namespace lygos {
         Ref<Type::Type> Impl::GetType(Scope *scope) { return nullptr; }
 
         void Impl::Lower(AST *parent) {
+            auto &strct = ast_root->GetCurrentBlock()->Scope().GetStruct(type);
+            for(const auto &gen : this->generics) {
+                if(!strct.generics.contains(gen.name))
+                    Log::Logger::Warn(fmt::format("differing generics for type `{}` in impl. `{}`", strct.name, gen.name));
+            }
+            for(const auto &member : body.Body()) {
+                auto func = (Function *)member.get();
+                strct.AddFunction({func->GetName(), {this->type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType(), func->IsMember()});
+                func->GetName() = this->type + "_" + func->GetName();
+            }
+            LYGOS_ASSERT(parent->type == ASTType::Mod);
             for(size_t i = 0; i < body.Body().size(); i++) {
+                ast_root->SetCurrentBlock(&((Mod *)parent)->Body());
                 body.Body()[i]->Lower(parent);
                 body.Increment();
             }

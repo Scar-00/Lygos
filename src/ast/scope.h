@@ -3,6 +3,7 @@
 
 #include "../core.h"
 
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -10,6 +11,10 @@ namespace lygos {
     namespace AST {
         struct Mod;
         struct Function;
+        struct Macro;
+        namespace Trait {
+            struct Trait;
+        }
         struct Scope {
             public:
                 Scope(Scope *parent = nullptr, Ref<Mod> mod = nullptr): mod(mod), parent(parent) {}
@@ -20,14 +25,25 @@ namespace lygos {
                 bool HasRetValue();
                 Type::Variable LookupVar(std::string id);
                 void RegisterFunction(Type::Function function);
-                Type::Function GetFunction(std::string name);
                 void AddStructType(std::string id, Type::StructType struct_type);
                 void AddEnumType(std::string id, Type::EnumType enum_type);
                 void AddTypeAlias(std::string name, Ref<Type::Type> ref_type);
+                void DeclMacro(Macro *macro);
+                void DeclTrait(Trait::Trait *trait);
+
+                bool IsEnum(std::string_view name);
+                bool IsStruct(std::string_view name);
+                bool IsMacro(std::string_view name);
+                bool IsTrait(std::string_view name);
+
+                Type::Function &GetFunction(std::string name);
+                Type::StructType &GetStruct(std::string name);
+                Type::EnumType &GetEnum(std::string);
+                Macro &GetMacro(std::string &name);
+                Trait::Trait &GetTrait(std::string &name);
                 llvm::Type *GetType(Type::Type *type);
-                Type::StructType &GetStruct(std::string);
-                Option<Type::EnumType> GetEnum(std::string);
                 Ref<Mod> GetMod();
+                void SetParent(Scope *parent) { this->parent = parent; }
             private:
                 Scope *Resolve(std::string id);
                 Scope *Resolve(const char *type);
@@ -39,6 +55,8 @@ namespace lygos {
                 std::unordered_map<std::string, Type::EnumType> enum_types;
                 std::unordered_map<std::string, Type::Function> functions;
                 std::unordered_map<std::string, Ref<Type::Type>> type_aliases;
+                std::unordered_map<std::string, Macro*> macros;
+                std::unordered_map<std::string, Trait::Trait *> traits;
                 Scope *parent = nullptr;
                 llvm::Value *ret = nullptr;
         };

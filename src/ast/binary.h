@@ -8,6 +8,8 @@ namespace lygos {
         struct BinaryExpr : public AST {
             public:
                 BinaryExpr(Ref<AST> lhs, Ref<AST> rhs, std::string op);
+                Ref<AST> Lhs() { return lhs; }
+                Ref<AST> Rhs() { return rhs; }
             public:
                 std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;

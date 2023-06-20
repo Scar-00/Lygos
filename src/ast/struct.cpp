@@ -1,5 +1,6 @@
 #include "struct.h"
 #include "ast.h"
+#include "mod.h"
 #include <unordered_map>
 #include <vector>
 
@@ -16,11 +17,12 @@ namespace lygos {
 
         llvm::Value *StructDef::GenCode(Scope *scope) {
             //scope->AddType(id, {});
-            std::vector<llvm::Type *> field_types;
+            /*std::vector<llvm::Type *> field_types;
             std::vector<std::tuple<std::string, Ref<Type::Type>>> struct_fields;
             for(const auto &field : fields) {
                 //check that is type is self it is a pointer
-                field_types.push_back(scope->GetType(field.type.get()));
+                if(this->generics.size() < 0)
+                    field_types.push_back(scope->GetType(field.type.get()));
                 struct_fields.push_back({field.id, field.type});
             }
 
@@ -31,12 +33,25 @@ namespace lygos {
                 false
             );
 
-            scope->AddStructType(id, {id, struct_type, struct_fields, {}, {}, {}});
+            std::unordered_map<std::string, Type::Generic> generics;
+            for(const auto &gen : this->generics) {
+                generics.insert({gen.name, gen});
+            }*/
+
             return nullptr;
         }
 
         void StructDef::Lower(AST *parent) {
-            for(const auto &name : generics) {
+            std::vector<std::tuple<std::string, Ref<Type::Type>>> struct_fields;
+            for(const auto &field : fields) {
+                struct_fields.push_back({field.id, field.type});
+            }
+            std::unordered_map<std::string, Type::Generic> generics;
+            for(const auto &gen : this->generics) {
+                generics.insert({gen.name, gen});
+            }
+            ast_root->GetCurrentBlock()->Scope().AddStructType(id, {id, {}, struct_fields, {}, generics, {}});
+            for(const auto &name : this->generics) {
                 fmt::print("generic -> {}\n", name.name);
             }
         }

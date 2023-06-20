@@ -41,6 +41,7 @@ namespace lygos {
 
     namespace AST {
         struct Mod;
+        struct Scope;
     }
     extern Ref<AST::Mod> ast_root;
 }

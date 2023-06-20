@@ -38,50 +38,13 @@ namespace lygos {
             return current_func;
         }
 
-        Function *Mod::GetFunction(std::string &name) {
-            if(!functions.contains(name))
-                return nullptr;
-                //Log::Logger::Warn(fmt::format("unknown function `{}`", name));
-
-            return functions.at(name);
-        }
-
-        void Mod::AddFunction(Function *func) {
-            functions.insert({func->GetName(), func});
-        }
-
-        void Mod::DeclMacro(Macro *macro) {
-            if(macros.contains(macro->GetName()))
-                Log::Logger::Warn(fmt::format("cannot redeclare macro `{}`", macro->GetName()));
-            macros.insert({macro->GetName(), macro});
-        }
-
-        Macro *Mod::GetMacro(std::string &name) {
-            if(!macros.contains(name))
-                Log::Logger::Warn(fmt::format("cannot find macro named `{}`", name));
-            return macros.at(name);
-        }
-
-        void Mod::DeclTrait(Trait::Trait *trait) {
-            if(traits.contains(trait->GetValue()))
-                Log::Logger::Warn(fmt::format("cannot redeclare trait `{}`", trait->GetValue()));
-            traits.insert({trait->GetValue(), trait});
-        }
-
-        Trait::Trait *Mod::GetTrait(std::string &name) {
-            if(!traits.contains(name))
-                Log::Logger::Warn(fmt::format("cannot find trait `{}`", name));
-            return traits.at(name);
-        }
-
         std::string Mod::GetValue() {
             return name;
         }
 
         llvm::Value *Mod::GenCode(Scope *scope) {
-            Scope global{};
             for(const auto &item : body.Body()) {
-                item->GenCode(&global);
+                item->GenCode(&body.Scope());
             }
             return nullptr;
         }
@@ -91,6 +54,18 @@ namespace lygos {
         }
 
         void Mod::Lower(AST *parent) {
+            auto type = llvm::FunctionType::get(
+                llvm::Type::getInt32Ty(*lygos::ctx),
+                {
+                    llvm::Type::getInt8PtrTy(*lygos::ctx),
+                },
+                true
+            );
+
+            llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf", *lygos::mod);
+            Type::Function printf{"printf", {}, {{"", MakeRef<Type::Pointer>(MakeRef<Type::Path>("i8"), false)}}, MakeRef<Type::Path>("i32"), false};
+            body.Scope().RegisterFunction(printf);
+
             for(u64 i = 0; i < body.Body().size(); i++) {
                 ast_root->SetCurrentBlock(&body);
                 body.Body()[i]->Lower(this);

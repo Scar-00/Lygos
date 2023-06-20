@@ -25,10 +25,10 @@ namespace lygos {
         llvm::Value *CallExpr::GenCode(Scope *scope) {
             //std::cout << this->GetCaller()->type << "\n";
             auto fn_name = caller->GetValue();
-            auto fn = ast_root->GetFunction(fn_name);
+            auto fn = scope->GetFunction(fn_name);
             llvm::Function *callee = mod->getFunction(fn_name);
             bool is_ptr = false;
-            if(!callee || !fn) {
+            if(!callee) {
                 auto test = caller->GenCode(scope);
                 if(!IsFunctionType(test->getType()))
                     Log::Logger::Warn(fmt::format("unknown function `{}`", caller->GetValue()));
@@ -48,11 +48,11 @@ namespace lygos {
             size_t i = 0;
             for(const auto &arg : args) {
                 auto val = arg->GenCode(scope);
-                if(ShouldLoad(arg.get()) && (!(i == 0 && fn->IsMember()) || (i == 0 && deref_self)))
+                if(ShouldLoad(arg.get()) && (!(i == 0 && fn.is_member) || (i == 0 && deref_self)))
                     val = LoadOrIgnore(val);
 
-                if(i < fn->GetArgs().size()) {
-                    auto type_dest = scope->GetType(std::get<1>(fn->GetArgs().at(i)).get());
+                if(i < fn.args.size()) {
+                    auto type_dest = scope->GetType(std::get<1>(fn.args.at(i)).get());
                     builder->CreateCast(GetCastOp(val->getType(), type_dest), val, type_dest);
                 }
 
@@ -69,8 +69,7 @@ namespace lygos {
         }
 
         Ref<Type::Type> CallExpr::GetType(Scope *scope) {
-            auto fn_name = caller->GetValue();
-            return ast_root->GetFunction(fn_name)->GetRetType();
+            return scope->GetFunction(caller->GetValue()).ret_type;
         }
 
         void CallExpr::Lower(AST *parent) {

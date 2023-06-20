@@ -68,10 +68,31 @@ namespace lygos {
             if(id.type != TokenType::Id)
                 Log::Logger::Warn(At(), "expected identifier after keyword `impl`");
 
+            std::vector<Type::Generic> generics;
+            if(At().type == TokenType::AngleLeft) {
+                Eat();
+                while (At().type != TokenType::AngleRight) {
+                    Token name = Eat();
+                    if(name.type != TokenType::Id)
+                        Log::Logger::Warn(name, "expected `identifier`");
+
+                    generics.push_back(Type::Generic{name.value, {}});
+
+                    if(At().type == TokenType::AngleRight)
+                        break;
+
+                    if(Eat().type != TokenType::Comma)
+                        Log::Logger::Warn(PEEK(-1), "expected type args to be comma seperated");
+                }
+                if(Eat().type != TokenType::AngleRight) {
+                    Log::Logger::Warn(PEEK(-1), "expected closing bracked `>`");
+                }
+            }
+
             if(Eat().type != TokenType::CurlyLeft)
                 Log::Logger::Warn(PEEK(-1), "expected `{`");
 
-            auto impl = MakeRef<AST::Impl>(id.value, AST::Block{}, trait);
+            auto impl = MakeRef<AST::Impl>(id.value, AST::Block{}, generics, trait);
 
             current_impl = impl;
             current_block = &impl->Body();
@@ -829,7 +850,7 @@ namespace lygos {
             Ref<Type::Type> origin = nullptr;
             //handle pointers;
             while(At().type == TokenType::OpMul || At().type == TokenType::Ampercent) {
-                Eat();
+                bool is_ref = Eat().type == TokenType::Ampercent;
                 bool mut = false;
                 if(At().value == "mut") {
                     Eat();
@@ -837,10 +858,10 @@ namespace lygos {
                 }
 
                 if(!spec) {
-                    origin = spec = MakeRef<Type::Pointer>(nullptr, mut);
+                    origin = spec = MakeRef<Type::Pointer>(nullptr, mut, is_ref);
                 }
                 else {
-                    auto ptr = MakeRef<Type::Pointer>(nullptr, mut);
+                    auto ptr = MakeRef<Type::Pointer>(nullptr, mut, is_ref);
                     static_cast<Type::Pointer *>(spec.get())->SetType(ptr);
                     spec = ptr;
                 }

@@ -8,6 +8,7 @@
 #include "function.h"
 #include "binary.h"
 #include "impl.h"
+#include "scope.h"
 #include "vardecl.h"
 #include "casting.h"
 #include "struct.h"

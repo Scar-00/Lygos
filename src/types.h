@@ -196,11 +196,12 @@ namespace lygos {
             std::string name_mangeled;
             std::vector<std::tuple<std::string, Ref<struct Type>>> args;
             Ref<struct Type> ret_type;
+            bool is_member;
         };
 
         struct StructType {
             std::string name;
-            llvm::StructType *llvm_type;
+            std::unordered_map<std::string, llvm::StructType *> variants;
             std::vector<std::tuple<std::string, Ref<struct Type>>> fields;
             std::unordered_map<std::string, Function> functions;
             std::unordered_map<std::string, Generic> generics;

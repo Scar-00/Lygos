@@ -3,11 +3,13 @@
 #include "../error/log.h"
 #include "macro.h"
 
-#include "function.h"
+#include "trait.h"
 
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <memory>
+#include <string_view>
+#include <vector>
 
 
 namespace lygos {
@@ -25,13 +27,13 @@ namespace lygos {
 
         void Scope::Print() {
             std::cout << "Scope [\n";
-            std::cout << "-types:\n";
-            for(auto const &pair : struct_types) {
-                std::cout << "\t" << PrintType(pair.second.llvm_type) << "\n";
+            std::cout << "[funcs]:\n";
+            for(const auto &func : this->functions) {
+                std::cout << "    " << func.first << "\n";
             }
-            std::cout << "-vars:\n";
-            for(auto const &[name, alloca] : vars) {
-                std::cout << "\t{" << name << " : " << PrintType(alloca.alloca->getType()) << "},\n";
+            std::cout << "[macros]:\n";
+            for(const auto &macro : this->macros) {
+                std::cout << "    " << macro.first << "\n";
             }
             std::cout << "]" << std::endl;
         }
@@ -70,10 +72,31 @@ namespace lygos {
             functions.insert({function.name, function});
         }
 
-        Type::Function Scope::GetFunction(std::string name) {
-            if(!functions.contains(name))
-                Log::Logger::Warn("");
-            return functions.at(name);
+        bool Scope::IsEnum(std::string_view name) {
+            Scope *scope = this->Resolve(name.data());
+            return scope->enum_types.contains(name.data());
+        }
+
+        bool Scope::IsStruct(std::string_view name) {
+            Scope *scope = this->Resolve(name.data());
+            return scope->struct_types.contains(name.data());
+        }
+
+        bool Scope::IsMacro(std::string_view name) {
+            Scope *scope = this->Resolve(name.data());
+            return scope->macros.contains(name.data());
+        }
+
+        bool Scope::IsTrait(std::string_view name) {
+            Scope *scope = this->Resolve(name.data());
+            return scope->traits.contains(name.data());
+        }
+
+        Type::Function& Scope::GetFunction(std::string name) {
+            Scope *scope = this->Resolve(name.c_str());
+            if(!scope->functions.contains(name))
+                Log::Logger::Warn(fmt::format("unknown function `{}`", name));
+            return scope->functions.at(name);
         }
 
         //TODO: check in every function weather another type with the same name exists
@@ -98,6 +121,32 @@ namespace lygos {
             scope->type_aliases.insert({name, ref_type});
         }
 
+        void Scope::DeclMacro(Macro *macro) {
+            if(macros.contains(macro->GetName()))
+                Log::Logger::Warn(fmt::format("cannot redeclare macro `{}`", macro->GetName()));
+            macros.insert({macro->GetName(), macro});
+        }
+
+        Macro &Scope::GetMacro(std::string &name) {
+            Scope *scope = this->Resolve(name.c_str());
+            if(!scope->macros.contains(name))
+                Log::Logger::Warn(fmt::format("unknown macro `{}`", name));
+            return *scope->macros.at(name);
+        }
+
+        void Scope::DeclTrait(Trait::Trait *trait) {
+            if(traits.contains(trait->GetValue()))
+                Log::Logger::Warn(fmt::format("cannot redeclare trait `{}`", trait->GetValue()));
+            traits.insert({trait->GetValue(), trait});
+        }
+
+        Trait::Trait &Scope::GetTrait(std::string &name) {
+            Scope *scope = this->Resolve(name.c_str());
+            if(!scope->traits.contains(name))
+                Log::Logger::Warn(fmt::format("unknown trait `{}`", name));
+            return *scope->traits.at(name);
+        }
+
         llvm::Type *Scope::GetType(Type::Type *type) {
             switch (type->kind) {
                 case Type::Kind::path: {
@@ -107,10 +156,37 @@ namespace lygos {
                     if(scope->struct_types.contains(path)) {
                         Type::StructType &typ = scope->struct_types.at(path);
                         //handle potential generics of the type
-                        for(const auto &type : ((Type::Path *)type)->GetArgs()) {
-                            fmt::print("{}\n", type->GetName());
+                        /*if(typ.generics.size() != ((Type::Path *)type)->GetArgs().size())
+                            Log::Logger::Warn(fmt::format("incorrect number of args supplied to type", typ.name));
+                        if(typ.generics.size() > 0) {
+                            std::string name = typ.name;
+                            std::vector<llvm::Type *> types;
+                            for(const auto &type : ((Type::Path *)type)->GetArgs()) {
+                                types.push_back(GetType(type.get()));
+                                name += "_" + type->GetFullName();
+                                fmt::print("arg -> {}\n", type->GetName());
+                            }
+                            return llvm::StructType::create(
+                            *ctx,
+                            types,
+                            name,
+                            false
+                        );
+                        }*/
+                        if(!typ.variants.contains(typ.name)) {
+                            std::vector<llvm::Type *> types;
+                            for(const auto &[name, type] : typ.fields) {
+                                types.push_back(GetType(type.get()));
+                            }
+                            typ.variants.insert({typ.name, llvm::StructType::create(
+                                *ctx,
+                                types,
+                                typ.name,
+                                false
+                            )});
                         }
-                        return typ.llvm_type;
+
+                        return typ.variants.at(typ.name);
                     }
                     if(scope->enum_types.contains(path))
                         return GetType(scope->enum_types.at(path).type.get());
@@ -147,19 +223,16 @@ namespace lygos {
 
         Type::StructType &Scope::GetStruct(std::string type) {
             Scope *scope = this->Resolve(type.c_str());
-            if(scope->struct_types.contains(type)) {
-                return scope->struct_types.at(type);
-            }
-
-            Log::Logger::Warn(fmt::format("unknwon struct type `{}`", type));
-            std::exit(1);
+            if(!scope->struct_types.contains(type))
+                Log::Logger::Warn(fmt::format("unknown struct type `{}`", type));
+            return scope->struct_types.at(type);
         }
 
-        Option<Type::EnumType> Scope::GetEnum(std::string type) {
+        Type::EnumType &Scope::GetEnum(std::string type) {
             Scope *scope = this->Resolve(type.c_str());
-            if(scope->enum_types.contains(type))
-                return Some(scope->enum_types.at(type));
-            return None;
+            if(!scope->enum_types.contains(type))
+                Log::Logger::Warn(fmt::format("unknown enum type `{}`", type));
+            return scope->enum_types.at(type);
         }
 
         Scope *Scope::Resolve(std::string var) {
@@ -173,8 +246,14 @@ namespace lygos {
         }
 
         Scope *Scope::Resolve(const char *type) {
-            if(this->struct_types.contains({type}) || this->enum_types.contains({type}) || type_aliases.contains({type}))
-                return this;
+            std::string type_string{type};
+            if(this->struct_types.contains(type_string)
+            || this->enum_types.contains(type_string)
+            || this->functions.contains(type_string)
+            || this->type_aliases.contains(type_string)
+            || this->macros.contains(type_string)
+            || this->traits.contains(type_string)
+            ) return this;
 
             if(!this->parent)
                 return this;

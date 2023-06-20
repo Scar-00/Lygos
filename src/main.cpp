@@ -78,17 +78,6 @@ int main(int argc, char **argv) {
     root->Lower(nullptr);
     std::cout << "lowered:\n" << lygos::AST::Print(root.get()).str() << std::endl;
 
-    auto type = llvm::FunctionType::get(
-        llvm::Type::getInt32Ty(*lygos::ctx),
-        {
-            llvm::Type::getInt8PtrTy(*lygos::ctx),
-        },
-        true
-    );
-
-    llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf", *lygos::mod);
-    lygos::AST::Function func{"printf", nullptr, std::vector<lygos::AST::Function::Arg>(), std::vector<Ref<lygos::AST::AST>>(), nullptr, false};
-    lygos::ast_root->AddFunction(&func);
     root->GenCode({});
 
     llvm::verifyModule(*lygos::mod, &llvm::errs());

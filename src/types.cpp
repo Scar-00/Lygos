@@ -58,7 +58,7 @@ namespace lygos {
             return CastOps::SExt;
         }
         if(src->isPointerTy() && dest->isPointerTy()) return CastOps::BitCast;
-        if(src->isPointerTy() && dest->isIntegerTy()) return CastOps::PtrToInt;
+        //if(src->isPointerTy() && dest->isIntegerTy()) return CastOps::PtrToInt;
         if(src->isFloatingPointTy() && dest->isFloatingPointTy()) {
             if(src->isFloatTy() && dest->isDoubleTy()) return CastOps::FPExt;
         }
@@ -89,7 +89,7 @@ namespace lygos {
 
     Type::Function Type::StructType::GetFunction(std::string name) {
         if(!functions.contains(name))
-            Log::Logger::Warn(fmt::format("unknown function `{}` in struct {}", name, this->name));
+            Log::Logger::Warn(fmt::format("unknown function `{}` in struct `{}`", name, this->name));
         return functions.at(name);
     }
 
@@ -141,22 +141,6 @@ namespace lygos {
         return name;
     }
 
-    bool Type::Type::Matches(Ref<Type> other) {
-        if(kind == Kind::ptr)
-            return ((Pointer *)this)->GetType()->Matches(other);
-
-        if(other->kind == Kind::ptr) {
-            return Matches(((Pointer *)other.get())->GetType());
-        }
-
-        /*if((kind == Kind::path && other->kind == Kind::trait)
-        || (kind == Kind::trait && other->kind == Kind::path)) {
-            return ((Path *)kind)->GetPath() == ((Trait *)kind)->GetName();
-        }*/
-
-        return kind == other->kind;
-    }
-
     std::string &Type::Type::GetName() {
         if(kind == Kind::path)
             return ((Path *)this)->GetPath();
@@ -175,7 +159,7 @@ namespace lygos {
             return ((Path *)this)->GetPath();
 
         if(kind == Kind::ptr)
-            return "*" + ((Pointer *)this)->GetType()->GetName();
+            return ((Pointer *)this)->IsRef() ? "&" : "*" + ((Pointer *)this)->GetType()->GetName();
 
         if(kind == Kind::arr)
             return "[" + ((Array *)this)->GetType()->GetName() + "]";

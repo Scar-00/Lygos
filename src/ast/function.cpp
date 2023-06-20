@@ -3,6 +3,7 @@
 #include "mod.h"
 #include "impl.h"
 #include <cstdio>
+#include <llvm/Support/raw_ostream.h>
 
 namespace lygos {
     namespace AST {
@@ -18,17 +19,17 @@ namespace lygos {
         }
 
         llvm::Value *Function::GenCode(Scope *scope) {
-            Scope curr_scope{scope};
+            this->Body().SetParent(scope);
 
             auto fn = mod->getFunction(name);
             //check if function is already defined
             if(!fn) {
                 std::vector<llvm::Type *> arg_types;
                 for(const auto &[name, type] : args)
-                    arg_types.push_back(curr_scope.GetType(type.get()));
+                    arg_types.push_back(body.Scope().GetType(type.get()));
 
                 auto fn_type = llvm::FunctionType::get(
-                    curr_scope.GetType(ret_type.get()),
+                    body.Scope().GetType(ret_type.get()),
                     arg_types,
                     is_var_arg
                 );
@@ -42,7 +43,6 @@ namespace lygos {
             }
             //if(is_definition)
             ast_root->SetCurrentFunction(this);
-            ast_root->AddFunction(this);
             if(!is_definition)
                 return nullptr;
 
@@ -56,26 +56,26 @@ namespace lygos {
                 auto arg = &*args + i;
                 auto alloca = builder->CreateAlloca(arg->getType());
                 builder->CreateStore(arg, alloca);
-                curr_scope.DeclVar(std::get<0>(this->args.at(i)), false, {std::get<1>(this->args[i]), alloca});
+                body.Scope().DeclVar(std::get<0>(this->args.at(i)), false, {std::get<1>(this->args[i]), alloca});
             }
 
             //curr_scope.SetRetBlock(llvm::BasicBlock::Create(*ctx, "", fn));
 
             if(!(ret_type->kind == Type::Kind::path && ((Type::Path *)ret_type.get())->GetPath() == "void"))
-                curr_scope.SetRet(builder->CreateAlloca(fn->getReturnType()));
+                body.Scope().SetRet(builder->CreateAlloca(fn->getReturnType()));
 
             for(const auto &node : body.Body())
-                node->GenCode(&curr_scope);
+                node->GenCode(&body.Scope());
 
             //fmt::print("? -> {}\n", curr_scope.LookupVar("x").alloca->canBeFreed());
 
             if(return_block != nullptr)
                 builder->SetInsertPoint(return_block);
-            curr_scope.GetRet() ? builder->CreateRet(LoadOrIgnore(curr_scope.GetRet())) : builder->CreateRetVoid();
+            body.Scope().GetRet() ? builder->CreateRet(LoadOrIgnore(body.Scope().GetRet())) : builder->CreateRetVoid();
 
             llvm::verifyFunction(*fn, &llvm::errs());
             //curr_scope.Print();
-            scope->RegisterFunction({name, {}, this->args, ret_type});
+            //scope->RegisterFunction({name, {}, this->args, ret_type, IsMember()});
             return nullptr;
         }
 
@@ -84,6 +84,8 @@ namespace lygos {
         }
 
         void Function::Lower(AST *parent) {
+            ast_root->GetCurrentBlock()->Scope().RegisterFunction({name, mangeled_name, this->args, ret_type, IsMember()});
+            body.Scope().SetParent(&ast_root->GetCurrentBlock()->Scope());
             ast_root->SetCurrentFunction(this);
             for(u64 i = 0; i < body.Body().size(); i++) {
                 ast_root->SetCurrentBlock(&body);

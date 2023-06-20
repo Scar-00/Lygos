@@ -27,10 +27,6 @@ namespace lygos {
 
         llvm::Value *MemberExpr::GenCode(Scope *scope) {
             auto obj = this->obj->GenCode(scope);
-            //if(this->GetType(scope)->kind == Type::Kind::ptr) {
-            //    Log::Logger::Warn(fmt::format("{} is a ptr", this->obj->GetValue()));
-            //}
-
             if(deref)
                 obj = LoadOrIgnore(obj);
 
@@ -111,25 +107,12 @@ namespace lygos {
             return obj->GetValue();
         }
 
-            /*if(obj->getType()->isStructTy()) {
-                Log::Logger::Warn("DEBUG");
-                auto struct_name = ((llvm::StructType *)TryGetPointerBase(obj->getType()))->getName().data();
-                if(scope->GetStruct(struct_name).ImplementsTrait("Index")) {
-                    auto iden = MakeRef<Identifier>("index");
-                    std::vector<Ref<AST>> args = {index};
-                    auto expr = MemberExpr{this->obj, MakeRef<CallExpr>(iden, args), false};
-                    std::cout << "expr -> " << Print(&expr).str() << std::endl;
-                    Log::Logger::Warn("DEBUG");
-                    //return expr.GenCode(scope);
-                }
-            }*/
-
         llvm::Value *AccessExpr::GenCode(Scope *scope) {
             auto obj = this->obj->GenCode(scope);
             if(!IsArrayType(obj->getType()))
                 obj = LoadOrIgnore(obj);
 
-            if(obj->getType()->isStructTy()) {
+            /*if(obj->getType()->isStructTy()) {
                 auto struct_name = ((llvm::StructType *)obj->getType())->getName().data();
                 if(scope->GetStruct(struct_name).ImplementsTrait("Index")) {
                     auto iden = MakeRef<Identifier>("index");
@@ -138,7 +121,7 @@ namespace lygos {
                     return expr.GenCode(scope);
                 }
                 Log::Logger::Warn(fmt::format("type `{}` does not implement `Index`", struct_name));
-            }
+            }*/
 
             auto index = this->index->GenCode(scope);
             if(ShouldLoad(this->index.get()))
@@ -176,14 +159,14 @@ namespace lygos {
 
         //check for static -> cant call static functions on an object
         llvm::Value *ResolutionExpr::GenCode(Scope *scope) {
-            if (scope->GetEnum(obj->GetValue()).IsSome()) {
-                Type::EnumType e = scope->GetEnum(obj->GetValue()).Unwrap();
+            if (scope->IsEnum(obj->GetValue())) {
+                Type::EnumType e = scope->GetEnum(obj->GetValue());
                 for(size_t i = 0; i < e.variants.size(); i++) {
                     if(e.variants[i] == this->member->GetValue()){
                         return llvm::ConstantInt::get(scope->GetType(e.type.get()), i);
                     }
                 }
-                Log::Logger::Warn(fmt::format("unknown enum variant `{}`", member->GetValue()));
+                Log::Logger::Warn(fmt::format("unknown enum variant `{}` in enum `{}`", member->GetValue(), e.name));
             }
 
             auto fn = (CallExpr *)member.get();

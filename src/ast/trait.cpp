@@ -19,7 +19,7 @@ namespace lygos {
             }
 
             void Trait::Lower(AST *parent) {
-                ast_root->DeclTrait(this);
+                ast_root->GetCurrentBlock()->Scope().DeclTrait(this);
             }
 
             void Trait::Sanatize() {

@@ -2,9 +2,8 @@
 #include "ast.h"
 #include "scope.h"
 #include "mod.h"
+#include "binary.h"
 #include "function.h"
-#include <llvm/ADT/Twine.h>
-#include <llvm/Support/raw_ostream.h>
 #include <vector>
 
 namespace lygos {
@@ -29,12 +28,21 @@ namespace lygos {
             auto true_block = llvm::BasicBlock::Create(*ctx, "if.then", fn, ret_block);
             auto false_block = llvm::BasicBlock::Create(*ctx, "if.else", fn, ret_block);
             auto merge = llvm::BasicBlock::Create(*ctx, "if.end", fn, ret_block);
+
+            auto cond = (BinaryExpr *)this->cond.get();
+            //TODO: break up conditional into multiple blocks
+            if(cond->Lhs()->type == ASTType::BinaryExpr) {
+                auto bb = llvm::BasicBlock::Create(*ctx, "", fn, ret_block);
+                builder->CreateCondBr(cond->Lhs()->GenCode(scope), bb, has_else_brach ? false_block : merge);
+                cond = (BinaryExpr *)cond->Rhs().get();
+                builder->SetInsertPoint(bb);
+            }
             builder->CreateCondBr(cond->GenCode(scope), true_block, has_else_brach ? false_block : merge);
 
             builder->SetInsertPoint(true_block);
-            Scope then_scope{scope};
+            this->then_body.SetParent(scope);
             for(const auto &node : then_body.Body()) {
-                node->GenCode(&then_scope);
+                node->GenCode(&then_body.Scope());
             }
             if(!true_block->getTerminator())
                 builder->CreateBr(merge);
@@ -42,13 +50,13 @@ namespace lygos {
             //generate else
             builder->SetInsertPoint(false_block);
             if(has_else_brach) {
-                Scope else_scope{scope};
+                this->else_body.SetParent(scope);
                 for(const auto &node : else_body.Body()) {
-                    node->GenCode(&else_scope);
+                    node->GenCode(&this->else_body.Scope());
                 }
                 if(!false_block->getTerminator())
                     builder->CreateBr(merge);
-            }else if(false_block->hasNUses(0)){
+            }else if(false_block->hasNUses(0)) {
                 false_block->removeFromParent();
             }
 
@@ -100,18 +108,25 @@ namespace lygos {
             auto merge = llvm::BasicBlock::Create(*ctx, "for.end", fn);
 
             //builder->CreateCondBr(this->cond->GenCode(scope), block, merge);
-
-            Scope loop_scope{scope};
-            var->GenCode(&loop_scope);
+            this->body.SetParent(scope);
+            var->GenCode(&this->body.Scope());
             builder->CreateBr(cond);
 
             //cond block
             builder->SetInsertPoint(cond);
-            builder->CreateCondBr(this->cond->GenCode(&loop_scope), loop_body, merge);
+            auto cond_expr = (BinaryExpr *)this->cond.get();
+            //TODO: break up conditional into multiple blocks
+            if(cond_expr->Lhs()->type == ASTType::BinaryExpr) {
+                auto bb = llvm::BasicBlock::Create(*ctx, "", fn, cond);
+                builder->CreateCondBr(cond_expr->Lhs()->GenCode(scope), bb, merge);
+                cond_expr = (BinaryExpr *)cond_expr->Rhs().get();
+                builder->SetInsertPoint(bb);
+            }
+            builder->CreateCondBr(this->cond->GenCode(&this->body.Scope()), loop_body, merge);
             //body
             builder->SetInsertPoint(loop_body);
             for(const auto &expr : body.Body())
-                expr->GenCode(&loop_scope);
+                expr->GenCode(&this->body.Scope());
             builder->CreateBr(cond);
 
             //end
@@ -148,6 +163,7 @@ namespace lygos {
         //fix returning -> see if_stmt
         //add `default case` eg. -> x/_ -> {...}
         llvm::Value *MatchStmt::GenCode(Scope *scope) {
+            Log::Logger::Warn("FIXME: [MatchStmt]");
             auto val = value->GenCode(scope);
             if(ShouldLoad(value.get()))
                 val = LoadOrIgnore(val);
