@@ -6,6 +6,7 @@
 #include "trait.h"
 #include <algorithm>
 #include <fmt/core.h>
+#include <memory>
 #include <vector>
 
 namespace lygos {
@@ -64,11 +65,13 @@ namespace lygos {
                 if(!strct.generics.contains(gen.name))
                     Log::Logger::Warn(fmt::format("differing generics for type `{}` in impl. `{}`", strct.name, gen.name));
             }
-            for(const auto &member : body.Body()) {
-                auto func = (Function *)member.get();
-                strct.AddFunction({func->GetName(), {this->type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType(), func->IsMember()});
+
+            for(size_t i = 0; i < body.Body().size(); i++) {
+                Function *func = (Function*)body.Body()[i].get();
+                strct.AddFunction({func->GetName(), {type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType(), func->IsMember()});
                 func->GetName() = this->type + "_" + func->GetName();
             }
+
             LYGOS_ASSERT(parent->type == ASTType::Mod);
             for(size_t i = 0; i < body.Body().size(); i++) {
                 ast_root->SetCurrentBlock(&((Mod *)parent)->Body());

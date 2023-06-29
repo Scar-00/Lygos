@@ -54,18 +54,19 @@ namespace lygos {
         }
 
         void Mod::Lower(AST *parent) {
-            auto type = llvm::FunctionType::get(
-                llvm::Type::getInt32Ty(*lygos::ctx),
-                {
-                    llvm::Type::getInt8PtrTy(*lygos::ctx),
-                },
-                true
-            );
+            if(body.Scope().GetFunctions().contains("printf")) {
+                auto type = llvm::FunctionType::get(
+                    llvm::Type::getInt32Ty(*lygos::ctx),
+                    {
+                        llvm::Type::getInt8PtrTy(*lygos::ctx),
+                    },
+                    true
+                );
 
-            llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf", *lygos::mod);
-            Type::Function printf{"printf", {}, {{"", MakeRef<Type::Pointer>(MakeRef<Type::Path>("i8"), false)}}, MakeRef<Type::Path>("i32"), false};
-            body.Scope().RegisterFunction(printf);
-
+                llvm::Function::Create(type, llvm::Function::LinkageTypes::ExternalLinkage, "printf", *lygos::mod);
+                Type::Function printf{"printf", {}, {{"", MakeRef<Type::Pointer>(MakeRef<Type::Path>("i8"), false)}}, MakeRef<Type::Path>("i32"), false};
+                body.Scope().RegisterFunction(printf);
+            }
             for(u64 i = 0; i < body.Body().size(); i++) {
                 ast_root->SetCurrentBlock(&body);
                 body.Body()[i]->Lower(this);

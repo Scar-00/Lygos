@@ -35,6 +35,10 @@ namespace lygos {
             for(const auto &macro : this->macros) {
                 std::cout << "    " << macro.first << "\n";
             }
+            std::cout << "[structs]:\n";
+            for(const auto &strct : this->struct_types) {
+                std::cout << "    " << strct.first << "\n";
+            }
             std::cout << "]" << std::endl;
         }
 
@@ -68,7 +72,7 @@ namespace lygos {
 
         void Scope::RegisterFunction(Type::Function function) {
             if(functions.contains(function.name))
-                Log::Logger::Warn("");
+                Log::Logger::Warn(fmt::format("Cannot redeclare function `{}`", function.name));
             functions.insert({function.name, function});
         }
 
@@ -156,23 +160,29 @@ namespace lygos {
                     if(scope->struct_types.contains(path)) {
                         Type::StructType &typ = scope->struct_types.at(path);
                         //handle potential generics of the type
-                        /*if(typ.generics.size() != ((Type::Path *)type)->GetArgs().size())
+                        //fmt::print("gen -> {}\n", typ.generics.size());
+                        //fmt::print("args -> {}\n", ((Type::Path *)type)->GetArgs().size());
+                        if(typ.generics.size() != ((Type::Path *)type)->GetArgs().size())
                             Log::Logger::Warn(fmt::format("incorrect number of args supplied to type", typ.name));
                         if(typ.generics.size() > 0) {
                             std::string name = typ.name;
                             std::vector<llvm::Type *> types;
                             for(const auto &type : ((Type::Path *)type)->GetArgs()) {
+                                fmt::print("arg -> {}\n", type->GetName());
                                 types.push_back(GetType(type.get()));
                                 name += "_" + type->GetFullName();
-                                fmt::print("arg -> {}\n", type->GetName());
                             }
-                            return llvm::StructType::create(
-                            *ctx,
-                            types,
-                            name,
-                            false
-                        );
-                        }*/
+                            if(!typ.variants.contains(name)) {
+                                typ.variants.insert({name, llvm::StructType::create(
+                                    *ctx,
+                                    types,
+                                    name,
+                                    false
+                                )});
+                            }
+
+                            return typ.variants.at(name);
+                        }
                         if(!typ.variants.contains(typ.name)) {
                             std::vector<llvm::Type *> types;
                             for(const auto &[name, type] : typ.fields) {

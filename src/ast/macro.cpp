@@ -199,11 +199,26 @@ namespace lygos {
             Parser::Parser parser{tokens};
             Ref<AST> root = parser.BuildAst();
             ast_root = std::static_pointer_cast<Mod>(root);
-            //FIXEM:
-            //ast_root->GetFunctions() = root_original->GetFunctions();
-            //ast_root->GetMacros() = root_original->GetMacros();
-            //ast_root->GetTraits() = root_original->GetTraits();
+            ast_root->GetCurrentBlock()->Scope().GetStructTypes() = root_original->GetCurrentBlock()->Scope().GetStructTypes();
+            ast_root->GetCurrentBlock()->Scope().GetEnumTypes() = root_original->GetCurrentBlock()->Scope().GetEnumTypes();
+            ast_root->GetCurrentBlock()->Scope().GetFunctions() = root_original->GetCurrentBlock()->Scope().GetFunctions();
+            ast_root->GetCurrentBlock()->Scope().GetMacros() = root_original->GetCurrentBlock()->Scope().GetMacros();
+            ast_root->GetCurrentBlock()->Scope().GetTraits() = root_original->GetCurrentBlock()->Scope().GetTraits();
+
             root->Lower(nullptr);
+            //referecnes to scope in block of `root` and its children fall out of scope here so they are invalid and crash the programm
+            // -> [impl, ...]
+            for(const auto &st : ast_root->GetCurrentBlock()->Scope().GetStructTypes())
+                root_original->GetCurrentBlock()->Scope().GetStructTypes().insert(st);
+            for(const auto &e : ast_root->GetCurrentBlock()->Scope().GetEnumTypes())
+                root_original->GetCurrentBlock()->Scope().GetEnumTypes().insert(e);
+            for(const auto &fn : ast_root->GetCurrentBlock()->Scope().GetFunctions())
+                root_original->GetCurrentBlock()->Scope().GetFunctions().insert(fn);
+            for(const auto &m : ast_root->GetCurrentBlock()->Scope().GetMacros())
+                root_original->GetCurrentBlock()->Scope().GetMacros().insert(m);
+            for(const auto &t : ast_root->GetCurrentBlock()->Scope().GetTraits())
+                root_original->GetCurrentBlock()->Scope().GetTraits().insert(t);
+
             ast_root = root_original;
             ast_root->Replace(((Mod *)root.get())->Body().Body());
         }

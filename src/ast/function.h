@@ -13,14 +13,14 @@ namespace lygos {
             public:
                 Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, Block body, Ref<Type::Type> ret_type, bool is_def);
                 Block &Body() { return body; }
-                std::string &GetName() { return name; }
-                bool IsMember() { return obj.get() != nullptr && std::get<0>(args[0]) == "self"; }
+                std::string &GetName();
+                bool IsMember();
                 std::vector<Arg> GetArgs() { return args; }
                 Ref<Type::Type> GetRetType() { return ret_type; }
                 void SetRetBlock(llvm::BasicBlock *block);
                 llvm::BasicBlock * GetRetBlock() { return return_block; }
             public:
-                std::string GetValue() override{ return name; }
+                std::string GetValue() override;
                 llvm::Value *GenCode(Scope *scope) override;
                 Ref<Type::Type> GetType(Scope *scope) override;
                 void Lower(AST *parent) override;

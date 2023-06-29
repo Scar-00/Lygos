@@ -1,22 +1,32 @@
-struct Vec {
-    value: i32;
-};
-
-impl Vec {
-    fn new(value: i32) -> Self {
-        let this: Self = {
-            .value = value,
-        };
-        return this;
+macro println {
+    () -> {
+        printf("\n");
+    }
+    (string: $) -> {
+        printf("%s\n", $string);
     }
 
-    fn test(&self) -> i32 {
-        return self->value;
+    (fmt: $, args: $[]) -> {
+        printf($fmt, $args);
+        printf("\n");
     }
 }
 
+macro test {
+    () -> {
+        struct Vec {
+            x: i32;
+            y: i32;
+        };
+
+        impl Vec {
+            fn test() -> Self {}
+        }
+    }
+}
+
+test$();
+
 fn main(argc: i32) -> i32 {
-    let mut x = Vec::new(10);
-    printf("%d\n", x.test());
     return 0;
 }

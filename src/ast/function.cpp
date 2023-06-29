@@ -18,8 +18,21 @@ namespace lygos {
             return_block = block;
         }
 
+        std::string &Function::GetName() {
+            return this->name;
+        }
+
+        bool Function::IsMember() {
+            if(args.size() == 0) return false;
+            return obj.get() != nullptr && std::get<0>(args[0]) == "self";
+        }
+
+        std::string Function::GetValue() {
+            return this->name;
+        }
+
         llvm::Value *Function::GenCode(Scope *scope) {
-            this->Body().SetParent(scope);
+            //this->Body().SetParent(scope);
 
             auto fn = mod->getFunction(name);
             //check if function is already defined

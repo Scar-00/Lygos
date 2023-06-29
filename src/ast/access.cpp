@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "call.h"
 #include "literals.h"
+#include "mod.h"
 #include <fmt/core.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -35,7 +36,7 @@ namespace lygos {
             if(member->type == ASTType::CallExpr) {
                 std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
                 auto call = (CallExpr *)member.get();
-                call->Args().insert(call->Args().cbegin(), this->obj);
+                //call->Args().insert(call->Args().cbegin(), this->obj);
                 switch (call->GetCaller()->type) {
                     case ASTType::Id: {
                         std::string &fn_name = static_cast<Identifier *>(call->GetCaller().get())->GetId();
@@ -90,8 +91,14 @@ namespace lygos {
         }
 
         void MemberExpr::Lower(AST *parent) {
-            member->Lower(this);
             obj->Lower(this);
+
+            if(member->type == ASTType::CallExpr) {
+                auto call = (CallExpr *)member.get();
+                call->Args().insert(call->Args().cbegin(), this->obj);
+            }
+
+            member->Lower(this);
         }
 
         void MemberExpr::Sanatize() {

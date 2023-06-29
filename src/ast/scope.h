@@ -41,6 +41,14 @@ namespace lygos {
                 Type::EnumType &GetEnum(std::string);
                 Macro &GetMacro(std::string &name);
                 Trait::Trait &GetTrait(std::string &name);
+
+                std::unordered_map<std::string, Type::StructType> &GetStructTypes() { return struct_types; }
+                std::unordered_map<std::string, Type::EnumType> &GetEnumTypes() { return enum_types; }
+                std::unordered_map<std::string, Type::Function> &GetFunctions() { return functions; }
+                std::unordered_map<std::string, Ref<Type::Type>> &GetTypeAliases() { return type_aliases; }
+                std::unordered_map<std::string, Macro*> &GetMacros() { return macros; }
+                std::unordered_map<std::string, Trait::Trait *> &GetTraits() { return traits; }
+
                 llvm::Type *GetType(Type::Type *type);
                 Ref<Mod> GetMod();
                 void SetParent(Scope *parent) { this->parent = parent; }
