@@ -33,10 +33,9 @@ namespace lygos {
 
             //FIXME: function chain calling
             //check if function is actually a member and not static
-            if(member->type == ASTType::CallExpr) {
+            if(!use_index && member->type == ASTType::CallExpr) {
                 std::string struct_name = static_cast<llvm::StructType *>(TryGetPointerBase(obj->getType()))->getName().data();
                 auto call = (CallExpr *)member.get();
-                //call->Args().insert(call->Args().cbegin(), this->obj);
                 switch (call->GetCaller()->type) {
                     case ASTType::Id: {
                         std::string &fn_name = static_cast<Identifier *>(call->GetCaller().get())->GetId();
@@ -66,13 +65,12 @@ namespace lygos {
                 for(size_t i = 0; i < struct_fields.size(); i++)
                     if(std::get<0>(struct_fields[i]) == member_name)
                        index = i;
-
             }else {
                 index = this->index;
                 LYGOS_ASSERT(index <= struct_fields.size() && "out of bounds index in strcut gep");
             }
 
-            if(member->type != ASTType::Id)
+            if(!use_index && member->type != ASTType::Id)
                 member->GenCode(scope);
 
             return builder->CreateStructGEP(TryGetPointerBase(obj->getType()), obj, index);
@@ -93,12 +91,14 @@ namespace lygos {
         void MemberExpr::Lower(AST *parent) {
             obj->Lower(this);
 
-            if(member->type == ASTType::CallExpr) {
-                auto call = (CallExpr *)member.get();
-                call->Args().insert(call->Args().cbegin(), this->obj);
-            }
+            if(!use_index) {
+                if(member->type == ASTType::CallExpr) {
+                    auto call = (CallExpr *)member.get();
+                    call->Args().insert(call->Args().cbegin(), this->obj);
+                }
 
-            member->Lower(this);
+                member->Lower(this);
+            }
         }
 
         void MemberExpr::Sanatize() {

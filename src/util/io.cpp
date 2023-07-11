@@ -4,6 +4,7 @@
 #include "../core.h"
 
 #include <filesystem>
+#include <llvm/Linker/Linker.h>
 #include <sstream>
 #include <fstream>
 #include <string>
@@ -40,6 +41,7 @@ namespace lygos {
             auto obj_path = path.replace_extension(".o").string();
             llvm::legacy::PassManager pass_manager;
             //add passes
+            //pass_manager.add()
 
             std::error_code e;
             llvm::raw_fd_ostream os(obj_path, e);

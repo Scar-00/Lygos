@@ -35,12 +35,19 @@ define dso_local i32 @main() {
   %7 = getelementptr inbounds %Foo, %Foo* %4, i32 0, i32 1
   %8 = load i32, i32* %3, align 4
   store i32 %8, i32* %7, align 4
-  %9 = bitcast %Foo* %4 to i32*
-  %10 = load i32, i32* %9, align 4
-  %11 = getelementptr inbounds %Foo, %Foo* %4, i32 0, i32 1
-  %12 = load i32, i32* %11, align 4
-  %13 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @0, i32 0, i32 0), i32 %10, i32 %12)
+  %9 = alloca %Foo, align 8
+  %10 = bitcast %Foo* %9 to i32*
+  %11 = load i32, i32* %2, align 4
+  store i32 %11, i32* %10, align 4
+  %12 = getelementptr inbounds %Foo, %Foo* %9, i32 0, i32 1
+  %13 = load i32, i32* %3, align 4
+  store i32 %13, i32* %12, align 4
+  %14 = bitcast %Foo* %4 to i32*
+  %15 = load i32, i32* %14, align 4
+  %16 = getelementptr inbounds %Foo, %Foo* %4, i32 0, i32 1
+  %17 = load i32, i32* %16, align 4
+  %18 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @0, i32 0, i32 0), i32 %15, i32 %17)
   store i32 0, i32* %1, align 4
-  %14 = load i32, i32* %1, align 4
-  ret i32 %14
+  %19 = load i32, i32* %1, align 4
+  ret i32 %19
 }

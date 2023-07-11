@@ -12,18 +12,17 @@ macro println {
     }
 }
 
-struct Vec {
-    x: i32;
-    y: i32;
+struct Box<T> {
+    data: T;
 };
 
-impl Vec {
-    fn test() -> Self {}
-    fn foo(&self) -> i32 {}
+impl Box<T> {
+    fn test() {
+
+    }
 }
 
-static foo: *i32;
-
 fn main(argc: i32) -> i32 {
+    let mut v: Box<*i32>;
     return 0;
 }

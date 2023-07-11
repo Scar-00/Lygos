@@ -15,6 +15,7 @@ fn main() -> i32 {
     let x = 10;
     let y = 20;
     let f: Foo = { .x = x, .y = y };
+    let foo: Foo = { x, y };
     printf("foo -> %d | %d\n", f.x, f.y);
     return 0;
 }

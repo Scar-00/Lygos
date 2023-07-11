@@ -171,6 +171,7 @@ namespace lygos {
                         if(typ.generics.size() > 0) {
                             std::string name = typ.name;
                             std::vector<llvm::Type *> types;
+                            //TODO: correctly substitute types, cant be bothered rn
                             for(const auto &type : ((Type::Path *)type)->GetArgs()) {
                                 fmt::print("arg -> {}\n", type->GetName());
                                 types.push_back(GetType(type.get()));
