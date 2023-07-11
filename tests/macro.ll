@@ -12,12 +12,6 @@ target triple = "x86_64-pc-linux-gnu"
 
 declare i32 @printf(i8*, ...)
 
-declare i32 @printf.1(i8*, ...)
-
-declare i32 @printf.2(i8*, ...)
-
-declare i32 @printf.3(i8*, ...)
-
 define dso_local i32 @main() {
   %1 = alloca i32, align 4
   %2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i32 0, i32 0), i8* getelementptr inbounds ([14 x i8], [14 x i8]* @1, i32 0, i32 0))

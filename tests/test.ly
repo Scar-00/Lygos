@@ -12,20 +12,17 @@ macro println {
     }
 }
 
-macro test {
-    () -> {
-        struct Vec {
-            x: i32;
-            y: i32;
-        };
+struct Vec {
+    x: i32;
+    y: i32;
+};
 
-        impl Vec {
-            fn test() -> Self {}
-        }
-    }
+impl Vec {
+    fn test() -> Self {}
+    fn foo(&self) -> i32 {}
 }
 
-test$();
+static foo: *i32;
 
 fn main(argc: i32) -> i32 {
     return 0;

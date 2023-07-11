@@ -175,6 +175,9 @@ namespace lygos {
                 case ASTType::EnumDef: {
                     ss << ": " << node->GetValue() << "\n";
                 } break;
+                case ASTType::MacroCall: {
+                    ss << ": " << node->GetValue() << "\n";
+                } break;
                 default: ss << "\n"; break;
             }
             return ss;

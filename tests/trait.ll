@@ -6,6 +6,8 @@ target triple = "x86_64-pc-linux-gnu"
 %Triangle = type { i32, i32 }
 %Quad = type { i32, i32 }
 
+@0 = private unnamed_addr constant [12 x i8] c"area -> %d\0A\00", align 1
+
 declare i32 @printf(i8*, ...)
 
 define dso_local i32 @Triangle_area(%Triangle* %0) {
@@ -59,7 +61,12 @@ define dso_local i32 @main() {
   store i32 10, i32* %3, align 4
   %4 = getelementptr inbounds %Quad, %Quad* %2, i32 0, i32 1
   store i32 5, i32* %4, align 4
+  %5 = call i32 @Quad_area(%Quad* %2)
+  %6 = alloca i32, align 4
+  store i32 %5, i32* %6, align 4
+  %7 = load i32, i32* %6, align 4
+  %8 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @0, i32 0, i32 0), i32 %7)
   store i32 0, i32* %1, align 4
-  %5 = load i32, i32* %1, align 4
-  ret i32 %5
+  %9 = load i32, i32* %1, align 4
+  ret i32 %9
 }

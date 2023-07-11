@@ -38,7 +38,7 @@ impl Area for Quad {
 fn main() -> i32 {
     let q: Quad = { .width = 10, .height = 5 };
     //let tri: Triangle = { 10, 5 };
-    //let area = q.area();
-    //printf("area -> %d\n", area);
+    let area = q.area();
+    printf("area -> %d\n", area);
     return 0;
 }

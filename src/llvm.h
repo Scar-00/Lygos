@@ -27,5 +27,6 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/MC/TargetRegistry.h>
+#include <llvm/Linker/Linker.h>
 
 #endif // _LYGOS_LLVM_HEADERS_H_

@@ -75,7 +75,7 @@ namespace lygos {
 
         llvm::Value *MacroCall::GenCode(Scope *scope) {
             (void)scope;
-            Log::Logger::Warn("macro should have been expanded before code generation");
+            Log::Logger::Warn(fmt::format("macro `{}` should have been expanded before code generation", this->name));
             return nullptr;
         }
 
@@ -86,6 +86,7 @@ namespace lygos {
                 intrinsic_macros.at(name)(this);
                 return;
             }
+
             auto macro = ast_root->GetCurrentBlock()->Scope().GetMacro(name);
             auto arms = macro.GetArms();
             size_t arm = 0;
@@ -199,25 +200,31 @@ namespace lygos {
             Parser::Parser parser{tokens};
             Ref<AST> root = parser.BuildAst();
             ast_root = std::static_pointer_cast<Mod>(root);
-            ast_root->GetCurrentBlock()->Scope().GetStructTypes() = root_original->GetCurrentBlock()->Scope().GetStructTypes();
-            ast_root->GetCurrentBlock()->Scope().GetEnumTypes() = root_original->GetCurrentBlock()->Scope().GetEnumTypes();
-            ast_root->GetCurrentBlock()->Scope().GetFunctions() = root_original->GetCurrentBlock()->Scope().GetFunctions();
-            ast_root->GetCurrentBlock()->Scope().GetMacros() = root_original->GetCurrentBlock()->Scope().GetMacros();
-            ast_root->GetCurrentBlock()->Scope().GetTraits() = root_original->GetCurrentBlock()->Scope().GetTraits();
+            ast_root->Body().Scope().GetStructTypes() = root_original->Body().Scope().GetStructTypes();
+            ast_root->Body().Scope().GetEnumTypes() = root_original->Body().Scope().GetEnumTypes();
+            ast_root->Body().Scope().GetFunctions() = root_original->Body().Scope().GetFunctions();
+            ast_root->Body().Scope().GetMacros() = root_original->Body().Scope().GetMacros();
+            ast_root->Body().Scope().GetTraits() = root_original->Body().Scope().GetTraits();
 
-            root->Lower(nullptr);
-            //referecnes to scope in block of `root` and its children fall out of scope here so they are invalid and crash the programm
-            // -> [impl, ...]
-            for(const auto &st : ast_root->GetCurrentBlock()->Scope().GetStructTypes())
-                root_original->GetCurrentBlock()->Scope().GetStructTypes().insert(st);
-            for(const auto &e : ast_root->GetCurrentBlock()->Scope().GetEnumTypes())
-                root_original->GetCurrentBlock()->Scope().GetEnumTypes().insert(e);
-            for(const auto &fn : ast_root->GetCurrentBlock()->Scope().GetFunctions())
-                root_original->GetCurrentBlock()->Scope().GetFunctions().insert(fn);
-            for(const auto &m : ast_root->GetCurrentBlock()->Scope().GetMacros())
-                root_original->GetCurrentBlock()->Scope().GetMacros().insert(m);
-            for(const auto &t : ast_root->GetCurrentBlock()->Scope().GetTraits())
-                root_original->GetCurrentBlock()->Scope().GetTraits().insert(t);
+            auto &body = ast_root->Body();
+            //body.Scope().SetParent(&ast_root->GetCurrentBlock()->Scope());
+            for(size_t i = 0; i < body.Body().size(); i++) {
+                ast_root->SetCurrentBlock(&body);
+                body.Body()[i]->Lower(this);
+                body.Increment();
+            }
+
+            root_original->Body().Scope().GetStructTypes() = ast_root->Body().Scope().GetStructTypes();
+            root_original->Body().Scope().GetEnumTypes() = ast_root->Body().Scope().GetEnumTypes();
+            root_original->Body().Scope().GetFunctions() = ast_root->Body().Scope().GetFunctions();
+            root_original->Body().Scope().GetMacros() = ast_root->Body().Scope().GetMacros();
+            root_original->Body().Scope().GetTraits() = ast_root->Body().Scope().GetTraits();
+
+            /*std::cout << "Body:\n";
+            for(const auto &expr : body.Body()) {
+                std::cout << Print(expr.get(), 1).str();
+            }
+            std::cout << std::endl;*/
 
             ast_root = root_original;
             ast_root->Replace(((Mod *)root.get())->Body().Body());

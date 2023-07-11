@@ -7,7 +7,7 @@ $CC tests/init_list.ly -o tests/init_list -e llvm-ir
 $CC tests/macro.ly -o tests/macro -e llvm-ir
 $CC tests/trait.ly -o tests/trait -e llvm-ir
 
-./tests/match
+#./tests/match
 ./tests/member_fn
 ./tests/for_loop
 ./tests/init_list

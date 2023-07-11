@@ -49,9 +49,6 @@ namespace lygos {
                 strct.RegisterTraitImpl(trait);
             }
             for(const auto &member : body.Body()) {
-                //auto func = (Function *)member.get();
-                //strct.AddFunction({func->GetName(), {this->type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType(), func->IsMember()});
-                //func->GetName() = this->type + "_" + func->GetName();
                 member->GenCode(scope);
             }
             return nullptr;
@@ -60,6 +57,8 @@ namespace lygos {
         Ref<Type::Type> Impl::GetType(Scope *scope) { return nullptr; }
 
         void Impl::Lower(AST *parent) {
+            if(parent->type == ASTType::MacroCall)
+                return;
             auto &strct = ast_root->GetCurrentBlock()->Scope().GetStruct(type);
             for(const auto &gen : this->generics) {
                 if(!strct.generics.contains(gen.name))
@@ -68,8 +67,10 @@ namespace lygos {
 
             for(size_t i = 0; i < body.Body().size(); i++) {
                 Function *func = (Function*)body.Body()[i].get();
-                strct.AddFunction({func->GetName(), {type + "_" + func->GetName()}, func->GetArgs(), func->GetRetType(), func->IsMember()});
-                func->GetName() = this->type + "_" + func->GetName();
+                std::string name_mangeled = {type + "_" + func->GetName()};
+                strct.AddFunction({func->GetName(), name_mangeled, func->GetArgs(), func->GetRetType(), func->IsMember()});
+                func->GetName() = name_mangeled;
+                func->GetMangledName() = name_mangeled;
             }
 
             LYGOS_ASSERT(parent->type == ASTType::Mod);

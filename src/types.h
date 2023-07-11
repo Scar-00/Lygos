@@ -191,8 +191,6 @@ namespace lygos {
         };
 
         struct Function {
-            //bool operator==(const Function &other) { return name == other.name; }
-            Function(std::string name, std::string name_mangeled, std::vector<std::tuple<std::string, Ref<struct Type>>> args, Ref<struct Type> ret_type, bool is_member): name(name), name_mangeled(name_mangeled), args(args), ret_type(ret_type), is_member(is_member) {}
             std::string name;
             std::string name_mangeled;
             std::vector<std::tuple<std::string, Ref<struct Type>>> args;

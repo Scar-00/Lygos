@@ -73,7 +73,7 @@ target triple = "x86_64-pc-linux-gnu"
 @54 = private unnamed_addr constant [20 x i8] c"x86_64-pc-linux-gnu\00", align 1
 @55 = private unnamed_addr constant [5 x i8] c"test\00", align 1
 @56 = private unnamed_addr constant [5 x i8] c"test\00", align 1
-@57 = private unnamed_addr constant [12 x i8] c"let x = 10;\00", align 1
+@57 = private unnamed_addr constant [20 x i8] c"let x = 10;\0Ax = 10;\00", align 1
 @58 = private unnamed_addr constant [8 x i8] c"test.ly\00", align 1
 @59 = private unnamed_addr constant [10 x i8] c"src -> %s\00", align 1
 @60 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
@@ -1391,7 +1391,7 @@ define dso_local %Token @Lexer_next_token(%Lexer* %0) {
   store i32 0, i32* %4, align 4
   br label %for.cond
 
-for.cond:                                         ; preds = %if.end82, %1
+for.cond:                                         ; preds = %if.end108, %1
   %5 = load %Lexer*, %Lexer** %2, align 8
   %6 = getelementptr inbounds %Lexer, %Lexer* %5, i32 0, i32 4
   %7 = load %Lexer*, %Lexer** %2, align 8
@@ -1421,7 +1421,7 @@ for.end:                                          ; preds = %for.cond
   store %Token %23, %Token* %3, align 8
   br label %ret
 
-for.cond1:                                        ; preds = %if.end, %for.block
+for.cond1:                                        ; preds = %if.then, %if.else, %for.block
   %24 = load %Lexer*, %Lexer** %2, align 8
   %25 = getelementptr inbounds %Lexer, %Lexer* %24, i32 0, i32 3
   %26 = load i8, i8* %25, align 1
@@ -1435,948 +1435,951 @@ for.block2:                                       ; preds = %for.cond1
   %31 = getelementptr inbounds %Lexer, %Lexer* %30, i32 0, i32 3
   %32 = load i8, i8* %31, align 1
   %33 = icmp eq i8 %32, 10
-  br i1 %33, label %if.then, label %if.end
+  br i1 %33, label %if.then, label %if.else
 
 for.end3:                                         ; preds = %for.cond1
   %34 = load %Lexer*, %Lexer** %2, align 8
   %35 = getelementptr inbounds %Lexer, %Lexer* %34, i32 0, i32 3
   %36 = load i8, i8* %35, align 1
   %37 = icmp eq i8 %36, 46
-  br i1 %37, label %if.then4, label %if.end5
+  br i1 %37, label %if.then4, label %if.end6
 
 if.then:                                          ; preds = %for.block2
   %38 = load %Lexer*, %Lexer** %2, align 8
-  %39 = getelementptr inbounds %Lexer, %Lexer* %38, i32 0, i32 5
+  %39 = load %Lexer*, %Lexer** %2, align 8
+  call void @Lexer_advance(%Lexer* %39)
   %40 = load %Lexer*, %Lexer** %2, align 8
   %41 = getelementptr inbounds %Lexer, %Lexer* %40, i32 0, i32 5
-  %42 = load i64, i64* %41, align 8
-  %43 = add i64 %42, 1
-  store i64 %43, i64* %39, align 8
-  %44 = load %Lexer*, %Lexer** %2, align 8
-  %45 = getelementptr inbounds %Lexer, %Lexer* %44, i32 0, i32 6
-  store i64 0, i64* %45, align 8
-  br label %if.end
-
-if.end:                                           ; preds = %if.then, %for.block2
+  %42 = load %Lexer*, %Lexer** %2, align 8
+  %43 = getelementptr inbounds %Lexer, %Lexer* %42, i32 0, i32 5
+  %44 = load i64, i64* %43, align 8
+  %45 = add i64 %44, 1
+  store i64 %45, i64* %41, align 8
   %46 = load %Lexer*, %Lexer** %2, align 8
-  %47 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %47)
+  %47 = getelementptr inbounds %Lexer, %Lexer* %46, i32 0, i32 6
+  store i64 0, i64* %47, align 8
+  br label %for.cond1
+
+if.else:                                          ; preds = %for.block2
+  %48 = load %Lexer*, %Lexer** %2, align 8
+  %49 = load %Lexer*, %Lexer** %2, align 8
+  call void @Lexer_advance(%Lexer* %49)
   br label %for.cond1
 
 if.then4:                                         ; preds = %for.end3
-  %48 = load %Lexer*, %Lexer** %2, align 8
-  %49 = load %Lexer*, %Lexer** %2, align 8
-  %50 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @21, i32 0, i32 0))
+  %50 = load %Lexer*, %Lexer** %2, align 8
   %51 = load %Lexer*, %Lexer** %2, align 8
-  %52 = bitcast %Lexer* %51 to %String*
+  %52 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @21, i32 0, i32 0))
   %53 = load %Lexer*, %Lexer** %2, align 8
-  %54 = getelementptr inbounds %Lexer, %Lexer* %53, i32 0, i32 5
-  %55 = load i64, i64* %54, align 8
-  %56 = load %Lexer*, %Lexer** %2, align 8
-  %57 = getelementptr inbounds %Lexer, %Lexer* %56, i32 0, i32 6
-  %58 = load i64, i64* %57, align 8
-  %59 = call %Loc @Loc_new(%String* %52, i64 %55, i64 %58, i64 0)
-  %60 = call %Token @Token_new(%String %50, i32 7, %Loc %59)
-  %61 = call %Token @Lexer_advance_token(%Lexer* %49, %Token %60)
-  store %Token %61, %Token* %3, align 8
+  %54 = bitcast %Lexer* %53 to %String*
+  %55 = load %Lexer*, %Lexer** %2, align 8
+  %56 = getelementptr inbounds %Lexer, %Lexer* %55, i32 0, i32 5
+  %57 = load i64, i64* %56, align 8
+  %58 = load %Lexer*, %Lexer** %2, align 8
+  %59 = getelementptr inbounds %Lexer, %Lexer* %58, i32 0, i32 6
+  %60 = load i64, i64* %59, align 8
+  %61 = call %Loc @Loc_new(%String* %54, i64 %57, i64 %60, i64 0)
+  %62 = call %Token @Token_new(%String %52, i32 7, %Loc %61)
+  %63 = call %Token @Lexer_advance_token(%Lexer* %51, %Token %62)
+  store %Token %63, %Token* %3, align 8
   br label %ret
 
-if.end5:                                          ; preds = %for.end3
-  %62 = load %Lexer*, %Lexer** %2, align 8
-  %63 = getelementptr inbounds %Lexer, %Lexer* %62, i32 0, i32 3
-  %64 = load i8, i8* %63, align 1
-  %65 = icmp eq i8 %64, 44
-  br i1 %65, label %if.then6, label %if.end7
+if.end6:                                          ; preds = %for.end3
+  %64 = load %Lexer*, %Lexer** %2, align 8
+  %65 = getelementptr inbounds %Lexer, %Lexer* %64, i32 0, i32 3
+  %66 = load i8, i8* %65, align 1
+  %67 = icmp eq i8 %66, 44
+  br i1 %67, label %if.then7, label %if.end9
 
-if.then6:                                         ; preds = %if.end5
-  %66 = load %Lexer*, %Lexer** %2, align 8
-  %67 = load %Lexer*, %Lexer** %2, align 8
-  %68 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @22, i32 0, i32 0))
+if.then7:                                         ; preds = %if.end6
+  %68 = load %Lexer*, %Lexer** %2, align 8
   %69 = load %Lexer*, %Lexer** %2, align 8
-  %70 = bitcast %Lexer* %69 to %String*
+  %70 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @22, i32 0, i32 0))
   %71 = load %Lexer*, %Lexer** %2, align 8
-  %72 = getelementptr inbounds %Lexer, %Lexer* %71, i32 0, i32 5
-  %73 = load i64, i64* %72, align 8
-  %74 = load %Lexer*, %Lexer** %2, align 8
-  %75 = getelementptr inbounds %Lexer, %Lexer* %74, i32 0, i32 6
-  %76 = load i64, i64* %75, align 8
-  %77 = call %Loc @Loc_new(%String* %70, i64 %73, i64 %76, i64 0)
-  %78 = call %Token @Token_new(%String %68, i32 8, %Loc %77)
-  %79 = call %Token @Lexer_advance_token(%Lexer* %67, %Token %78)
-  store %Token %79, %Token* %3, align 8
+  %72 = bitcast %Lexer* %71 to %String*
+  %73 = load %Lexer*, %Lexer** %2, align 8
+  %74 = getelementptr inbounds %Lexer, %Lexer* %73, i32 0, i32 5
+  %75 = load i64, i64* %74, align 8
+  %76 = load %Lexer*, %Lexer** %2, align 8
+  %77 = getelementptr inbounds %Lexer, %Lexer* %76, i32 0, i32 6
+  %78 = load i64, i64* %77, align 8
+  %79 = call %Loc @Loc_new(%String* %72, i64 %75, i64 %78, i64 0)
+  %80 = call %Token @Token_new(%String %70, i32 8, %Loc %79)
+  %81 = call %Token @Lexer_advance_token(%Lexer* %69, %Token %80)
+  store %Token %81, %Token* %3, align 8
   br label %ret
 
-if.end7:                                          ; preds = %if.end5
-  %80 = load %Lexer*, %Lexer** %2, align 8
-  %81 = getelementptr inbounds %Lexer, %Lexer* %80, i32 0, i32 3
-  %82 = load i8, i8* %81, align 1
-  %83 = icmp eq i8 %82, 59
-  br i1 %83, label %if.then8, label %if.end9
-
-if.then8:                                         ; preds = %if.end7
-  %84 = load %Lexer*, %Lexer** %2, align 8
-  %85 = load %Lexer*, %Lexer** %2, align 8
-  %86 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @23, i32 0, i32 0))
-  %87 = load %Lexer*, %Lexer** %2, align 8
-  %88 = bitcast %Lexer* %87 to %String*
-  %89 = load %Lexer*, %Lexer** %2, align 8
-  %90 = getelementptr inbounds %Lexer, %Lexer* %89, i32 0, i32 5
-  %91 = load i64, i64* %90, align 8
-  %92 = load %Lexer*, %Lexer** %2, align 8
-  %93 = getelementptr inbounds %Lexer, %Lexer* %92, i32 0, i32 6
-  %94 = load i64, i64* %93, align 8
-  %95 = call %Loc @Loc_new(%String* %88, i64 %91, i64 %94, i64 0)
-  %96 = call %Token @Token_new(%String %86, i32 9, %Loc %95)
-  %97 = call %Token @Lexer_advance_token(%Lexer* %85, %Token %96)
-  store %Token %97, %Token* %3, align 8
-  br label %ret
-
-if.end9:                                          ; preds = %if.end7
-  %98 = load %Lexer*, %Lexer** %2, align 8
-  %99 = getelementptr inbounds %Lexer, %Lexer* %98, i32 0, i32 3
-  %100 = load i8, i8* %99, align 1
-  %101 = icmp eq i8 %100, 58
-  br i1 %101, label %if.then10, label %if.end11
+if.end9:                                          ; preds = %if.end6
+  %82 = load %Lexer*, %Lexer** %2, align 8
+  %83 = getelementptr inbounds %Lexer, %Lexer* %82, i32 0, i32 3
+  %84 = load i8, i8* %83, align 1
+  %85 = icmp eq i8 %84, 59
+  br i1 %85, label %if.then10, label %if.end12
 
 if.then10:                                        ; preds = %if.end9
-  %102 = load %Lexer*, %Lexer** %2, align 8
-  %103 = getelementptr inbounds %Lexer, %Lexer* %102, i32 0, i32 1
-  %104 = load i8*, i8** %103, align 8
-  %105 = load %Lexer*, %Lexer** %2, align 8
-  %106 = getelementptr inbounds %Lexer, %Lexer* %105, i32 0, i32 4
-  %107 = load i32, i32* %106, align 4
-  %108 = add i32 %107, 1
-  %109 = getelementptr inbounds i8, i8* %104, i32 %108
-  %110 = load i8, i8* %109, align 1
-  %111 = icmp eq i8 %110, 58
-  br i1 %111, label %if.then12, label %if.end14
+  %86 = load %Lexer*, %Lexer** %2, align 8
+  %87 = load %Lexer*, %Lexer** %2, align 8
+  %88 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @23, i32 0, i32 0))
+  %89 = load %Lexer*, %Lexer** %2, align 8
+  %90 = bitcast %Lexer* %89 to %String*
+  %91 = load %Lexer*, %Lexer** %2, align 8
+  %92 = getelementptr inbounds %Lexer, %Lexer* %91, i32 0, i32 5
+  %93 = load i64, i64* %92, align 8
+  %94 = load %Lexer*, %Lexer** %2, align 8
+  %95 = getelementptr inbounds %Lexer, %Lexer* %94, i32 0, i32 6
+  %96 = load i64, i64* %95, align 8
+  %97 = call %Loc @Loc_new(%String* %90, i64 %93, i64 %96, i64 0)
+  %98 = call %Token @Token_new(%String %88, i32 9, %Loc %97)
+  %99 = call %Token @Lexer_advance_token(%Lexer* %87, %Token %98)
+  store %Token %99, %Token* %3, align 8
+  br label %ret
 
-if.end11:                                         ; preds = %if.end9
-  %112 = load %Lexer*, %Lexer** %2, align 8
-  %113 = getelementptr inbounds %Lexer, %Lexer* %112, i32 0, i32 3
-  %114 = load i8, i8* %113, align 1
-  %115 = icmp eq i8 %114, 43
-  br i1 %115, label %if.then15, label %if.end16
+if.end12:                                         ; preds = %if.end9
+  %100 = load %Lexer*, %Lexer** %2, align 8
+  %101 = getelementptr inbounds %Lexer, %Lexer* %100, i32 0, i32 3
+  %102 = load i8, i8* %101, align 1
+  %103 = icmp eq i8 %102, 58
+  br i1 %103, label %if.then13, label %if.end15
 
-if.then12:                                        ; preds = %if.then10
-  %116 = load %Lexer*, %Lexer** %2, align 8
-  %117 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %117)
+if.then13:                                        ; preds = %if.end12
+  %104 = load %Lexer*, %Lexer** %2, align 8
+  %105 = getelementptr inbounds %Lexer, %Lexer* %104, i32 0, i32 1
+  %106 = load i8*, i8** %105, align 8
+  %107 = load %Lexer*, %Lexer** %2, align 8
+  %108 = getelementptr inbounds %Lexer, %Lexer* %107, i32 0, i32 4
+  %109 = load i32, i32* %108, align 4
+  %110 = add i32 %109, 1
+  %111 = getelementptr inbounds i8, i8* %106, i32 %110
+  %112 = load i8, i8* %111, align 1
+  %113 = icmp eq i8 %112, 58
+  br i1 %113, label %if.then16, label %if.end18
+
+if.end15:                                         ; preds = %if.end12
+  %114 = load %Lexer*, %Lexer** %2, align 8
+  %115 = getelementptr inbounds %Lexer, %Lexer* %114, i32 0, i32 3
+  %116 = load i8, i8* %115, align 1
+  %117 = icmp eq i8 %116, 43
+  br i1 %117, label %if.then19, label %if.end21
+
+if.then16:                                        ; preds = %if.then13
   %118 = load %Lexer*, %Lexer** %2, align 8
   %119 = load %Lexer*, %Lexer** %2, align 8
-  %120 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @24, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %119)
+  %120 = load %Lexer*, %Lexer** %2, align 8
   %121 = load %Lexer*, %Lexer** %2, align 8
-  %122 = bitcast %Lexer* %121 to %String*
+  %122 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @24, i32 0, i32 0))
   %123 = load %Lexer*, %Lexer** %2, align 8
-  %124 = getelementptr inbounds %Lexer, %Lexer* %123, i32 0, i32 5
-  %125 = load i64, i64* %124, align 8
-  %126 = load %Lexer*, %Lexer** %2, align 8
-  %127 = getelementptr inbounds %Lexer, %Lexer* %126, i32 0, i32 6
-  %128 = load i64, i64* %127, align 8
-  %129 = call %Loc @Loc_new(%String* %122, i64 %125, i64 %128, i64 0)
-  %130 = call %Token @Token_new(%String %120, i32 27, %Loc %129)
-  %131 = call %Token @Lexer_advance_token(%Lexer* %119, %Token %130)
-  store %Token %131, %Token* %3, align 8
+  %124 = bitcast %Lexer* %123 to %String*
+  %125 = load %Lexer*, %Lexer** %2, align 8
+  %126 = getelementptr inbounds %Lexer, %Lexer* %125, i32 0, i32 5
+  %127 = load i64, i64* %126, align 8
+  %128 = load %Lexer*, %Lexer** %2, align 8
+  %129 = getelementptr inbounds %Lexer, %Lexer* %128, i32 0, i32 6
+  %130 = load i64, i64* %129, align 8
+  %131 = call %Loc @Loc_new(%String* %124, i64 %127, i64 %130, i64 0)
+  %132 = call %Token @Token_new(%String %122, i32 27, %Loc %131)
+  %133 = call %Token @Lexer_advance_token(%Lexer* %121, %Token %132)
+  store %Token %133, %Token* %3, align 8
   br label %ret
 
-if.end14:                                         ; preds = %if.then10
-  %132 = load %Lexer*, %Lexer** %2, align 8
-  %133 = load %Lexer*, %Lexer** %2, align 8
-  %134 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @25, i32 0, i32 0))
+if.end18:                                         ; preds = %if.then13
+  %134 = load %Lexer*, %Lexer** %2, align 8
   %135 = load %Lexer*, %Lexer** %2, align 8
-  %136 = bitcast %Lexer* %135 to %String*
+  %136 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @25, i32 0, i32 0))
   %137 = load %Lexer*, %Lexer** %2, align 8
-  %138 = getelementptr inbounds %Lexer, %Lexer* %137, i32 0, i32 5
-  %139 = load i64, i64* %138, align 8
-  %140 = load %Lexer*, %Lexer** %2, align 8
-  %141 = getelementptr inbounds %Lexer, %Lexer* %140, i32 0, i32 6
-  %142 = load i64, i64* %141, align 8
-  %143 = call %Loc @Loc_new(%String* %136, i64 %139, i64 %142, i64 0)
-  %144 = call %Token @Token_new(%String %134, i32 10, %Loc %143)
-  %145 = call %Token @Lexer_advance_token(%Lexer* %133, %Token %144)
-  store %Token %145, %Token* %3, align 8
+  %138 = bitcast %Lexer* %137 to %String*
+  %139 = load %Lexer*, %Lexer** %2, align 8
+  %140 = getelementptr inbounds %Lexer, %Lexer* %139, i32 0, i32 5
+  %141 = load i64, i64* %140, align 8
+  %142 = load %Lexer*, %Lexer** %2, align 8
+  %143 = getelementptr inbounds %Lexer, %Lexer* %142, i32 0, i32 6
+  %144 = load i64, i64* %143, align 8
+  %145 = call %Loc @Loc_new(%String* %138, i64 %141, i64 %144, i64 0)
+  %146 = call %Token @Token_new(%String %136, i32 10, %Loc %145)
+  %147 = call %Token @Lexer_advance_token(%Lexer* %135, %Token %146)
+  store %Token %147, %Token* %3, align 8
   br label %ret
 
-if.then15:                                        ; preds = %if.end11
-  %146 = load %Lexer*, %Lexer** %2, align 8
-  %147 = load %Lexer*, %Lexer** %2, align 8
-  %148 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @26, i32 0, i32 0))
+if.then19:                                        ; preds = %if.end15
+  %148 = load %Lexer*, %Lexer** %2, align 8
   %149 = load %Lexer*, %Lexer** %2, align 8
-  %150 = bitcast %Lexer* %149 to %String*
+  %150 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @26, i32 0, i32 0))
   %151 = load %Lexer*, %Lexer** %2, align 8
-  %152 = getelementptr inbounds %Lexer, %Lexer* %151, i32 0, i32 5
-  %153 = load i64, i64* %152, align 8
-  %154 = load %Lexer*, %Lexer** %2, align 8
-  %155 = getelementptr inbounds %Lexer, %Lexer* %154, i32 0, i32 6
-  %156 = load i64, i64* %155, align 8
-  %157 = call %Loc @Loc_new(%String* %150, i64 %153, i64 %156, i64 0)
-  %158 = call %Token @Token_new(%String %148, i32 16, %Loc %157)
-  %159 = call %Token @Lexer_advance_token(%Lexer* %147, %Token %158)
-  store %Token %159, %Token* %3, align 8
+  %152 = bitcast %Lexer* %151 to %String*
+  %153 = load %Lexer*, %Lexer** %2, align 8
+  %154 = getelementptr inbounds %Lexer, %Lexer* %153, i32 0, i32 5
+  %155 = load i64, i64* %154, align 8
+  %156 = load %Lexer*, %Lexer** %2, align 8
+  %157 = getelementptr inbounds %Lexer, %Lexer* %156, i32 0, i32 6
+  %158 = load i64, i64* %157, align 8
+  %159 = call %Loc @Loc_new(%String* %152, i64 %155, i64 %158, i64 0)
+  %160 = call %Token @Token_new(%String %150, i32 16, %Loc %159)
+  %161 = call %Token @Lexer_advance_token(%Lexer* %149, %Token %160)
+  store %Token %161, %Token* %3, align 8
   br label %ret
 
-if.end16:                                         ; preds = %if.end11
-  %160 = load %Lexer*, %Lexer** %2, align 8
-  %161 = getelementptr inbounds %Lexer, %Lexer* %160, i32 0, i32 3
-  %162 = load i8, i8* %161, align 1
-  %163 = icmp eq i8 %162, 45
-  br i1 %163, label %if.then17, label %if.end18
+if.end21:                                         ; preds = %if.end15
+  %162 = load %Lexer*, %Lexer** %2, align 8
+  %163 = getelementptr inbounds %Lexer, %Lexer* %162, i32 0, i32 3
+  %164 = load i8, i8* %163, align 1
+  %165 = icmp eq i8 %164, 45
+  br i1 %165, label %if.then22, label %if.end24
 
-if.then17:                                        ; preds = %if.end16
-  %164 = load %Lexer*, %Lexer** %2, align 8
-  %165 = getelementptr inbounds %Lexer, %Lexer* %164, i32 0, i32 1
-  %166 = load i8*, i8** %165, align 8
-  %167 = load %Lexer*, %Lexer** %2, align 8
-  %168 = getelementptr inbounds %Lexer, %Lexer* %167, i32 0, i32 4
-  %169 = load i32, i32* %168, align 4
-  %170 = add i32 %169, 1
-  %171 = getelementptr inbounds i8, i8* %166, i32 %170
-  %172 = load i8, i8* %171, align 1
-  %173 = icmp eq i8 %172, 62
-  br i1 %173, label %if.then19, label %if.end21
+if.then22:                                        ; preds = %if.end21
+  %166 = load %Lexer*, %Lexer** %2, align 8
+  %167 = getelementptr inbounds %Lexer, %Lexer* %166, i32 0, i32 1
+  %168 = load i8*, i8** %167, align 8
+  %169 = load %Lexer*, %Lexer** %2, align 8
+  %170 = getelementptr inbounds %Lexer, %Lexer* %169, i32 0, i32 4
+  %171 = load i32, i32* %170, align 4
+  %172 = add i32 %171, 1
+  %173 = getelementptr inbounds i8, i8* %168, i32 %172
+  %174 = load i8, i8* %173, align 1
+  %175 = icmp eq i8 %174, 62
+  br i1 %175, label %if.then25, label %if.end27
 
-if.end18:                                         ; preds = %if.end16
-  %174 = load %Lexer*, %Lexer** %2, align 8
-  %175 = getelementptr inbounds %Lexer, %Lexer* %174, i32 0, i32 3
-  %176 = load i8, i8* %175, align 1
-  %177 = icmp eq i8 %176, 42
-  br i1 %177, label %if.then22, label %if.end23
+if.end24:                                         ; preds = %if.end21
+  %176 = load %Lexer*, %Lexer** %2, align 8
+  %177 = getelementptr inbounds %Lexer, %Lexer* %176, i32 0, i32 3
+  %178 = load i8, i8* %177, align 1
+  %179 = icmp eq i8 %178, 42
+  br i1 %179, label %if.then28, label %if.end30
 
-if.then19:                                        ; preds = %if.then17
-  %178 = load %Lexer*, %Lexer** %2, align 8
-  %179 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %179)
+if.then25:                                        ; preds = %if.then22
   %180 = load %Lexer*, %Lexer** %2, align 8
   %181 = load %Lexer*, %Lexer** %2, align 8
-  %182 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @27, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %181)
+  %182 = load %Lexer*, %Lexer** %2, align 8
   %183 = load %Lexer*, %Lexer** %2, align 8
-  %184 = bitcast %Lexer* %183 to %String*
+  %184 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @27, i32 0, i32 0))
   %185 = load %Lexer*, %Lexer** %2, align 8
-  %186 = getelementptr inbounds %Lexer, %Lexer* %185, i32 0, i32 5
-  %187 = load i64, i64* %186, align 8
-  %188 = load %Lexer*, %Lexer** %2, align 8
-  %189 = getelementptr inbounds %Lexer, %Lexer* %188, i32 0, i32 6
-  %190 = load i64, i64* %189, align 8
-  %191 = call %Loc @Loc_new(%String* %184, i64 %187, i64 %190, i64 0)
-  %192 = call %Token @Token_new(%String %182, i32 6, %Loc %191)
-  %193 = call %Token @Lexer_advance_token(%Lexer* %181, %Token %192)
-  store %Token %193, %Token* %3, align 8
+  %186 = bitcast %Lexer* %185 to %String*
+  %187 = load %Lexer*, %Lexer** %2, align 8
+  %188 = getelementptr inbounds %Lexer, %Lexer* %187, i32 0, i32 5
+  %189 = load i64, i64* %188, align 8
+  %190 = load %Lexer*, %Lexer** %2, align 8
+  %191 = getelementptr inbounds %Lexer, %Lexer* %190, i32 0, i32 6
+  %192 = load i64, i64* %191, align 8
+  %193 = call %Loc @Loc_new(%String* %186, i64 %189, i64 %192, i64 0)
+  %194 = call %Token @Token_new(%String %184, i32 6, %Loc %193)
+  %195 = call %Token @Lexer_advance_token(%Lexer* %183, %Token %194)
+  store %Token %195, %Token* %3, align 8
   br label %ret
 
-if.end21:                                         ; preds = %if.then17
-  %194 = load %Lexer*, %Lexer** %2, align 8
-  %195 = load %Lexer*, %Lexer** %2, align 8
-  %196 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @28, i32 0, i32 0))
+if.end27:                                         ; preds = %if.then22
+  %196 = load %Lexer*, %Lexer** %2, align 8
   %197 = load %Lexer*, %Lexer** %2, align 8
-  %198 = bitcast %Lexer* %197 to %String*
+  %198 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @28, i32 0, i32 0))
   %199 = load %Lexer*, %Lexer** %2, align 8
-  %200 = getelementptr inbounds %Lexer, %Lexer* %199, i32 0, i32 5
-  %201 = load i64, i64* %200, align 8
-  %202 = load %Lexer*, %Lexer** %2, align 8
-  %203 = getelementptr inbounds %Lexer, %Lexer* %202, i32 0, i32 6
-  %204 = load i64, i64* %203, align 8
-  %205 = call %Loc @Loc_new(%String* %198, i64 %201, i64 %204, i64 0)
-  %206 = call %Token @Token_new(%String %196, i32 17, %Loc %205)
-  %207 = call %Token @Lexer_advance_token(%Lexer* %195, %Token %206)
-  store %Token %207, %Token* %3, align 8
+  %200 = bitcast %Lexer* %199 to %String*
+  %201 = load %Lexer*, %Lexer** %2, align 8
+  %202 = getelementptr inbounds %Lexer, %Lexer* %201, i32 0, i32 5
+  %203 = load i64, i64* %202, align 8
+  %204 = load %Lexer*, %Lexer** %2, align 8
+  %205 = getelementptr inbounds %Lexer, %Lexer* %204, i32 0, i32 6
+  %206 = load i64, i64* %205, align 8
+  %207 = call %Loc @Loc_new(%String* %200, i64 %203, i64 %206, i64 0)
+  %208 = call %Token @Token_new(%String %198, i32 17, %Loc %207)
+  %209 = call %Token @Lexer_advance_token(%Lexer* %197, %Token %208)
+  store %Token %209, %Token* %3, align 8
   br label %ret
 
-if.then22:                                        ; preds = %if.end18
-  %208 = load %Lexer*, %Lexer** %2, align 8
-  %209 = load %Lexer*, %Lexer** %2, align 8
-  %210 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @29, i32 0, i32 0))
+if.then28:                                        ; preds = %if.end24
+  %210 = load %Lexer*, %Lexer** %2, align 8
   %211 = load %Lexer*, %Lexer** %2, align 8
-  %212 = bitcast %Lexer* %211 to %String*
+  %212 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @29, i32 0, i32 0))
   %213 = load %Lexer*, %Lexer** %2, align 8
-  %214 = getelementptr inbounds %Lexer, %Lexer* %213, i32 0, i32 5
-  %215 = load i64, i64* %214, align 8
-  %216 = load %Lexer*, %Lexer** %2, align 8
-  %217 = getelementptr inbounds %Lexer, %Lexer* %216, i32 0, i32 6
-  %218 = load i64, i64* %217, align 8
-  %219 = call %Loc @Loc_new(%String* %212, i64 %215, i64 %218, i64 0)
-  %220 = call %Token @Token_new(%String %210, i32 18, %Loc %219)
-  %221 = call %Token @Lexer_advance_token(%Lexer* %209, %Token %220)
-  store %Token %221, %Token* %3, align 8
+  %214 = bitcast %Lexer* %213 to %String*
+  %215 = load %Lexer*, %Lexer** %2, align 8
+  %216 = getelementptr inbounds %Lexer, %Lexer* %215, i32 0, i32 5
+  %217 = load i64, i64* %216, align 8
+  %218 = load %Lexer*, %Lexer** %2, align 8
+  %219 = getelementptr inbounds %Lexer, %Lexer* %218, i32 0, i32 6
+  %220 = load i64, i64* %219, align 8
+  %221 = call %Loc @Loc_new(%String* %214, i64 %217, i64 %220, i64 0)
+  %222 = call %Token @Token_new(%String %212, i32 18, %Loc %221)
+  %223 = call %Token @Lexer_advance_token(%Lexer* %211, %Token %222)
+  store %Token %223, %Token* %3, align 8
   br label %ret
 
-if.end23:                                         ; preds = %if.end18
-  %222 = load %Lexer*, %Lexer** %2, align 8
-  %223 = getelementptr inbounds %Lexer, %Lexer* %222, i32 0, i32 3
-  %224 = load i8, i8* %223, align 1
-  %225 = icmp eq i8 %224, 47
-  br i1 %225, label %if.then24, label %if.end25
-
-if.then24:                                        ; preds = %if.end23
-  %226 = load %Lexer*, %Lexer** %2, align 8
-  %227 = load %Lexer*, %Lexer** %2, align 8
-  %228 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @30, i32 0, i32 0))
-  %229 = load %Lexer*, %Lexer** %2, align 8
-  %230 = bitcast %Lexer* %229 to %String*
-  %231 = load %Lexer*, %Lexer** %2, align 8
-  %232 = getelementptr inbounds %Lexer, %Lexer* %231, i32 0, i32 5
-  %233 = load i64, i64* %232, align 8
-  %234 = load %Lexer*, %Lexer** %2, align 8
-  %235 = getelementptr inbounds %Lexer, %Lexer* %234, i32 0, i32 6
-  %236 = load i64, i64* %235, align 8
-  %237 = call %Loc @Loc_new(%String* %230, i64 %233, i64 %236, i64 0)
-  %238 = call %Token @Token_new(%String %228, i32 19, %Loc %237)
-  %239 = call %Token @Lexer_advance_token(%Lexer* %227, %Token %238)
-  store %Token %239, %Token* %3, align 8
-  br label %ret
-
-if.end25:                                         ; preds = %if.end23
-  %240 = load %Lexer*, %Lexer** %2, align 8
-  %241 = getelementptr inbounds %Lexer, %Lexer* %240, i32 0, i32 3
-  %242 = load i8, i8* %241, align 1
-  %243 = icmp eq i8 %242, 37
-  br i1 %243, label %if.then29, label %if.end30
-
-if.then29:                                        ; preds = %if.end25
-  %244 = load %Lexer*, %Lexer** %2, align 8
-  %245 = load %Lexer*, %Lexer** %2, align 8
-  %246 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @31, i32 0, i32 0))
-  %247 = load %Lexer*, %Lexer** %2, align 8
-  %248 = bitcast %Lexer* %247 to %String*
-  %249 = load %Lexer*, %Lexer** %2, align 8
-  %250 = getelementptr inbounds %Lexer, %Lexer* %249, i32 0, i32 5
-  %251 = load i64, i64* %250, align 8
-  %252 = load %Lexer*, %Lexer** %2, align 8
-  %253 = getelementptr inbounds %Lexer, %Lexer* %252, i32 0, i32 6
-  %254 = load i64, i64* %253, align 8
-  %255 = call %Loc @Loc_new(%String* %248, i64 %251, i64 %254, i64 0)
-  %256 = call %Token @Token_new(%String %246, i32 20, %Loc %255)
-  %257 = call %Token @Lexer_advance_token(%Lexer* %245, %Token %256)
-  store %Token %257, %Token* %3, align 8
-  br label %ret
-
-if.end30:                                         ; preds = %if.end25
-  %258 = load %Lexer*, %Lexer** %2, align 8
-  %259 = getelementptr inbounds %Lexer, %Lexer* %258, i32 0, i32 3
-  %260 = load i8, i8* %259, align 1
-  %261 = icmp eq i8 %260, 91
-  br i1 %261, label %if.then31, label %if.end32
+if.end30:                                         ; preds = %if.end24
+  %224 = load %Lexer*, %Lexer** %2, align 8
+  %225 = getelementptr inbounds %Lexer, %Lexer* %224, i32 0, i32 3
+  %226 = load i8, i8* %225, align 1
+  %227 = icmp eq i8 %226, 47
+  br i1 %227, label %if.then31, label %if.end33
 
 if.then31:                                        ; preds = %if.end30
-  %262 = load %Lexer*, %Lexer** %2, align 8
-  %263 = load %Lexer*, %Lexer** %2, align 8
-  %264 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @32, i32 0, i32 0))
+  %228 = load %Lexer*, %Lexer** %2, align 8
+  %229 = load %Lexer*, %Lexer** %2, align 8
+  %230 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @30, i32 0, i32 0))
+  %231 = load %Lexer*, %Lexer** %2, align 8
+  %232 = bitcast %Lexer* %231 to %String*
+  %233 = load %Lexer*, %Lexer** %2, align 8
+  %234 = getelementptr inbounds %Lexer, %Lexer* %233, i32 0, i32 5
+  %235 = load i64, i64* %234, align 8
+  %236 = load %Lexer*, %Lexer** %2, align 8
+  %237 = getelementptr inbounds %Lexer, %Lexer* %236, i32 0, i32 6
+  %238 = load i64, i64* %237, align 8
+  %239 = call %Loc @Loc_new(%String* %232, i64 %235, i64 %238, i64 0)
+  %240 = call %Token @Token_new(%String %230, i32 19, %Loc %239)
+  %241 = call %Token @Lexer_advance_token(%Lexer* %229, %Token %240)
+  store %Token %241, %Token* %3, align 8
+  br label %ret
+
+if.end33:                                         ; preds = %if.end30
+  %242 = load %Lexer*, %Lexer** %2, align 8
+  %243 = getelementptr inbounds %Lexer, %Lexer* %242, i32 0, i32 3
+  %244 = load i8, i8* %243, align 1
+  %245 = icmp eq i8 %244, 37
+  br i1 %245, label %if.then37, label %if.end39
+
+if.then37:                                        ; preds = %if.end33
+  %246 = load %Lexer*, %Lexer** %2, align 8
+  %247 = load %Lexer*, %Lexer** %2, align 8
+  %248 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @31, i32 0, i32 0))
+  %249 = load %Lexer*, %Lexer** %2, align 8
+  %250 = bitcast %Lexer* %249 to %String*
+  %251 = load %Lexer*, %Lexer** %2, align 8
+  %252 = getelementptr inbounds %Lexer, %Lexer* %251, i32 0, i32 5
+  %253 = load i64, i64* %252, align 8
+  %254 = load %Lexer*, %Lexer** %2, align 8
+  %255 = getelementptr inbounds %Lexer, %Lexer* %254, i32 0, i32 6
+  %256 = load i64, i64* %255, align 8
+  %257 = call %Loc @Loc_new(%String* %250, i64 %253, i64 %256, i64 0)
+  %258 = call %Token @Token_new(%String %248, i32 20, %Loc %257)
+  %259 = call %Token @Lexer_advance_token(%Lexer* %247, %Token %258)
+  store %Token %259, %Token* %3, align 8
+  br label %ret
+
+if.end39:                                         ; preds = %if.end33
+  %260 = load %Lexer*, %Lexer** %2, align 8
+  %261 = getelementptr inbounds %Lexer, %Lexer* %260, i32 0, i32 3
+  %262 = load i8, i8* %261, align 1
+  %263 = icmp eq i8 %262, 91
+  br i1 %263, label %if.then40, label %if.end42
+
+if.then40:                                        ; preds = %if.end39
+  %264 = load %Lexer*, %Lexer** %2, align 8
   %265 = load %Lexer*, %Lexer** %2, align 8
-  %266 = bitcast %Lexer* %265 to %String*
+  %266 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @32, i32 0, i32 0))
   %267 = load %Lexer*, %Lexer** %2, align 8
-  %268 = getelementptr inbounds %Lexer, %Lexer* %267, i32 0, i32 5
-  %269 = load i64, i64* %268, align 8
-  %270 = load %Lexer*, %Lexer** %2, align 8
-  %271 = getelementptr inbounds %Lexer, %Lexer* %270, i32 0, i32 6
-  %272 = load i64, i64* %271, align 8
-  %273 = call %Loc @Loc_new(%String* %266, i64 %269, i64 %272, i64 0)
-  %274 = call %Token @Token_new(%String %264, i32 29, %Loc %273)
-  %275 = call %Token @Lexer_advance_token(%Lexer* %263, %Token %274)
-  store %Token %275, %Token* %3, align 8
+  %268 = bitcast %Lexer* %267 to %String*
+  %269 = load %Lexer*, %Lexer** %2, align 8
+  %270 = getelementptr inbounds %Lexer, %Lexer* %269, i32 0, i32 5
+  %271 = load i64, i64* %270, align 8
+  %272 = load %Lexer*, %Lexer** %2, align 8
+  %273 = getelementptr inbounds %Lexer, %Lexer* %272, i32 0, i32 6
+  %274 = load i64, i64* %273, align 8
+  %275 = call %Loc @Loc_new(%String* %268, i64 %271, i64 %274, i64 0)
+  %276 = call %Token @Token_new(%String %266, i32 29, %Loc %275)
+  %277 = call %Token @Lexer_advance_token(%Lexer* %265, %Token %276)
+  store %Token %277, %Token* %3, align 8
   br label %ret
 
-if.end32:                                         ; preds = %if.end30
-  %276 = load %Lexer*, %Lexer** %2, align 8
-  %277 = getelementptr inbounds %Lexer, %Lexer* %276, i32 0, i32 3
-  %278 = load i8, i8* %277, align 1
-  %279 = icmp eq i8 %278, 93
-  br i1 %279, label %if.then33, label %if.end34
-
-if.then33:                                        ; preds = %if.end32
-  %280 = load %Lexer*, %Lexer** %2, align 8
-  %281 = load %Lexer*, %Lexer** %2, align 8
-  %282 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @33, i32 0, i32 0))
-  %283 = load %Lexer*, %Lexer** %2, align 8
-  %284 = bitcast %Lexer* %283 to %String*
-  %285 = load %Lexer*, %Lexer** %2, align 8
-  %286 = getelementptr inbounds %Lexer, %Lexer* %285, i32 0, i32 5
-  %287 = load i64, i64* %286, align 8
-  %288 = load %Lexer*, %Lexer** %2, align 8
-  %289 = getelementptr inbounds %Lexer, %Lexer* %288, i32 0, i32 6
-  %290 = load i64, i64* %289, align 8
-  %291 = call %Loc @Loc_new(%String* %284, i64 %287, i64 %290, i64 0)
-  %292 = call %Token @Token_new(%String %282, i32 30, %Loc %291)
-  %293 = call %Token @Lexer_advance_token(%Lexer* %281, %Token %292)
-  store %Token %293, %Token* %3, align 8
-  br label %ret
-
-if.end34:                                         ; preds = %if.end32
-  %294 = load %Lexer*, %Lexer** %2, align 8
-  %295 = getelementptr inbounds %Lexer, %Lexer* %294, i32 0, i32 3
-  %296 = load i8, i8* %295, align 1
-  %297 = icmp eq i8 %296, 123
-  br i1 %297, label %if.then35, label %if.end36
-
-if.then35:                                        ; preds = %if.end34
-  %298 = load %Lexer*, %Lexer** %2, align 8
-  %299 = load %Lexer*, %Lexer** %2, align 8
-  %300 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @34, i32 0, i32 0))
-  %301 = load %Lexer*, %Lexer** %2, align 8
-  %302 = bitcast %Lexer* %301 to %String*
-  %303 = load %Lexer*, %Lexer** %2, align 8
-  %304 = getelementptr inbounds %Lexer, %Lexer* %303, i32 0, i32 5
-  %305 = load i64, i64* %304, align 8
-  %306 = load %Lexer*, %Lexer** %2, align 8
-  %307 = getelementptr inbounds %Lexer, %Lexer* %306, i32 0, i32 6
-  %308 = load i64, i64* %307, align 8
-  %309 = call %Loc @Loc_new(%String* %302, i64 %305, i64 %308, i64 0)
-  %310 = call %Token @Token_new(%String %300, i32 31, %Loc %309)
-  %311 = call %Token @Lexer_advance_token(%Lexer* %299, %Token %310)
-  store %Token %311, %Token* %3, align 8
-  br label %ret
-
-if.end36:                                         ; preds = %if.end34
-  %312 = load %Lexer*, %Lexer** %2, align 8
-  %313 = getelementptr inbounds %Lexer, %Lexer* %312, i32 0, i32 3
-  %314 = load i8, i8* %313, align 1
-  %315 = icmp eq i8 %314, 125
-  br i1 %315, label %if.then37, label %if.end38
-
-if.then37:                                        ; preds = %if.end36
-  %316 = load %Lexer*, %Lexer** %2, align 8
-  %317 = load %Lexer*, %Lexer** %2, align 8
-  %318 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @35, i32 0, i32 0))
-  %319 = load %Lexer*, %Lexer** %2, align 8
-  %320 = bitcast %Lexer* %319 to %String*
-  %321 = load %Lexer*, %Lexer** %2, align 8
-  %322 = getelementptr inbounds %Lexer, %Lexer* %321, i32 0, i32 5
-  %323 = load i64, i64* %322, align 8
-  %324 = load %Lexer*, %Lexer** %2, align 8
-  %325 = getelementptr inbounds %Lexer, %Lexer* %324, i32 0, i32 6
-  %326 = load i64, i64* %325, align 8
-  %327 = call %Loc @Loc_new(%String* %320, i64 %323, i64 %326, i64 0)
-  %328 = call %Token @Token_new(%String %318, i32 32, %Loc %327)
-  %329 = call %Token @Lexer_advance_token(%Lexer* %317, %Token %328)
-  store %Token %329, %Token* %3, align 8
-  br label %ret
-
-if.end38:                                         ; preds = %if.end36
-  %330 = load %Lexer*, %Lexer** %2, align 8
-  %331 = getelementptr inbounds %Lexer, %Lexer* %330, i32 0, i32 3
-  %332 = load i8, i8* %331, align 1
-  %333 = icmp eq i8 %332, 40
-  br i1 %333, label %if.then39, label %if.end40
-
-if.then39:                                        ; preds = %if.end38
-  %334 = load %Lexer*, %Lexer** %2, align 8
-  %335 = load %Lexer*, %Lexer** %2, align 8
-  %336 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @36, i32 0, i32 0))
-  %337 = load %Lexer*, %Lexer** %2, align 8
-  %338 = bitcast %Lexer* %337 to %String*
-  %339 = load %Lexer*, %Lexer** %2, align 8
-  %340 = getelementptr inbounds %Lexer, %Lexer* %339, i32 0, i32 5
-  %341 = load i64, i64* %340, align 8
-  %342 = load %Lexer*, %Lexer** %2, align 8
-  %343 = getelementptr inbounds %Lexer, %Lexer* %342, i32 0, i32 6
-  %344 = load i64, i64* %343, align 8
-  %345 = call %Loc @Loc_new(%String* %338, i64 %341, i64 %344, i64 0)
-  %346 = call %Token @Token_new(%String %336, i32 35, %Loc %345)
-  %347 = call %Token @Lexer_advance_token(%Lexer* %335, %Token %346)
-  store %Token %347, %Token* %3, align 8
-  br label %ret
-
-if.end40:                                         ; preds = %if.end38
-  %348 = load %Lexer*, %Lexer** %2, align 8
-  %349 = getelementptr inbounds %Lexer, %Lexer* %348, i32 0, i32 3
-  %350 = load i8, i8* %349, align 1
-  %351 = icmp eq i8 %350, 41
-  br i1 %351, label %if.then41, label %if.end42
-
-if.then41:                                        ; preds = %if.end40
-  %352 = load %Lexer*, %Lexer** %2, align 8
-  %353 = load %Lexer*, %Lexer** %2, align 8
-  %354 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @37, i32 0, i32 0))
-  %355 = load %Lexer*, %Lexer** %2, align 8
-  %356 = bitcast %Lexer* %355 to %String*
-  %357 = load %Lexer*, %Lexer** %2, align 8
-  %358 = getelementptr inbounds %Lexer, %Lexer* %357, i32 0, i32 5
-  %359 = load i64, i64* %358, align 8
-  %360 = load %Lexer*, %Lexer** %2, align 8
-  %361 = getelementptr inbounds %Lexer, %Lexer* %360, i32 0, i32 6
-  %362 = load i64, i64* %361, align 8
-  %363 = call %Loc @Loc_new(%String* %356, i64 %359, i64 %362, i64 0)
-  %364 = call %Token @Token_new(%String %354, i32 36, %Loc %363)
-  %365 = call %Token @Lexer_advance_token(%Lexer* %353, %Token %364)
-  store %Token %365, %Token* %3, align 8
-  br label %ret
-
-if.end42:                                         ; preds = %if.end40
-  %366 = load %Lexer*, %Lexer** %2, align 8
-  %367 = getelementptr inbounds %Lexer, %Lexer* %366, i32 0, i32 3
-  %368 = load i8, i8* %367, align 1
-  %369 = icmp eq i8 %368, 35
-  br i1 %369, label %if.then43, label %if.end44
+if.end42:                                         ; preds = %if.end39
+  %278 = load %Lexer*, %Lexer** %2, align 8
+  %279 = getelementptr inbounds %Lexer, %Lexer* %278, i32 0, i32 3
+  %280 = load i8, i8* %279, align 1
+  %281 = icmp eq i8 %280, 93
+  br i1 %281, label %if.then43, label %if.end45
 
 if.then43:                                        ; preds = %if.end42
-  %370 = load %Lexer*, %Lexer** %2, align 8
-  %371 = load %Lexer*, %Lexer** %2, align 8
-  %372 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @38, i32 0, i32 0))
+  %282 = load %Lexer*, %Lexer** %2, align 8
+  %283 = load %Lexer*, %Lexer** %2, align 8
+  %284 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @33, i32 0, i32 0))
+  %285 = load %Lexer*, %Lexer** %2, align 8
+  %286 = bitcast %Lexer* %285 to %String*
+  %287 = load %Lexer*, %Lexer** %2, align 8
+  %288 = getelementptr inbounds %Lexer, %Lexer* %287, i32 0, i32 5
+  %289 = load i64, i64* %288, align 8
+  %290 = load %Lexer*, %Lexer** %2, align 8
+  %291 = getelementptr inbounds %Lexer, %Lexer* %290, i32 0, i32 6
+  %292 = load i64, i64* %291, align 8
+  %293 = call %Loc @Loc_new(%String* %286, i64 %289, i64 %292, i64 0)
+  %294 = call %Token @Token_new(%String %284, i32 30, %Loc %293)
+  %295 = call %Token @Lexer_advance_token(%Lexer* %283, %Token %294)
+  store %Token %295, %Token* %3, align 8
+  br label %ret
+
+if.end45:                                         ; preds = %if.end42
+  %296 = load %Lexer*, %Lexer** %2, align 8
+  %297 = getelementptr inbounds %Lexer, %Lexer* %296, i32 0, i32 3
+  %298 = load i8, i8* %297, align 1
+  %299 = icmp eq i8 %298, 123
+  br i1 %299, label %if.then46, label %if.end48
+
+if.then46:                                        ; preds = %if.end45
+  %300 = load %Lexer*, %Lexer** %2, align 8
+  %301 = load %Lexer*, %Lexer** %2, align 8
+  %302 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @34, i32 0, i32 0))
+  %303 = load %Lexer*, %Lexer** %2, align 8
+  %304 = bitcast %Lexer* %303 to %String*
+  %305 = load %Lexer*, %Lexer** %2, align 8
+  %306 = getelementptr inbounds %Lexer, %Lexer* %305, i32 0, i32 5
+  %307 = load i64, i64* %306, align 8
+  %308 = load %Lexer*, %Lexer** %2, align 8
+  %309 = getelementptr inbounds %Lexer, %Lexer* %308, i32 0, i32 6
+  %310 = load i64, i64* %309, align 8
+  %311 = call %Loc @Loc_new(%String* %304, i64 %307, i64 %310, i64 0)
+  %312 = call %Token @Token_new(%String %302, i32 31, %Loc %311)
+  %313 = call %Token @Lexer_advance_token(%Lexer* %301, %Token %312)
+  store %Token %313, %Token* %3, align 8
+  br label %ret
+
+if.end48:                                         ; preds = %if.end45
+  %314 = load %Lexer*, %Lexer** %2, align 8
+  %315 = getelementptr inbounds %Lexer, %Lexer* %314, i32 0, i32 3
+  %316 = load i8, i8* %315, align 1
+  %317 = icmp eq i8 %316, 125
+  br i1 %317, label %if.then49, label %if.end51
+
+if.then49:                                        ; preds = %if.end48
+  %318 = load %Lexer*, %Lexer** %2, align 8
+  %319 = load %Lexer*, %Lexer** %2, align 8
+  %320 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @35, i32 0, i32 0))
+  %321 = load %Lexer*, %Lexer** %2, align 8
+  %322 = bitcast %Lexer* %321 to %String*
+  %323 = load %Lexer*, %Lexer** %2, align 8
+  %324 = getelementptr inbounds %Lexer, %Lexer* %323, i32 0, i32 5
+  %325 = load i64, i64* %324, align 8
+  %326 = load %Lexer*, %Lexer** %2, align 8
+  %327 = getelementptr inbounds %Lexer, %Lexer* %326, i32 0, i32 6
+  %328 = load i64, i64* %327, align 8
+  %329 = call %Loc @Loc_new(%String* %322, i64 %325, i64 %328, i64 0)
+  %330 = call %Token @Token_new(%String %320, i32 32, %Loc %329)
+  %331 = call %Token @Lexer_advance_token(%Lexer* %319, %Token %330)
+  store %Token %331, %Token* %3, align 8
+  br label %ret
+
+if.end51:                                         ; preds = %if.end48
+  %332 = load %Lexer*, %Lexer** %2, align 8
+  %333 = getelementptr inbounds %Lexer, %Lexer* %332, i32 0, i32 3
+  %334 = load i8, i8* %333, align 1
+  %335 = icmp eq i8 %334, 40
+  br i1 %335, label %if.then52, label %if.end54
+
+if.then52:                                        ; preds = %if.end51
+  %336 = load %Lexer*, %Lexer** %2, align 8
+  %337 = load %Lexer*, %Lexer** %2, align 8
+  %338 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @36, i32 0, i32 0))
+  %339 = load %Lexer*, %Lexer** %2, align 8
+  %340 = bitcast %Lexer* %339 to %String*
+  %341 = load %Lexer*, %Lexer** %2, align 8
+  %342 = getelementptr inbounds %Lexer, %Lexer* %341, i32 0, i32 5
+  %343 = load i64, i64* %342, align 8
+  %344 = load %Lexer*, %Lexer** %2, align 8
+  %345 = getelementptr inbounds %Lexer, %Lexer* %344, i32 0, i32 6
+  %346 = load i64, i64* %345, align 8
+  %347 = call %Loc @Loc_new(%String* %340, i64 %343, i64 %346, i64 0)
+  %348 = call %Token @Token_new(%String %338, i32 35, %Loc %347)
+  %349 = call %Token @Lexer_advance_token(%Lexer* %337, %Token %348)
+  store %Token %349, %Token* %3, align 8
+  br label %ret
+
+if.end54:                                         ; preds = %if.end51
+  %350 = load %Lexer*, %Lexer** %2, align 8
+  %351 = getelementptr inbounds %Lexer, %Lexer* %350, i32 0, i32 3
+  %352 = load i8, i8* %351, align 1
+  %353 = icmp eq i8 %352, 41
+  br i1 %353, label %if.then55, label %if.end57
+
+if.then55:                                        ; preds = %if.end54
+  %354 = load %Lexer*, %Lexer** %2, align 8
+  %355 = load %Lexer*, %Lexer** %2, align 8
+  %356 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @37, i32 0, i32 0))
+  %357 = load %Lexer*, %Lexer** %2, align 8
+  %358 = bitcast %Lexer* %357 to %String*
+  %359 = load %Lexer*, %Lexer** %2, align 8
+  %360 = getelementptr inbounds %Lexer, %Lexer* %359, i32 0, i32 5
+  %361 = load i64, i64* %360, align 8
+  %362 = load %Lexer*, %Lexer** %2, align 8
+  %363 = getelementptr inbounds %Lexer, %Lexer* %362, i32 0, i32 6
+  %364 = load i64, i64* %363, align 8
+  %365 = call %Loc @Loc_new(%String* %358, i64 %361, i64 %364, i64 0)
+  %366 = call %Token @Token_new(%String %356, i32 36, %Loc %365)
+  %367 = call %Token @Lexer_advance_token(%Lexer* %355, %Token %366)
+  store %Token %367, %Token* %3, align 8
+  br label %ret
+
+if.end57:                                         ; preds = %if.end54
+  %368 = load %Lexer*, %Lexer** %2, align 8
+  %369 = getelementptr inbounds %Lexer, %Lexer* %368, i32 0, i32 3
+  %370 = load i8, i8* %369, align 1
+  %371 = icmp eq i8 %370, 35
+  br i1 %371, label %if.then58, label %if.end60
+
+if.then58:                                        ; preds = %if.end57
+  %372 = load %Lexer*, %Lexer** %2, align 8
   %373 = load %Lexer*, %Lexer** %2, align 8
-  %374 = bitcast %Lexer* %373 to %String*
+  %374 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @38, i32 0, i32 0))
   %375 = load %Lexer*, %Lexer** %2, align 8
-  %376 = getelementptr inbounds %Lexer, %Lexer* %375, i32 0, i32 5
-  %377 = load i64, i64* %376, align 8
-  %378 = load %Lexer*, %Lexer** %2, align 8
-  %379 = getelementptr inbounds %Lexer, %Lexer* %378, i32 0, i32 6
-  %380 = load i64, i64* %379, align 8
-  %381 = call %Loc @Loc_new(%String* %374, i64 %377, i64 %380, i64 0)
-  %382 = call %Token @Token_new(%String %372, i32 12, %Loc %381)
-  %383 = call %Token @Lexer_advance_token(%Lexer* %371, %Token %382)
-  store %Token %383, %Token* %3, align 8
+  %376 = bitcast %Lexer* %375 to %String*
+  %377 = load %Lexer*, %Lexer** %2, align 8
+  %378 = getelementptr inbounds %Lexer, %Lexer* %377, i32 0, i32 5
+  %379 = load i64, i64* %378, align 8
+  %380 = load %Lexer*, %Lexer** %2, align 8
+  %381 = getelementptr inbounds %Lexer, %Lexer* %380, i32 0, i32 6
+  %382 = load i64, i64* %381, align 8
+  %383 = call %Loc @Loc_new(%String* %376, i64 %379, i64 %382, i64 0)
+  %384 = call %Token @Token_new(%String %374, i32 12, %Loc %383)
+  %385 = call %Token @Lexer_advance_token(%Lexer* %373, %Token %384)
+  store %Token %385, %Token* %3, align 8
   br label %ret
 
-if.end44:                                         ; preds = %if.end42
-  %384 = load %Lexer*, %Lexer** %2, align 8
-  %385 = getelementptr inbounds %Lexer, %Lexer* %384, i32 0, i32 3
-  %386 = load i8, i8* %385, align 1
-  %387 = icmp eq i8 %386, 36
-  br i1 %387, label %if.then45, label %if.end46
+if.end60:                                         ; preds = %if.end57
+  %386 = load %Lexer*, %Lexer** %2, align 8
+  %387 = getelementptr inbounds %Lexer, %Lexer* %386, i32 0, i32 3
+  %388 = load i8, i8* %387, align 1
+  %389 = icmp eq i8 %388, 36
+  br i1 %389, label %if.then61, label %if.end63
 
-if.then45:                                        ; preds = %if.end44
-  %388 = load %Lexer*, %Lexer** %2, align 8
-  %389 = load %Lexer*, %Lexer** %2, align 8
-  %390 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @39, i32 0, i32 0))
+if.then61:                                        ; preds = %if.end60
+  %390 = load %Lexer*, %Lexer** %2, align 8
   %391 = load %Lexer*, %Lexer** %2, align 8
-  %392 = bitcast %Lexer* %391 to %String*
+  %392 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @39, i32 0, i32 0))
   %393 = load %Lexer*, %Lexer** %2, align 8
-  %394 = getelementptr inbounds %Lexer, %Lexer* %393, i32 0, i32 5
-  %395 = load i64, i64* %394, align 8
-  %396 = load %Lexer*, %Lexer** %2, align 8
-  %397 = getelementptr inbounds %Lexer, %Lexer* %396, i32 0, i32 6
-  %398 = load i64, i64* %397, align 8
-  %399 = call %Loc @Loc_new(%String* %392, i64 %395, i64 %398, i64 0)
-  %400 = call %Token @Token_new(%String %390, i32 13, %Loc %399)
-  %401 = call %Token @Lexer_advance_token(%Lexer* %389, %Token %400)
-  store %Token %401, %Token* %3, align 8
+  %394 = bitcast %Lexer* %393 to %String*
+  %395 = load %Lexer*, %Lexer** %2, align 8
+  %396 = getelementptr inbounds %Lexer, %Lexer* %395, i32 0, i32 5
+  %397 = load i64, i64* %396, align 8
+  %398 = load %Lexer*, %Lexer** %2, align 8
+  %399 = getelementptr inbounds %Lexer, %Lexer* %398, i32 0, i32 6
+  %400 = load i64, i64* %399, align 8
+  %401 = call %Loc @Loc_new(%String* %394, i64 %397, i64 %400, i64 0)
+  %402 = call %Token @Token_new(%String %392, i32 13, %Loc %401)
+  %403 = call %Token @Lexer_advance_token(%Lexer* %391, %Token %402)
+  store %Token %403, %Token* %3, align 8
   br label %ret
 
-if.end46:                                         ; preds = %if.end44
-  %402 = load %Lexer*, %Lexer** %2, align 8
-  %403 = getelementptr inbounds %Lexer, %Lexer* %402, i32 0, i32 3
-  %404 = load i8, i8* %403, align 1
-  %405 = icmp eq i8 %404, 60
-  br i1 %405, label %if.then47, label %if.end48
+if.end63:                                         ; preds = %if.end60
+  %404 = load %Lexer*, %Lexer** %2, align 8
+  %405 = getelementptr inbounds %Lexer, %Lexer* %404, i32 0, i32 3
+  %406 = load i8, i8* %405, align 1
+  %407 = icmp eq i8 %406, 60
+  br i1 %407, label %if.then64, label %if.end66
 
-if.then47:                                        ; preds = %if.end46
-  %406 = load %Lexer*, %Lexer** %2, align 8
-  %407 = getelementptr inbounds %Lexer, %Lexer* %406, i32 0, i32 1
-  %408 = load i8*, i8** %407, align 8
-  %409 = load %Lexer*, %Lexer** %2, align 8
-  %410 = getelementptr inbounds %Lexer, %Lexer* %409, i32 0, i32 4
-  %411 = load i32, i32* %410, align 4
-  %412 = add i32 %411, 1
-  %413 = getelementptr inbounds i8, i8* %408, i32 %412
-  %414 = load i8, i8* %413, align 1
-  %415 = icmp eq i8 %414, 61
-  br i1 %415, label %if.then49, label %if.end51
+if.then64:                                        ; preds = %if.end63
+  %408 = load %Lexer*, %Lexer** %2, align 8
+  %409 = getelementptr inbounds %Lexer, %Lexer* %408, i32 0, i32 1
+  %410 = load i8*, i8** %409, align 8
+  %411 = load %Lexer*, %Lexer** %2, align 8
+  %412 = getelementptr inbounds %Lexer, %Lexer* %411, i32 0, i32 4
+  %413 = load i32, i32* %412, align 4
+  %414 = add i32 %413, 1
+  %415 = getelementptr inbounds i8, i8* %410, i32 %414
+  %416 = load i8, i8* %415, align 1
+  %417 = icmp eq i8 %416, 61
+  br i1 %417, label %if.then67, label %if.end69
 
-if.end48:                                         ; preds = %if.end46
-  %416 = load %Lexer*, %Lexer** %2, align 8
-  %417 = getelementptr inbounds %Lexer, %Lexer* %416, i32 0, i32 3
-  %418 = load i8, i8* %417, align 1
-  %419 = icmp eq i8 %418, 62
-  br i1 %419, label %if.then52, label %if.end53
+if.end66:                                         ; preds = %if.end63
+  %418 = load %Lexer*, %Lexer** %2, align 8
+  %419 = getelementptr inbounds %Lexer, %Lexer* %418, i32 0, i32 3
+  %420 = load i8, i8* %419, align 1
+  %421 = icmp eq i8 %420, 62
+  br i1 %421, label %if.then70, label %if.end72
 
-if.then49:                                        ; preds = %if.then47
-  %420 = load %Lexer*, %Lexer** %2, align 8
-  %421 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %421)
+if.then67:                                        ; preds = %if.then64
   %422 = load %Lexer*, %Lexer** %2, align 8
   %423 = load %Lexer*, %Lexer** %2, align 8
-  %424 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @40, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %423)
+  %424 = load %Lexer*, %Lexer** %2, align 8
   %425 = load %Lexer*, %Lexer** %2, align 8
-  %426 = bitcast %Lexer* %425 to %String*
+  %426 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @40, i32 0, i32 0))
   %427 = load %Lexer*, %Lexer** %2, align 8
-  %428 = getelementptr inbounds %Lexer, %Lexer* %427, i32 0, i32 5
-  %429 = load i64, i64* %428, align 8
-  %430 = load %Lexer*, %Lexer** %2, align 8
-  %431 = getelementptr inbounds %Lexer, %Lexer* %430, i32 0, i32 6
-  %432 = load i64, i64* %431, align 8
-  %433 = call %Loc @Loc_new(%String* %426, i64 %429, i64 %432, i64 0)
-  %434 = call %Token @Token_new(%String %424, i32 23, %Loc %433)
-  %435 = call %Token @Lexer_advance_token(%Lexer* %423, %Token %434)
-  store %Token %435, %Token* %3, align 8
+  %428 = bitcast %Lexer* %427 to %String*
+  %429 = load %Lexer*, %Lexer** %2, align 8
+  %430 = getelementptr inbounds %Lexer, %Lexer* %429, i32 0, i32 5
+  %431 = load i64, i64* %430, align 8
+  %432 = load %Lexer*, %Lexer** %2, align 8
+  %433 = getelementptr inbounds %Lexer, %Lexer* %432, i32 0, i32 6
+  %434 = load i64, i64* %433, align 8
+  %435 = call %Loc @Loc_new(%String* %428, i64 %431, i64 %434, i64 0)
+  %436 = call %Token @Token_new(%String %426, i32 23, %Loc %435)
+  %437 = call %Token @Lexer_advance_token(%Lexer* %425, %Token %436)
+  store %Token %437, %Token* %3, align 8
   br label %ret
 
-if.end51:                                         ; preds = %if.then47
-  %436 = load %Lexer*, %Lexer** %2, align 8
-  %437 = load %Lexer*, %Lexer** %2, align 8
-  %438 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @41, i32 0, i32 0))
+if.end69:                                         ; preds = %if.then64
+  %438 = load %Lexer*, %Lexer** %2, align 8
   %439 = load %Lexer*, %Lexer** %2, align 8
-  %440 = bitcast %Lexer* %439 to %String*
+  %440 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @41, i32 0, i32 0))
   %441 = load %Lexer*, %Lexer** %2, align 8
-  %442 = getelementptr inbounds %Lexer, %Lexer* %441, i32 0, i32 5
-  %443 = load i64, i64* %442, align 8
-  %444 = load %Lexer*, %Lexer** %2, align 8
-  %445 = getelementptr inbounds %Lexer, %Lexer* %444, i32 0, i32 6
-  %446 = load i64, i64* %445, align 8
-  %447 = call %Loc @Loc_new(%String* %440, i64 %443, i64 %446, i64 0)
-  %448 = call %Token @Token_new(%String %438, i32 33, %Loc %447)
-  %449 = call %Token @Lexer_advance_token(%Lexer* %437, %Token %448)
-  store %Token %449, %Token* %3, align 8
+  %442 = bitcast %Lexer* %441 to %String*
+  %443 = load %Lexer*, %Lexer** %2, align 8
+  %444 = getelementptr inbounds %Lexer, %Lexer* %443, i32 0, i32 5
+  %445 = load i64, i64* %444, align 8
+  %446 = load %Lexer*, %Lexer** %2, align 8
+  %447 = getelementptr inbounds %Lexer, %Lexer* %446, i32 0, i32 6
+  %448 = load i64, i64* %447, align 8
+  %449 = call %Loc @Loc_new(%String* %442, i64 %445, i64 %448, i64 0)
+  %450 = call %Token @Token_new(%String %440, i32 33, %Loc %449)
+  %451 = call %Token @Lexer_advance_token(%Lexer* %439, %Token %450)
+  store %Token %451, %Token* %3, align 8
   br label %ret
 
-if.then52:                                        ; preds = %if.end48
-  %450 = load %Lexer*, %Lexer** %2, align 8
-  %451 = getelementptr inbounds %Lexer, %Lexer* %450, i32 0, i32 1
-  %452 = load i8*, i8** %451, align 8
-  %453 = load %Lexer*, %Lexer** %2, align 8
-  %454 = getelementptr inbounds %Lexer, %Lexer* %453, i32 0, i32 4
-  %455 = load i32, i32* %454, align 4
-  %456 = add i32 %455, 1
-  %457 = getelementptr inbounds i8, i8* %452, i32 %456
-  %458 = load i8, i8* %457, align 1
-  %459 = icmp eq i8 %458, 61
-  br i1 %459, label %if.then54, label %if.end56
+if.then70:                                        ; preds = %if.end66
+  %452 = load %Lexer*, %Lexer** %2, align 8
+  %453 = getelementptr inbounds %Lexer, %Lexer* %452, i32 0, i32 1
+  %454 = load i8*, i8** %453, align 8
+  %455 = load %Lexer*, %Lexer** %2, align 8
+  %456 = getelementptr inbounds %Lexer, %Lexer* %455, i32 0, i32 4
+  %457 = load i32, i32* %456, align 4
+  %458 = add i32 %457, 1
+  %459 = getelementptr inbounds i8, i8* %454, i32 %458
+  %460 = load i8, i8* %459, align 1
+  %461 = icmp eq i8 %460, 61
+  br i1 %461, label %if.then73, label %if.end75
 
-if.end53:                                         ; preds = %if.end48
-  %460 = load %Lexer*, %Lexer** %2, align 8
-  %461 = getelementptr inbounds %Lexer, %Lexer* %460, i32 0, i32 3
-  %462 = load i8, i8* %461, align 1
-  %463 = icmp eq i8 %462, 38
-  br i1 %463, label %if.then57, label %if.end58
+if.end72:                                         ; preds = %if.end66
+  %462 = load %Lexer*, %Lexer** %2, align 8
+  %463 = getelementptr inbounds %Lexer, %Lexer* %462, i32 0, i32 3
+  %464 = load i8, i8* %463, align 1
+  %465 = icmp eq i8 %464, 38
+  br i1 %465, label %if.then76, label %if.end78
 
-if.then54:                                        ; preds = %if.then52
-  %464 = load %Lexer*, %Lexer** %2, align 8
-  %465 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %465)
+if.then73:                                        ; preds = %if.then70
   %466 = load %Lexer*, %Lexer** %2, align 8
   %467 = load %Lexer*, %Lexer** %2, align 8
-  %468 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @42, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %467)
+  %468 = load %Lexer*, %Lexer** %2, align 8
   %469 = load %Lexer*, %Lexer** %2, align 8
-  %470 = bitcast %Lexer* %469 to %String*
+  %470 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @42, i32 0, i32 0))
   %471 = load %Lexer*, %Lexer** %2, align 8
-  %472 = getelementptr inbounds %Lexer, %Lexer* %471, i32 0, i32 5
-  %473 = load i64, i64* %472, align 8
-  %474 = load %Lexer*, %Lexer** %2, align 8
-  %475 = getelementptr inbounds %Lexer, %Lexer* %474, i32 0, i32 6
-  %476 = load i64, i64* %475, align 8
-  %477 = call %Loc @Loc_new(%String* %470, i64 %473, i64 %476, i64 0)
-  %478 = call %Token @Token_new(%String %468, i32 24, %Loc %477)
-  %479 = call %Token @Lexer_advance_token(%Lexer* %467, %Token %478)
-  store %Token %479, %Token* %3, align 8
+  %472 = bitcast %Lexer* %471 to %String*
+  %473 = load %Lexer*, %Lexer** %2, align 8
+  %474 = getelementptr inbounds %Lexer, %Lexer* %473, i32 0, i32 5
+  %475 = load i64, i64* %474, align 8
+  %476 = load %Lexer*, %Lexer** %2, align 8
+  %477 = getelementptr inbounds %Lexer, %Lexer* %476, i32 0, i32 6
+  %478 = load i64, i64* %477, align 8
+  %479 = call %Loc @Loc_new(%String* %472, i64 %475, i64 %478, i64 0)
+  %480 = call %Token @Token_new(%String %470, i32 24, %Loc %479)
+  %481 = call %Token @Lexer_advance_token(%Lexer* %469, %Token %480)
+  store %Token %481, %Token* %3, align 8
   br label %ret
 
-if.end56:                                         ; preds = %if.then52
-  %480 = load %Lexer*, %Lexer** %2, align 8
-  %481 = load %Lexer*, %Lexer** %2, align 8
-  %482 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @43, i32 0, i32 0))
+if.end75:                                         ; preds = %if.then70
+  %482 = load %Lexer*, %Lexer** %2, align 8
   %483 = load %Lexer*, %Lexer** %2, align 8
-  %484 = bitcast %Lexer* %483 to %String*
+  %484 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @43, i32 0, i32 0))
   %485 = load %Lexer*, %Lexer** %2, align 8
-  %486 = getelementptr inbounds %Lexer, %Lexer* %485, i32 0, i32 5
-  %487 = load i64, i64* %486, align 8
-  %488 = load %Lexer*, %Lexer** %2, align 8
-  %489 = getelementptr inbounds %Lexer, %Lexer* %488, i32 0, i32 6
-  %490 = load i64, i64* %489, align 8
-  %491 = call %Loc @Loc_new(%String* %484, i64 %487, i64 %490, i64 0)
-  %492 = call %Token @Token_new(%String %482, i32 34, %Loc %491)
-  %493 = call %Token @Lexer_advance_token(%Lexer* %481, %Token %492)
-  store %Token %493, %Token* %3, align 8
+  %486 = bitcast %Lexer* %485 to %String*
+  %487 = load %Lexer*, %Lexer** %2, align 8
+  %488 = getelementptr inbounds %Lexer, %Lexer* %487, i32 0, i32 5
+  %489 = load i64, i64* %488, align 8
+  %490 = load %Lexer*, %Lexer** %2, align 8
+  %491 = getelementptr inbounds %Lexer, %Lexer* %490, i32 0, i32 6
+  %492 = load i64, i64* %491, align 8
+  %493 = call %Loc @Loc_new(%String* %486, i64 %489, i64 %492, i64 0)
+  %494 = call %Token @Token_new(%String %484, i32 34, %Loc %493)
+  %495 = call %Token @Lexer_advance_token(%Lexer* %483, %Token %494)
+  store %Token %495, %Token* %3, align 8
   br label %ret
 
-if.then57:                                        ; preds = %if.end53
-  %494 = load %Lexer*, %Lexer** %2, align 8
-  %495 = getelementptr inbounds %Lexer, %Lexer* %494, i32 0, i32 1
-  %496 = load i8*, i8** %495, align 8
-  %497 = load %Lexer*, %Lexer** %2, align 8
-  %498 = getelementptr inbounds %Lexer, %Lexer* %497, i32 0, i32 4
-  %499 = load i32, i32* %498, align 4
-  %500 = add i32 %499, 1
-  %501 = getelementptr inbounds i8, i8* %496, i32 %500
-  %502 = load i8, i8* %501, align 1
-  %503 = icmp eq i8 %502, 38
-  br i1 %503, label %if.then59, label %if.end61
+if.then76:                                        ; preds = %if.end72
+  %496 = load %Lexer*, %Lexer** %2, align 8
+  %497 = getelementptr inbounds %Lexer, %Lexer* %496, i32 0, i32 1
+  %498 = load i8*, i8** %497, align 8
+  %499 = load %Lexer*, %Lexer** %2, align 8
+  %500 = getelementptr inbounds %Lexer, %Lexer* %499, i32 0, i32 4
+  %501 = load i32, i32* %500, align 4
+  %502 = add i32 %501, 1
+  %503 = getelementptr inbounds i8, i8* %498, i32 %502
+  %504 = load i8, i8* %503, align 1
+  %505 = icmp eq i8 %504, 38
+  br i1 %505, label %if.then79, label %if.end81
 
-if.end58:                                         ; preds = %if.end53
-  %504 = load %Lexer*, %Lexer** %2, align 8
-  %505 = getelementptr inbounds %Lexer, %Lexer* %504, i32 0, i32 3
-  %506 = load i8, i8* %505, align 1
-  %507 = icmp eq i8 %506, 124
-  br i1 %507, label %if.then62, label %if.end63
+if.end78:                                         ; preds = %if.end72
+  %506 = load %Lexer*, %Lexer** %2, align 8
+  %507 = getelementptr inbounds %Lexer, %Lexer* %506, i32 0, i32 3
+  %508 = load i8, i8* %507, align 1
+  %509 = icmp eq i8 %508, 124
+  br i1 %509, label %if.then82, label %if.end84
 
-if.then59:                                        ; preds = %if.then57
-  %508 = load %Lexer*, %Lexer** %2, align 8
-  %509 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %509)
+if.then79:                                        ; preds = %if.then76
   %510 = load %Lexer*, %Lexer** %2, align 8
   %511 = load %Lexer*, %Lexer** %2, align 8
-  %512 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @44, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %511)
+  %512 = load %Lexer*, %Lexer** %2, align 8
   %513 = load %Lexer*, %Lexer** %2, align 8
-  %514 = bitcast %Lexer* %513 to %String*
+  %514 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @44, i32 0, i32 0))
   %515 = load %Lexer*, %Lexer** %2, align 8
-  %516 = getelementptr inbounds %Lexer, %Lexer* %515, i32 0, i32 5
-  %517 = load i64, i64* %516, align 8
-  %518 = load %Lexer*, %Lexer** %2, align 8
-  %519 = getelementptr inbounds %Lexer, %Lexer* %518, i32 0, i32 6
-  %520 = load i64, i64* %519, align 8
-  %521 = call %Loc @Loc_new(%String* %514, i64 %517, i64 %520, i64 0)
-  %522 = call %Token @Token_new(%String %512, i32 26, %Loc %521)
-  %523 = call %Token @Lexer_advance_token(%Lexer* %511, %Token %522)
-  store %Token %523, %Token* %3, align 8
+  %516 = bitcast %Lexer* %515 to %String*
+  %517 = load %Lexer*, %Lexer** %2, align 8
+  %518 = getelementptr inbounds %Lexer, %Lexer* %517, i32 0, i32 5
+  %519 = load i64, i64* %518, align 8
+  %520 = load %Lexer*, %Lexer** %2, align 8
+  %521 = getelementptr inbounds %Lexer, %Lexer* %520, i32 0, i32 6
+  %522 = load i64, i64* %521, align 8
+  %523 = call %Loc @Loc_new(%String* %516, i64 %519, i64 %522, i64 0)
+  %524 = call %Token @Token_new(%String %514, i32 26, %Loc %523)
+  %525 = call %Token @Lexer_advance_token(%Lexer* %513, %Token %524)
+  store %Token %525, %Token* %3, align 8
   br label %ret
 
-if.end61:                                         ; preds = %if.then57
-  %524 = load %Lexer*, %Lexer** %2, align 8
-  %525 = load %Lexer*, %Lexer** %2, align 8
-  %526 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @45, i32 0, i32 0))
+if.end81:                                         ; preds = %if.then76
+  %526 = load %Lexer*, %Lexer** %2, align 8
   %527 = load %Lexer*, %Lexer** %2, align 8
-  %528 = bitcast %Lexer* %527 to %String*
+  %528 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @45, i32 0, i32 0))
   %529 = load %Lexer*, %Lexer** %2, align 8
-  %530 = getelementptr inbounds %Lexer, %Lexer* %529, i32 0, i32 5
-  %531 = load i64, i64* %530, align 8
-  %532 = load %Lexer*, %Lexer** %2, align 8
-  %533 = getelementptr inbounds %Lexer, %Lexer* %532, i32 0, i32 6
-  %534 = load i64, i64* %533, align 8
-  %535 = call %Loc @Loc_new(%String* %528, i64 %531, i64 %534, i64 0)
-  %536 = call %Token @Token_new(%String %526, i32 11, %Loc %535)
-  %537 = call %Token @Lexer_advance_token(%Lexer* %525, %Token %536)
-  store %Token %537, %Token* %3, align 8
+  %530 = bitcast %Lexer* %529 to %String*
+  %531 = load %Lexer*, %Lexer** %2, align 8
+  %532 = getelementptr inbounds %Lexer, %Lexer* %531, i32 0, i32 5
+  %533 = load i64, i64* %532, align 8
+  %534 = load %Lexer*, %Lexer** %2, align 8
+  %535 = getelementptr inbounds %Lexer, %Lexer* %534, i32 0, i32 6
+  %536 = load i64, i64* %535, align 8
+  %537 = call %Loc @Loc_new(%String* %530, i64 %533, i64 %536, i64 0)
+  %538 = call %Token @Token_new(%String %528, i32 11, %Loc %537)
+  %539 = call %Token @Lexer_advance_token(%Lexer* %527, %Token %538)
+  store %Token %539, %Token* %3, align 8
   br label %ret
 
-if.then62:                                        ; preds = %if.end58
-  %538 = load %Lexer*, %Lexer** %2, align 8
-  %539 = getelementptr inbounds %Lexer, %Lexer* %538, i32 0, i32 1
-  %540 = load i8*, i8** %539, align 8
-  %541 = load %Lexer*, %Lexer** %2, align 8
-  %542 = getelementptr inbounds %Lexer, %Lexer* %541, i32 0, i32 4
-  %543 = load i32, i32* %542, align 4
-  %544 = add i32 %543, 1
-  %545 = getelementptr inbounds i8, i8* %540, i32 %544
-  %546 = load i8, i8* %545, align 1
-  %547 = icmp eq i8 %546, 124
-  br i1 %547, label %if.then64, label %if.end66
+if.then82:                                        ; preds = %if.end78
+  %540 = load %Lexer*, %Lexer** %2, align 8
+  %541 = getelementptr inbounds %Lexer, %Lexer* %540, i32 0, i32 1
+  %542 = load i8*, i8** %541, align 8
+  %543 = load %Lexer*, %Lexer** %2, align 8
+  %544 = getelementptr inbounds %Lexer, %Lexer* %543, i32 0, i32 4
+  %545 = load i32, i32* %544, align 4
+  %546 = add i32 %545, 1
+  %547 = getelementptr inbounds i8, i8* %542, i32 %546
+  %548 = load i8, i8* %547, align 1
+  %549 = icmp eq i8 %548, 124
+  br i1 %549, label %if.then85, label %if.end87
 
-if.end63:                                         ; preds = %if.end58
-  %548 = load %Lexer*, %Lexer** %2, align 8
-  %549 = getelementptr inbounds %Lexer, %Lexer* %548, i32 0, i32 3
-  %550 = load i8, i8* %549, align 1
-  %551 = icmp eq i8 %550, 33
-  br i1 %551, label %if.then67, label %if.end68
+if.end84:                                         ; preds = %if.end78
+  %550 = load %Lexer*, %Lexer** %2, align 8
+  %551 = getelementptr inbounds %Lexer, %Lexer* %550, i32 0, i32 3
+  %552 = load i8, i8* %551, align 1
+  %553 = icmp eq i8 %552, 33
+  br i1 %553, label %if.then88, label %if.end90
 
-if.then64:                                        ; preds = %if.then62
-  %552 = load %Lexer*, %Lexer** %2, align 8
-  %553 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %553)
+if.then85:                                        ; preds = %if.then82
   %554 = load %Lexer*, %Lexer** %2, align 8
   %555 = load %Lexer*, %Lexer** %2, align 8
-  %556 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @46, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %555)
+  %556 = load %Lexer*, %Lexer** %2, align 8
   %557 = load %Lexer*, %Lexer** %2, align 8
-  %558 = bitcast %Lexer* %557 to %String*
+  %558 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @46, i32 0, i32 0))
   %559 = load %Lexer*, %Lexer** %2, align 8
-  %560 = getelementptr inbounds %Lexer, %Lexer* %559, i32 0, i32 5
-  %561 = load i64, i64* %560, align 8
-  %562 = load %Lexer*, %Lexer** %2, align 8
-  %563 = getelementptr inbounds %Lexer, %Lexer* %562, i32 0, i32 6
-  %564 = load i64, i64* %563, align 8
-  %565 = call %Loc @Loc_new(%String* %558, i64 %561, i64 %564, i64 0)
-  %566 = call %Token @Token_new(%String %556, i32 25, %Loc %565)
-  %567 = call %Token @Lexer_advance_token(%Lexer* %555, %Token %566)
-  store %Token %567, %Token* %3, align 8
+  %560 = bitcast %Lexer* %559 to %String*
+  %561 = load %Lexer*, %Lexer** %2, align 8
+  %562 = getelementptr inbounds %Lexer, %Lexer* %561, i32 0, i32 5
+  %563 = load i64, i64* %562, align 8
+  %564 = load %Lexer*, %Lexer** %2, align 8
+  %565 = getelementptr inbounds %Lexer, %Lexer* %564, i32 0, i32 6
+  %566 = load i64, i64* %565, align 8
+  %567 = call %Loc @Loc_new(%String* %560, i64 %563, i64 %566, i64 0)
+  %568 = call %Token @Token_new(%String %558, i32 25, %Loc %567)
+  %569 = call %Token @Lexer_advance_token(%Lexer* %557, %Token %568)
+  store %Token %569, %Token* %3, align 8
   br label %ret
 
-if.end66:                                         ; preds = %if.then62
-  %568 = load %Lexer*, %Lexer** %2, align 8
-  %569 = load %Lexer*, %Lexer** %2, align 8
-  %570 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @47, i32 0, i32 0))
+if.end87:                                         ; preds = %if.then82
+  %570 = load %Lexer*, %Lexer** %2, align 8
   %571 = load %Lexer*, %Lexer** %2, align 8
-  %572 = bitcast %Lexer* %571 to %String*
+  %572 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @47, i32 0, i32 0))
   %573 = load %Lexer*, %Lexer** %2, align 8
-  %574 = getelementptr inbounds %Lexer, %Lexer* %573, i32 0, i32 5
-  %575 = load i64, i64* %574, align 8
-  %576 = load %Lexer*, %Lexer** %2, align 8
-  %577 = getelementptr inbounds %Lexer, %Lexer* %576, i32 0, i32 6
-  %578 = load i64, i64* %577, align 8
-  %579 = call %Loc @Loc_new(%String* %572, i64 %575, i64 %578, i64 0)
-  %580 = call %Token @Token_new(%String %570, i32 14, %Loc %579)
-  %581 = call %Token @Lexer_advance_token(%Lexer* %569, %Token %580)
-  store %Token %581, %Token* %3, align 8
+  %574 = bitcast %Lexer* %573 to %String*
+  %575 = load %Lexer*, %Lexer** %2, align 8
+  %576 = getelementptr inbounds %Lexer, %Lexer* %575, i32 0, i32 5
+  %577 = load i64, i64* %576, align 8
+  %578 = load %Lexer*, %Lexer** %2, align 8
+  %579 = getelementptr inbounds %Lexer, %Lexer* %578, i32 0, i32 6
+  %580 = load i64, i64* %579, align 8
+  %581 = call %Loc @Loc_new(%String* %574, i64 %577, i64 %580, i64 0)
+  %582 = call %Token @Token_new(%String %572, i32 14, %Loc %581)
+  %583 = call %Token @Lexer_advance_token(%Lexer* %571, %Token %582)
+  store %Token %583, %Token* %3, align 8
   br label %ret
 
-if.then67:                                        ; preds = %if.end63
-  %582 = load %Lexer*, %Lexer** %2, align 8
-  %583 = getelementptr inbounds %Lexer, %Lexer* %582, i32 0, i32 1
-  %584 = load i8*, i8** %583, align 8
-  %585 = load %Lexer*, %Lexer** %2, align 8
-  %586 = getelementptr inbounds %Lexer, %Lexer* %585, i32 0, i32 4
-  %587 = load i32, i32* %586, align 4
-  %588 = add i32 %587, 1
-  %589 = getelementptr inbounds i8, i8* %584, i32 %588
-  %590 = load i8, i8* %589, align 1
-  %591 = icmp eq i8 %590, 61
-  br i1 %591, label %if.then69, label %if.end71
+if.then88:                                        ; preds = %if.end84
+  %584 = load %Lexer*, %Lexer** %2, align 8
+  %585 = getelementptr inbounds %Lexer, %Lexer* %584, i32 0, i32 1
+  %586 = load i8*, i8** %585, align 8
+  %587 = load %Lexer*, %Lexer** %2, align 8
+  %588 = getelementptr inbounds %Lexer, %Lexer* %587, i32 0, i32 4
+  %589 = load i32, i32* %588, align 4
+  %590 = add i32 %589, 1
+  %591 = getelementptr inbounds i8, i8* %586, i32 %590
+  %592 = load i8, i8* %591, align 1
+  %593 = icmp eq i8 %592, 61
+  br i1 %593, label %if.then91, label %if.end93
 
-if.end68:                                         ; preds = %if.end63
-  %592 = load %Lexer*, %Lexer** %2, align 8
-  %593 = getelementptr inbounds %Lexer, %Lexer* %592, i32 0, i32 3
-  %594 = load i8, i8* %593, align 1
-  %595 = icmp eq i8 %594, 61
-  br i1 %595, label %if.then72, label %if.end73
+if.end90:                                         ; preds = %if.end84
+  %594 = load %Lexer*, %Lexer** %2, align 8
+  %595 = getelementptr inbounds %Lexer, %Lexer* %594, i32 0, i32 3
+  %596 = load i8, i8* %595, align 1
+  %597 = icmp eq i8 %596, 61
+  br i1 %597, label %if.then94, label %if.end96
 
-if.then69:                                        ; preds = %if.then67
-  %596 = load %Lexer*, %Lexer** %2, align 8
-  %597 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %597)
+if.then91:                                        ; preds = %if.then88
   %598 = load %Lexer*, %Lexer** %2, align 8
   %599 = load %Lexer*, %Lexer** %2, align 8
-  %600 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @48, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %599)
+  %600 = load %Lexer*, %Lexer** %2, align 8
   %601 = load %Lexer*, %Lexer** %2, align 8
-  %602 = bitcast %Lexer* %601 to %String*
+  %602 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @48, i32 0, i32 0))
   %603 = load %Lexer*, %Lexer** %2, align 8
-  %604 = getelementptr inbounds %Lexer, %Lexer* %603, i32 0, i32 5
-  %605 = load i64, i64* %604, align 8
-  %606 = load %Lexer*, %Lexer** %2, align 8
-  %607 = getelementptr inbounds %Lexer, %Lexer* %606, i32 0, i32 6
-  %608 = load i64, i64* %607, align 8
-  %609 = call %Loc @Loc_new(%String* %602, i64 %605, i64 %608, i64 0)
-  %610 = call %Token @Token_new(%String %600, i32 22, %Loc %609)
-  %611 = call %Token @Lexer_advance_token(%Lexer* %599, %Token %610)
-  store %Token %611, %Token* %3, align 8
+  %604 = bitcast %Lexer* %603 to %String*
+  %605 = load %Lexer*, %Lexer** %2, align 8
+  %606 = getelementptr inbounds %Lexer, %Lexer* %605, i32 0, i32 5
+  %607 = load i64, i64* %606, align 8
+  %608 = load %Lexer*, %Lexer** %2, align 8
+  %609 = getelementptr inbounds %Lexer, %Lexer* %608, i32 0, i32 6
+  %610 = load i64, i64* %609, align 8
+  %611 = call %Loc @Loc_new(%String* %604, i64 %607, i64 %610, i64 0)
+  %612 = call %Token @Token_new(%String %602, i32 22, %Loc %611)
+  %613 = call %Token @Lexer_advance_token(%Lexer* %601, %Token %612)
+  store %Token %613, %Token* %3, align 8
   br label %ret
 
-if.end71:                                         ; preds = %if.then67
-  %612 = load %Lexer*, %Lexer** %2, align 8
-  %613 = load %Lexer*, %Lexer** %2, align 8
-  %614 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @49, i32 0, i32 0))
+if.end93:                                         ; preds = %if.then88
+  %614 = load %Lexer*, %Lexer** %2, align 8
   %615 = load %Lexer*, %Lexer** %2, align 8
-  %616 = bitcast %Lexer* %615 to %String*
+  %616 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @49, i32 0, i32 0))
   %617 = load %Lexer*, %Lexer** %2, align 8
-  %618 = getelementptr inbounds %Lexer, %Lexer* %617, i32 0, i32 5
-  %619 = load i64, i64* %618, align 8
-  %620 = load %Lexer*, %Lexer** %2, align 8
-  %621 = getelementptr inbounds %Lexer, %Lexer* %620, i32 0, i32 6
-  %622 = load i64, i64* %621, align 8
-  %623 = call %Loc @Loc_new(%String* %616, i64 %619, i64 %622, i64 0)
-  %624 = call %Token @Token_new(%String %614, i32 15, %Loc %623)
-  %625 = call %Token @Lexer_advance_token(%Lexer* %613, %Token %624)
-  store %Token %625, %Token* %3, align 8
+  %618 = bitcast %Lexer* %617 to %String*
+  %619 = load %Lexer*, %Lexer** %2, align 8
+  %620 = getelementptr inbounds %Lexer, %Lexer* %619, i32 0, i32 5
+  %621 = load i64, i64* %620, align 8
+  %622 = load %Lexer*, %Lexer** %2, align 8
+  %623 = getelementptr inbounds %Lexer, %Lexer* %622, i32 0, i32 6
+  %624 = load i64, i64* %623, align 8
+  %625 = call %Loc @Loc_new(%String* %618, i64 %621, i64 %624, i64 0)
+  %626 = call %Token @Token_new(%String %616, i32 15, %Loc %625)
+  %627 = call %Token @Lexer_advance_token(%Lexer* %615, %Token %626)
+  store %Token %627, %Token* %3, align 8
   br label %ret
 
-if.then72:                                        ; preds = %if.end68
-  %626 = load %Lexer*, %Lexer** %2, align 8
-  %627 = getelementptr inbounds %Lexer, %Lexer* %626, i32 0, i32 1
-  %628 = load i8*, i8** %627, align 8
-  %629 = load %Lexer*, %Lexer** %2, align 8
-  %630 = getelementptr inbounds %Lexer, %Lexer* %629, i32 0, i32 4
-  %631 = load i32, i32* %630, align 4
-  %632 = add i32 %631, 1
-  %633 = getelementptr inbounds i8, i8* %628, i32 %632
-  %634 = load i8, i8* %633, align 1
-  %635 = icmp eq i8 %634, 61
-  br i1 %635, label %if.then74, label %if.end76
+if.then94:                                        ; preds = %if.end90
+  %628 = load %Lexer*, %Lexer** %2, align 8
+  %629 = getelementptr inbounds %Lexer, %Lexer* %628, i32 0, i32 1
+  %630 = load i8*, i8** %629, align 8
+  %631 = load %Lexer*, %Lexer** %2, align 8
+  %632 = getelementptr inbounds %Lexer, %Lexer* %631, i32 0, i32 4
+  %633 = load i32, i32* %632, align 4
+  %634 = add i32 %633, 1
+  %635 = getelementptr inbounds i8, i8* %630, i32 %634
+  %636 = load i8, i8* %635, align 1
+  %637 = icmp eq i8 %636, 61
+  br i1 %637, label %if.then97, label %if.end99
 
-if.end73:                                         ; preds = %if.end68
-  %636 = load %Lexer*, %Lexer** %2, align 8
-  %637 = getelementptr inbounds %Lexer, %Lexer* %636, i32 0, i32 3
-  %638 = load i8, i8* %637, align 1
-  %639 = icmp eq i8 %638, 39
-  br i1 %639, label %if.then77, label %if.end78
+if.end96:                                         ; preds = %if.end90
+  %638 = load %Lexer*, %Lexer** %2, align 8
+  %639 = getelementptr inbounds %Lexer, %Lexer* %638, i32 0, i32 3
+  %640 = load i8, i8* %639, align 1
+  %641 = icmp eq i8 %640, 39
+  br i1 %641, label %if.then100, label %if.end102
 
-if.then74:                                        ; preds = %if.then72
-  %640 = load %Lexer*, %Lexer** %2, align 8
-  %641 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %641)
+if.then97:                                        ; preds = %if.then94
   %642 = load %Lexer*, %Lexer** %2, align 8
   %643 = load %Lexer*, %Lexer** %2, align 8
-  %644 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @50, i32 0, i32 0))
+  call void @Lexer_advance(%Lexer* %643)
+  %644 = load %Lexer*, %Lexer** %2, align 8
   %645 = load %Lexer*, %Lexer** %2, align 8
-  %646 = bitcast %Lexer* %645 to %String*
+  %646 = call %String @String_from(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @50, i32 0, i32 0))
   %647 = load %Lexer*, %Lexer** %2, align 8
-  %648 = getelementptr inbounds %Lexer, %Lexer* %647, i32 0, i32 5
-  %649 = load i64, i64* %648, align 8
-  %650 = load %Lexer*, %Lexer** %2, align 8
-  %651 = getelementptr inbounds %Lexer, %Lexer* %650, i32 0, i32 6
-  %652 = load i64, i64* %651, align 8
-  %653 = call %Loc @Loc_new(%String* %646, i64 %649, i64 %652, i64 0)
-  %654 = call %Token @Token_new(%String %644, i32 21, %Loc %653)
-  %655 = call %Token @Lexer_advance_token(%Lexer* %643, %Token %654)
-  store %Token %655, %Token* %3, align 8
+  %648 = bitcast %Lexer* %647 to %String*
+  %649 = load %Lexer*, %Lexer** %2, align 8
+  %650 = getelementptr inbounds %Lexer, %Lexer* %649, i32 0, i32 5
+  %651 = load i64, i64* %650, align 8
+  %652 = load %Lexer*, %Lexer** %2, align 8
+  %653 = getelementptr inbounds %Lexer, %Lexer* %652, i32 0, i32 6
+  %654 = load i64, i64* %653, align 8
+  %655 = call %Loc @Loc_new(%String* %648, i64 %651, i64 %654, i64 0)
+  %656 = call %Token @Token_new(%String %646, i32 21, %Loc %655)
+  %657 = call %Token @Lexer_advance_token(%Lexer* %645, %Token %656)
+  store %Token %657, %Token* %3, align 8
   br label %ret
 
-if.end76:                                         ; preds = %if.then72
-  %656 = load %Lexer*, %Lexer** %2, align 8
-  %657 = load %Lexer*, %Lexer** %2, align 8
-  %658 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @51, i32 0, i32 0))
+if.end99:                                         ; preds = %if.then94
+  %658 = load %Lexer*, %Lexer** %2, align 8
   %659 = load %Lexer*, %Lexer** %2, align 8
-  %660 = bitcast %Lexer* %659 to %String*
+  %660 = call %String @String_from(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @51, i32 0, i32 0))
   %661 = load %Lexer*, %Lexer** %2, align 8
-  %662 = getelementptr inbounds %Lexer, %Lexer* %661, i32 0, i32 5
-  %663 = load i64, i64* %662, align 8
-  %664 = load %Lexer*, %Lexer** %2, align 8
-  %665 = getelementptr inbounds %Lexer, %Lexer* %664, i32 0, i32 6
-  %666 = load i64, i64* %665, align 8
-  %667 = call %Loc @Loc_new(%String* %660, i64 %663, i64 %666, i64 0)
-  %668 = call %Token @Token_new(%String %658, i32 5, %Loc %667)
-  %669 = call %Token @Lexer_advance_token(%Lexer* %657, %Token %668)
-  store %Token %669, %Token* %3, align 8
+  %662 = bitcast %Lexer* %661 to %String*
+  %663 = load %Lexer*, %Lexer** %2, align 8
+  %664 = getelementptr inbounds %Lexer, %Lexer* %663, i32 0, i32 5
+  %665 = load i64, i64* %664, align 8
+  %666 = load %Lexer*, %Lexer** %2, align 8
+  %667 = getelementptr inbounds %Lexer, %Lexer* %666, i32 0, i32 6
+  %668 = load i64, i64* %667, align 8
+  %669 = call %Loc @Loc_new(%String* %662, i64 %665, i64 %668, i64 0)
+  %670 = call %Token @Token_new(%String %660, i32 5, %Loc %669)
+  %671 = call %Token @Lexer_advance_token(%Lexer* %659, %Token %670)
+  store %Token %671, %Token* %3, align 8
   br label %ret
 
-if.then77:                                        ; preds = %if.end73
-  %670 = load %Lexer*, %Lexer** %2, align 8
-  %671 = load %Lexer*, %Lexer** %2, align 8
-  call void @Lexer_advance(%Lexer* %671)
+if.then100:                                       ; preds = %if.end96
   %672 = load %Lexer*, %Lexer** %2, align 8
   %673 = load %Lexer*, %Lexer** %2, align 8
-  %674 = call %Token @Lexer_lex_char(%Lexer* %673)
-  store %Token %674, %Token* %3, align 8
-  br label %ret
-
-if.end78:                                         ; preds = %if.end73
+  call void @Lexer_advance(%Lexer* %673)
+  %674 = load %Lexer*, %Lexer** %2, align 8
   %675 = load %Lexer*, %Lexer** %2, align 8
-  %676 = getelementptr inbounds %Lexer, %Lexer* %675, i32 0, i32 3
-  %677 = load i8, i8* %676, align 1
-  %678 = icmp eq i8 %677, 0
-  br i1 %678, label %if.then79, label %if.end80
+  %676 = call %Token @Lexer_lex_char(%Lexer* %675)
+  store %Token %676, %Token* %3, align 8
+  br label %ret
 
-if.then79:                                        ; preds = %if.end78
-  %679 = call %String @String_from(i8* getelementptr inbounds ([1 x i8], [1 x i8]* @52, i32 0, i32 0))
-  %680 = load %Lexer*, %Lexer** %2, align 8
-  %681 = bitcast %Lexer* %680 to %String*
+if.end102:                                        ; preds = %if.end96
+  %677 = load %Lexer*, %Lexer** %2, align 8
+  %678 = getelementptr inbounds %Lexer, %Lexer* %677, i32 0, i32 3
+  %679 = load i8, i8* %678, align 1
+  %680 = icmp eq i8 %679, 0
+  br i1 %680, label %if.then103, label %if.end105
+
+if.then103:                                       ; preds = %if.end102
+  %681 = call %String @String_from(i8* getelementptr inbounds ([1 x i8], [1 x i8]* @52, i32 0, i32 0))
   %682 = load %Lexer*, %Lexer** %2, align 8
-  %683 = getelementptr inbounds %Lexer, %Lexer* %682, i32 0, i32 5
-  %684 = load i64, i64* %683, align 8
-  %685 = load %Lexer*, %Lexer** %2, align 8
-  %686 = getelementptr inbounds %Lexer, %Lexer* %685, i32 0, i32 6
-  %687 = load i64, i64* %686, align 8
-  %688 = call %Loc @Loc_new(%String* %681, i64 %684, i64 %687, i64 0)
-  %689 = call %Token @Token_new(%String %679, i32 57, %Loc %688)
-  store %Token %689, %Token* %3, align 8
+  %683 = bitcast %Lexer* %682 to %String*
+  %684 = load %Lexer*, %Lexer** %2, align 8
+  %685 = getelementptr inbounds %Lexer, %Lexer* %684, i32 0, i32 5
+  %686 = load i64, i64* %685, align 8
+  %687 = load %Lexer*, %Lexer** %2, align 8
+  %688 = getelementptr inbounds %Lexer, %Lexer* %687, i32 0, i32 6
+  %689 = load i64, i64* %688, align 8
+  %690 = call %Loc @Loc_new(%String* %683, i64 %686, i64 %689, i64 0)
+  %691 = call %Token @Token_new(%String %681, i32 57, %Loc %690)
+  store %Token %691, %Token* %3, align 8
   br label %ret
 
-if.end80:                                         ; preds = %if.end78
-  %690 = load %Lexer*, %Lexer** %2, align 8
-  %691 = getelementptr inbounds %Lexer, %Lexer* %690, i32 0, i32 3
-  %692 = load i8, i8* %691, align 1
-  %693 = sext i8 %692 to i32
-  %694 = call i32 @isdigit(i32 %693)
-  %695 = icmp ne i32 %694, 0
-  br i1 %695, label %if.then81, label %if.end82
+if.end105:                                        ; preds = %if.end102
+  %692 = load %Lexer*, %Lexer** %2, align 8
+  %693 = getelementptr inbounds %Lexer, %Lexer* %692, i32 0, i32 3
+  %694 = load i8, i8* %693, align 1
+  %695 = sext i8 %694 to i32
+  %696 = call i32 @isdigit(i32 %695)
+  %697 = icmp ne i32 %696, 0
+  br i1 %697, label %if.then106, label %if.end108
 
-if.then81:                                        ; preds = %if.end80
-  %696 = load %Lexer*, %Lexer** %2, align 8
-  %697 = load %Lexer*, %Lexer** %2, align 8
-  %698 = call %Token @Lexer_lex_number(%Lexer* %697)
-  store %Token %698, %Token* %3, align 8
-  br label %ret
-
-if.end82:                                         ; preds = %if.end80
+if.then106:                                       ; preds = %if.end105
+  %698 = load %Lexer*, %Lexer** %2, align 8
   %699 = load %Lexer*, %Lexer** %2, align 8
-  %700 = getelementptr inbounds %Lexer, %Lexer* %699, i32 0, i32 3
-  %701 = load i8, i8* %700, align 1
-  %702 = sext i8 %701 to i32
-  %703 = call i32 @isalpha(i32 %702)
-  %704 = icmp ne i32 %703, 0
-  br i1 %704, label %if.then83, label %for.cond
-
-if.then83:                                        ; preds = %if.end82
-  %705 = load %Lexer*, %Lexer** %2, align 8
-  %706 = load %Lexer*, %Lexer** %2, align 8
-  %707 = call %Token @Lexer_lex_id(%Lexer* %706)
-  store %Token %707, %Token* %3, align 8
+  %700 = call %Token @Lexer_lex_number(%Lexer* %699)
+  store %Token %700, %Token* %3, align 8
   br label %ret
 
-ret:                                              ; preds = %for.end, %if.then83, %if.then81, %if.then79, %if.then77, %if.end76, %if.then74, %if.end71, %if.then69, %if.end66, %if.then64, %if.end61, %if.then59, %if.end56, %if.then54, %if.end51, %if.then49, %if.then45, %if.then43, %if.then41, %if.then39, %if.then37, %if.then35, %if.then33, %if.then31, %if.then29, %if.then24, %if.then22, %if.end21, %if.then19, %if.then15, %if.end14, %if.then12, %if.then8, %if.then6, %if.then4
-  %708 = load %Token, %Token* %3, align 8
-  ret %Token %708
+if.end108:                                        ; preds = %if.end105
+  %701 = load %Lexer*, %Lexer** %2, align 8
+  %702 = getelementptr inbounds %Lexer, %Lexer* %701, i32 0, i32 3
+  %703 = load i8, i8* %702, align 1
+  %704 = sext i8 %703 to i32
+  %705 = call i32 @isalpha(i32 %704)
+  %706 = icmp ne i32 %705, 0
+  br i1 %706, label %if.then109, label %for.cond
+
+if.then109:                                       ; preds = %if.end108
+  %707 = load %Lexer*, %Lexer** %2, align 8
+  %708 = load %Lexer*, %Lexer** %2, align 8
+  %709 = call %Token @Lexer_lex_id(%Lexer* %708)
+  store %Token %709, %Token* %3, align 8
+  br label %ret
+
+ret:                                              ; preds = %for.end, %if.then109, %if.then106, %if.then103, %if.then100, %if.end99, %if.then97, %if.end93, %if.then91, %if.end87, %if.then85, %if.end81, %if.then79, %if.end75, %if.then73, %if.end69, %if.then67, %if.then61, %if.then58, %if.then55, %if.then52, %if.then49, %if.then46, %if.then43, %if.then40, %if.then37, %if.then31, %if.then28, %if.end27, %if.then25, %if.then19, %if.end18, %if.then16, %if.then10, %if.then7, %if.then4
+  %710 = load %Token, %Token* %3, align 8
+  ret %Token %710
 }
 
 define dso_local %VecToken @Lexer_collect_tokens(%Lexer* %0) {
@@ -3081,7 +3084,7 @@ define dso_local i32 @main(i32 %0, i8** %1) {
   %19 = load i8*, i8** %18, align 8
   %20 = call i8* @Ctx_add_function(%Ctx* %8, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @56, i32 0, i32 0), i8* %19)
   %21 = call %String @String_from(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @58, i32 0, i32 0))
-  %22 = call %Lexer @Lexer_new(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @57, i32 0, i32 0), i32 11, %String %21)
+  %22 = call %Lexer @Lexer_new(i8* getelementptr inbounds ([20 x i8], [20 x i8]* @57, i32 0, i32 0), i32 19, %String %21)
   %23 = alloca %Lexer, align 8
   store %Lexer %22, %Lexer* %23, align 8
   %24 = getelementptr inbounds %Lexer, %Lexer* %23, i32 0, i32 1

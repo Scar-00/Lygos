@@ -95,8 +95,8 @@ namespace lygos {
 
         }
 
-        StaticLiterial::StaticLiterial(std::string name, Ref<Type::Type> type):
-            AST(ASTType::StaticLiterial), name(name), type(type) {
+        StaticLiterial::StaticLiterial(std::string name, Ref<Type::Type> type, Ref<AST> value):
+            AST(ASTType::StaticLiterial), name(name), type(type), value(value) {
         }
 
         std::string StaticLiterial::GetValue() {
@@ -104,12 +104,12 @@ namespace lygos {
         }
 
         llvm::Value *StaticLiterial::GenCode(Scope *scope) {
-            //auto glob = new llvm::GlobalVariable(scope->GetType(type.get()), false, llvm::GlobalVariable::InternalLinkage);
-            //Log::Logger::Warn("unimplemented [Statics]");
-            mod->getOrInsertGlobal(name, scope->GetType(type.get()));
-            //mod->getNamedGlobal(name)->setLinkage(llvm::GlobalVariable::InternalLinkage);
-            scope->DeclVar(this->name, false, {type, (llvm::AllocaInst *)mod->getNamedGlobal(name)});
-            return mod->getNamedGlobal(name);
+            //TODO: compare type and value->type to see if they match or can be safely casted
+            llvm::Constant *value = this->value ? (llvm::Constant *)this->value->GenCode(scope)
+                                                : llvm::ConstantAggregateZero::get(scope->GetType(type.get()));
+            auto glob = new llvm::GlobalVariable(*mod, scope->GetType(type.get()), false, llvm::GlobalVariable::InternalLinkage, value);
+            scope->DeclVar(this->name, false, {type, (llvm::AllocaInst *)glob});
+            return glob;
         }
 
         Ref<Type::Type> StaticLiterial::GetType(Scope *scope) {

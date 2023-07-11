@@ -14,6 +14,7 @@ namespace lygos {
                 Function(std::string name, Ref<Impl> obj, std::vector<Arg> args, Block body, Ref<Type::Type> ret_type, bool is_def);
                 Block &Body() { return body; }
                 std::string &GetName();
+                std::string &GetMangledName() { return mangeled_name; }
                 bool IsMember();
                 std::vector<Arg> GetArgs() { return args; }
                 Ref<Type::Type> GetRetType() { return ret_type; }

@@ -567,10 +567,12 @@ impl Lexer {
         for let w = 0 in self->index < self->len {
             for let l = 0 in isspace((:i32)self->curr) != 0 {
                 if self->curr == (:i8)10 {
+                    self->advance();
                     self->line = self->line + (:u64)1;
                     self->line_index = (:u64)0;
+                }else {
+                    self->advance();
                 }
-                self->advance();
             }
 
             if self->curr == '.' { return self->advance_token(Token::new(String::from("."), TokenType::Dot, Loc::new(&self->file, self->line, self->line_index, (:u64)0))); }
@@ -867,7 +869,7 @@ fn main(argc: i32, argv: **i8) -> i32 {
     let fn_type = LLVMFunctionType(LLVMInt32Type(), t, 1, false);
     ctx.add_function("test", fn_type);
 
-    let lexer = Lexer::new("let x = 10;", 11, String::from("test.ly"));
+    let lexer = Lexer::new("let x = 10;\nx = 10;", 19, String::from("test.ly"));
     println$("src -> %s", lexer.src);
     let tokens = lexer.collect_tokens();
     for let mut index = 0 in index < tokens.len {

@@ -40,6 +40,10 @@ namespace lygos {
                 std::cout << "    " << strct.first << "\n";
             }
             std::cout << "]" << std::endl;
+            if(parent) {
+                std::cout << "Parent: \n";
+                parent->Print();
+            }
         }
 
         llvm::Value *Scope::GetRet() {
