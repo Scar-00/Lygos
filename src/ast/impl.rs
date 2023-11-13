@@ -1,0 +1,48 @@
+use crate::types::Type;
+use crate::lexer::Tagged;
+use crate::ast::{Block, Generate, AST};
+use crate::ast::symbol;
+
+#[derive(Debug)]
+pub struct Impl {
+    pub typ: Tagged<String>,
+    pub body: Block,
+    pub trat: Option<Tagged<String>>,
+}
+
+impl Impl {
+    pub fn new(typ: Tagged<String>, body: Block, trat: Option<Tagged<String>>) -> Self {
+        Self{ typ, body, trat }
+    }
+}
+
+impl Generate for Impl {
+    fn loc(&self) -> &crate::lexer::Loc {
+        self.typ.loc()
+    }
+
+    fn get_value(&self) -> String {
+        self.typ.inner().to_string()
+    }
+
+    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+        if let Some(t) = &self.trat {
+            let strct = scope.get_struct(&self.typ);
+            strct.register_trait_impl(t);
+        }
+
+        for func in &mut self.body.body {
+            if let AST::Function(func) = func {
+                func.gen_code(scope, ctx);
+                let strct = scope.get_struct(&self.typ);
+                let func_sym: symbol::Function = func.into();
+                strct.register_function(func_sym);
+            }
+        }
+        None
+    }
+
+    fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
+
+    fn collect_symbols(&self, _: &mut super::Scope) {}
+}

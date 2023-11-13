@@ -1,81 +1,93 @@
-use std::fmt::format;
-use std::path::PathBuf;
-use std::sync::atomic::AtomicPtr;
+#![allow(non_upper_case_globals)]
 
-use inkwell::builder::Builder;
-use inkwell::context::Context;
-use inkwell::module::Module;
-use inkwell::values::{AnyValue, PointerValue};
+use std::path::PathBuf;
 
 mod ast;
 mod io;
 mod lexer;
 mod parse;
 mod types;
-use ast::ast::AST;
-use lexer::lexer::Lexer as lex;
-use parse::parser::Parser;
+mod log;
+use lexer::{Lexer, Loc};
+use parse::Parser;
+use ast::Generate;
+use ast::Scope;
 
-pub mod ctx {
-    use inkwell::builder::Builder;
-    use inkwell::context::Context;
-    use inkwell::module::Module;
-    use std::sync::atomic::{AtomicPtr, Ordering};
+//#[global_allocator]
+//static AREANA_ALLOCATOR: types::containers::Allocator = types::containers::Allocator{ buffer: None };
 
-    #[allow(non_upper_case_globals)]
-    static ctx: AtomicPtr<Context> = AtomicPtr::new(&mut Context::create());
-    #[allow(non_upper_case_globals)]
-    static module: AtomicPtr<Module> = AtomicPtr::new(&mut get_ctx().create_module(""));
-    #[allow(non_upper_case_globals)]
-    static builder: AtomicPtr<Builder> = AtomicPtr::new(&mut get_ctx().create_builder());
+pub struct GenerationContext<'a> {
+    pub ctx: &'a llvm::Context,
+    pub module: &'a llvm::Module<'a>,
+    pub builder: &'a llvm::IRBuilder<'a>,
+    pub current_function: *mut crate::ast::Function,
+    pub current_break_point: Vec<*mut llvm::BasicBlock>,
+}
 
-    pub fn get_ctx() -> &'static mut Context {
-        unsafe { ctx.load(Ordering::Relaxed).as_mut().unwrap() }
-    }
-
-    pub fn get_mod() -> &'static mut Module<'static> {
-        unsafe { module.load(Ordering::Relaxed).as_mut().unwrap() }
-    }
-
-    pub fn get_builder() -> &'static mut Builder<'static> {
-        unsafe { builder.load(Ordering::Relaxed).as_mut().unwrap() }
-    }
-
-    pub fn set_mod_name(name: &str) {
-        get_mod().set_name(name);
+impl<'a> GenerationContext<'a> {
+    pub fn new(ctx: &'a llvm::Context, module: &'a llvm::Module<'a>, builder: &'a llvm::IRBuilder<'a>) -> GenerationContext<'a> {
+        return Self{ ctx, module, builder, current_function: std::ptr::null_mut(), current_break_point: Vec::new() }
     }
 }
 
 fn main() {
-    let ctx = Context::create();
-    let module = ctx.create_module("test");
-    let builder = ctx.create_builder();
+    let opt = io::get_cli_options();
 
-    let fn_type = ctx.i32_type().fn_type(&[], false);
+    let file = if let Some(file) = &opt.input_file {
+        PathBuf::from(file)
+    }else {
+        eprintln!("[error]: no input file provided");
+        std::process::exit(1);
+    };
 
-    let main = module.add_function("main", fn_type, None);
-    let bb = ctx.append_basic_block(main, "");
-    builder.position_at_end(bb);
-
-    let typ = ctx.opaque_struct_type("test");
-    typ.set_body(&[ctx.i32_type().into()], false);
-    let alloca = builder.build_alloca(ctx.i32_type(), "");
-    builder.build_store(alloca, ctx.i32_type().const_int(10, false));
-    builder.build_return(None);
-
-    module.print_to_file("main.ll");
-
-    let file = PathBuf::from("test.ly");
     let content = match io::read_file(&file) {
         Ok(c) => c,
         Err(_) => panic!("could not read file"),
     };
 
-    ctx::set_mod_name(file.to_str().unwrap());
+    llvm::init_all();
+    let tt = llvm::get_default_target_triple();
+    let target = llvm::lookup_target(&tt);
 
-    let mut lexer = lex::Lexer::from(&content, &file);
-    let tokens = lexer.get_tokens();
-    println!("{:#?}", tokens);
+    let cpu = "generic";
+    let features = "";
+    let target_machine = llvm::create_target_machine(target, tt.as_str(), cpu, features);
+
+    let ctx = llvm::Context::new();
+    ctx.set_opaque_pointers(false);
+    let mut m = llvm::Module::new(opt.input_file.unwrap().as_str(), &ctx);
+    m.set_data_layout(&target_machine);
+    m.set_target_triple(&tt);
+    let builder = llvm::IRBuilder::new(&ctx);
+
+    let mut lexer = Lexer::from(&content, &file);
+    let mut parser = Parser::new(&mut lexer);
+    let mut ast = parser.build_ast();
+    //println!("{:#?}", &ast);
+    let ctx = GenerationContext::new(&ctx, &m, &builder);
+    ast.gen_code(&mut Scope::new(), &ctx);
+    //println!("{}", m.print());
+
+    let out_file = PathBuf::from(&opt.output_file);
+
+    if let Some(extra) = opt.emit_extra {
+        let _res = match extra {
+            io::EmitType::llvm_ir => {
+                let mut out = out_file.clone();
+                out.set_extension("ll");
+                io::emit_ir(out, &ctx)
+            }
+            io::EmitType::ast => {
+                let mut out = out_file.clone();
+                out.set_extension("ast");
+                io::emit_ast(out, &ast)
+            }
+        };
+    }
+
+    let res = if opt.emit_exe {
+        io::emit_exe(&out_file, &m, &target_machine)
+    }else {
+        io::emit_obj(&out_file, &m, &target_machine)
+    };
 }
-
-struct Foo;

@@ -1,23 +1,58 @@
-pub mod Lexer {
+pub mod lexer {
     use super::super::super::types::{KeyWords, TokenType};
     use std::path::PathBuf;
 
     #[derive(Debug, Clone)]
     pub struct Loc {
-        file: PathBuf,
-        line: usize,
-        start: usize,
-        end: usize,
+        pub file: PathBuf,
+        pub start: usize,
+        pub end: usize,
     }
 
     impl Loc {
-        pub fn new(file: PathBuf, line: usize, start: usize, end: usize) -> Self {
+        pub fn new(file: PathBuf, start: usize, end: usize) -> Self {
             return Self {
                 file,
-                line,
                 start,
                 end,
             };
+        }
+    }
+
+    impl std::ops::Add for Loc {
+        type Output = Loc;
+        fn add(self, rhs: Self) -> Self::Output {
+            Self::new(self.file, self.start, rhs.end)
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct Tagged<T> {
+        inner: T,
+        loc: Loc,
+    }
+
+    impl<T> Tagged<T> {
+        pub fn new(loc: Loc, value: T) -> Tagged<T> {
+            return Self{ loc, inner: value };
+        }
+
+        pub fn inner(&self) -> &T {
+            return &self.inner;
+        }
+
+        pub fn inner_mut(&mut self) -> &mut T {
+            return &mut self.inner;
+        }
+
+        pub fn loc(&self) -> &Loc {
+            return &self.loc;
+        }
+    }
+
+    impl From<Token> for Tagged<String> {
+        fn from(value: Token) -> Self {
+            Self{ inner: value.value, loc: value.loc }
         }
     }
 
@@ -39,11 +74,10 @@ pub mod Lexer {
     }
 
     pub struct Lexer {
-        file: PathBuf,
+        pub file: PathBuf,
         src: Vec<char>,
         curr: char,
         index: usize,
-        line: usize,
         line_index: usize,
     }
 
@@ -54,7 +88,6 @@ pub mod Lexer {
                 src: logic.chars().collect(),
                 curr: ' ',
                 index: 0,
-                line: 1,
                 line_index: 0,
             };
             parser.src.push('\0');
@@ -83,11 +116,12 @@ pub mod Lexer {
 
         fn number(&mut self) -> Token {
             let mut value: String = String::new();
-            let loc = Loc::new(self.file.clone(), self.line, self.line_index, 0);
+            let start = self.line_index;
             while self.curr.is_digit(10) || self.curr == '.' {
                 value.push(self.curr);
                 self.advance();
             }
+            let loc = Loc::new(self.file.clone(), start, self.line_index);
             if value.contains(".") {
                 return Token::new(value.as_str(), TokenType::Float, loc);
             }
@@ -96,39 +130,45 @@ pub mod Lexer {
 
         fn string(&mut self) -> Token {
             let mut value: String = String::new();
-            let loc = Loc::new(self.file.clone(), self.line, self.line_index, 0);
+            let start = self.line_index;
             while self.curr != '\"' {
                 value.push(self.curr);
                 self.advance();
             }
+            let loc = Loc::new(self.file.clone(), start, self.line_index);
             self.advance();
             return Token::new(value.as_str(), TokenType::String, loc);
         }
 
         fn char(&mut self) -> Token {
             let mut value: String = String::new();
-            let loc = Loc::new(self.file.clone(), self.line, self.line_index, 0);
+            let start = self.line_index;
             while self.curr != '\'' {
                 value.push(self.curr);
                 self.advance();
             }
+            let loc = Loc::new(self.file.clone(), start, self.line_index);
             self.advance();
-            return Token::new(value.as_str(), TokenType::String, loc);
+            return Token::new(value.as_str(), TokenType::Char, loc);
         }
 
         fn id(&mut self) -> Token {
             let mut value: String = String::new();
-            let loc = Loc::new(self.file.clone(), self.line, self.line_index, 0);
-            while self.curr.is_alphabetic() {
+            let start = self.line_index;
+            while self.curr.is_alphanumeric() || self.curr == '_' {
                 value.push(self.curr);
                 self.advance();
             }
-            if KeyWords.contains_key(&value.as_str()) {
+            let loc = Loc::new(self.file.clone(), start, self.line_index);
+            /*if KeyWords.contains_key(&value.as_str()) {
                 return Token::new(
                     value.as_str(),
                     KeyWords.get(&value.as_str()).unwrap().clone(),
                     loc,
                 );
+            }*/
+            if let Some(typ) = KeyWords.get(&value.as_str()) {
+                return Token::new(value.as_str(), typ.clone(), loc);
             }
 
             return Token::new(value.as_str(), TokenType::Id, loc);
@@ -139,17 +179,17 @@ pub mod Lexer {
             return token;
         }
 
+        /*
+        *   FIXME(S): multi character values
+        */
+
         fn next_token(&mut self) -> Token {
             while self.curr != '\0' {
                 while self.curr.is_whitespace() {
-                    if self.curr == '\n' {
-                        self.line += 1;
-                        self.line_index = 0;
-                    }
                     self.advance();
                 }
 
-                let loc = Loc::new(self.file.clone(), self.line, self.line_index, 0);
+                let loc = Loc::new(self.file.clone(), self.line_index, self.line_index + 1);
                 match self.curr {
                     '.' => return self.advance_token(Token::new(".", TokenType::Dot, loc)),
                     ',' => return self.advance_token(Token::new(",", TokenType::Comma, loc)),
@@ -175,7 +215,31 @@ pub mod Lexer {
                             while self.curr != '\n' {
                                 self.advance();
                             }
-                        }
+                            continue;
+                        },
+                        '*' => {
+                            let mut braces = 0;
+                            loop {
+                                if self.curr == '/' && self.src[self.index + 1] == '*' {
+                                    self.advance();
+                                    self.advance();
+                                    braces += 1;
+                                }
+                                if self.curr == '*' && self.src[self.index + 1] == '/' {
+                                    self.advance();
+                                    self.advance();
+                                    braces -= 1;
+                                    if braces == 0 {
+                                        break;
+                                    }
+                                }
+                                self.advance();
+                                if self.curr == '\0' {
+                                    break;
+                                }
+                            }
+                            continue;
+                        },
                         _ => return self.advance_token(Token::new("/", TokenType::OpDiv, loc)),
                     },
                     '%' => return self.advance_token(Token::new("%", TokenType::OpMod, loc)),
@@ -190,14 +254,14 @@ pub mod Lexer {
                     '<' => match self.src[self.index + 1] {
                         '=' => {
                             self.advance();
-                            self.advance_token(Token::new("<=", TokenType::OpLeEq, loc));
+                            return self.advance_token(Token::new("<=", TokenType::OpLeEq, loc));
                         }
                         _ => return self.advance_token(Token::new("<", TokenType::AngleLeft, loc)),
                     },
                     '>' => match self.src[self.index + 1] {
                         '=' => {
                             self.advance();
-                            self.advance_token(Token::new(">=", TokenType::OpGrEq, loc));
+                            return self.advance_token(Token::new(">=", TokenType::OpGrEq, loc));
                         }
                         _ => {
                             return self.advance_token(Token::new(">", TokenType::AngleRight, loc))
@@ -206,21 +270,21 @@ pub mod Lexer {
                     '&' => match self.src[self.index + 1] {
                         '&' => {
                             self.advance();
-                            self.advance_token(Token::new("&&", TokenType::OpAnd, loc));
+                            return self.advance_token(Token::new("&&", TokenType::OpAnd, loc));
                         }
                         _ => return self.advance_token(Token::new("&", TokenType::Ampercent, loc)),
                     },
                     '|' => match self.src[self.index + 1] {
                         '|' => {
                             self.advance();
-                            self.advance_token(Token::new("||", TokenType::OpOr, loc));
+                            return self.advance_token(Token::new("||", TokenType::OpOr, loc));
                         }
                         _ => return self.advance_token(Token::new("|", TokenType::Pipe, loc)),
                     },
                     '!' => match self.src[self.index + 1] {
                         '=' => {
                             self.advance();
-                            self.advance_token(Token::new("!=", TokenType::OpNeEq, loc));
+                            return self.advance_token(Token::new("!=", TokenType::OpNeEq, loc));
                         }
                         _ => return self.advance_token(Token::new("!", TokenType::Bang, loc)),
                     },
@@ -254,7 +318,7 @@ pub mod Lexer {
                     }
                 }
             }
-            return Token::new("", TokenType::Eof, Loc::new(PathBuf::new(), 0, 0, 0));
+            return Token::new("", TokenType::Eof, Loc::new(PathBuf::new(), self.line_index, self.line_index + 1));
         }
     }
 }
