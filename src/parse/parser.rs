@@ -221,7 +221,7 @@ pub mod parser {
                 }
 
                 if self.eat().typ != TokenType::Comma {
-                    token_expected(&self.peek(-1).loc, "unexpected token found", "expected `;` or `->` at the end of function decl");
+                    token_expected(&self.peek(-1).loc, "unexpected token found", "function arguments need to be comma seperated");
                 }
             }
             self.eat();
@@ -933,6 +933,40 @@ pub mod parser {
             return self.parse_primary_expr();
         }
 
+        fn parse_closure(&mut self) -> AST {
+            let loc = self.eat().loc.clone();
+            let mut args = Vec::new();
+            while self.at().typ != TokenType::Pipe {
+                args.push(self.parse_func_arg());
+                if self.at().typ == TokenType::ParanRight {
+                    break;
+                }
+
+                if self.eat().typ != TokenType::Comma {
+                    token_expected(&self.peek(-1).loc, "unexpected token found", "closure arguments need to be comma seperated");
+                }
+            }
+            self.eat();
+            let ret_type = if self.at().typ == TokenType::Arrow {
+                self.eat();
+                self.parse_type_spec()
+            }else {
+                Type::Path(Path::new(Loc::new("internal".into(), 0, 1), "void".to_string()))
+            };
+
+            if self.eat().typ != TokenType::CurlyLeft {
+                token_expected(&self.peek(-1).loc, "unexpected token found", "expected `{` after for statement");
+            }
+            let mut body = Block::new();
+            while self.at().typ != TokenType::CurlyRight {
+                self.current_block = containers::Pointer::from(&body);
+                body.body.push(self.parse_stmt());
+            }
+            self.eat();
+
+            return AST::ClosureExpr(ClosureExpr::new(loc.clone(), Function::new(Tagged::new(loc, "".into()), None, args, body, ret_type, true, false)));
+        }
+
         fn parse_primary_expr(&mut self) -> AST {
             let tok = self.at().clone();
             match &tok.typ {
@@ -942,6 +976,7 @@ pub mod parser {
                 TokenType::Char => AST::NumberLiteral(NumberLiteral::new(self.eat().clone().into(), NumberType::Char)),
                 TokenType::String => AST::StringLiteral(StringLiteral::new(self.eat().clone().into())),
                 TokenType::KwBreak => AST::BreakExpr(BreakExpr::new(self.eat().loc.clone())),
+                TokenType::Pipe => self.parse_closure(),
                 _ => {
                     token_expected(&self.at().loc, format!("unexpected token found: `{:?}`", tok.typ).as_str(), "unexpected token found");
                 }

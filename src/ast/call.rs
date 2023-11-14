@@ -1,6 +1,6 @@
-use crate::types::Type;
+use crate::types::{Type, FuncPtr};
 use crate::lexer::{Tagged, Loc};
-use crate::ast::{AST, FunctionArg, Generate, symbol, symbol::Symbol};
+use crate::ast::{AST, FunctionArg, Generate, symbol, symbol::Symbol, Block};
 use crate::log::*;
 
 #[derive(Debug)]
@@ -249,6 +249,5 @@ impl Generate for ReturnExpr {
 
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {
-    }
+    fn collect_symbols(&self, _: &mut super::Scope) {}
 }

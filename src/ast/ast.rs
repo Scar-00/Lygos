@@ -26,9 +26,8 @@ pub mod ast {
         IfStmt(IfStmt),
         ForStmt(ForStmt),
         MatchStmt(),
-        //BlockExpr(BlockExpr),
-        //ClaimExpr(ClaimExpr),
         BreakExpr(BreakExpr),
+        ClosureExpr(ClosureExpr),
 
         StructDef(StructDef),
         EnumDef(EnumDef),
@@ -42,7 +41,6 @@ pub mod ast {
         InitializerList(InitializerListExpr),
         StaticLiteral(StaticLiteral),
         Id(Identifier),
-        //Block(BlockExpr),
     }
 
     impl AST {
@@ -81,9 +79,8 @@ pub mod ast {
                 AST::BinaryExpr(bin) => bin.loc(),
                 AST::IfStmt(i) => i.loc(),
                 AST::ForStmt(f) => f.loc(),
-                //AST::BlockExpr(b) => b.loc(),
-                //AST::ClaimExpr(c) => c.loc(),
                 AST::BreakExpr(b) => b.loc(),
+                AST::ClosureExpr(c) => c.loc(),
                 AST::StructDef(def) => def.loc(),
                 AST::EnumDef(en) => en.loc(),
                 AST::Impl(i) => i.loc(),
@@ -118,9 +115,8 @@ pub mod ast {
                 AST::BinaryExpr(bin) => bin.get_value(),
                 AST::IfStmt(i) => i.get_value(),
                 AST::ForStmt(f) => f.get_value(),
-                //AST::BlockExpr(b) => b.get_value(),
-                //AST::ClaimExpr(c) => c.get_value(),
                 AST::BreakExpr(b) => b.get_value(),
+                AST::ClosureExpr(c) => c.get_value(),
                 AST::StructDef(def) => def.get_value(),
                 AST::EnumDef(en) => en.get_value(),
                 AST::Impl(i) => i.get_value(),
@@ -136,7 +132,6 @@ pub mod ast {
                 AST::InitializerList(list) => list.get_value(),
                 AST::StaticLiteral(stat) => stat.get_value(),
                 AST::Id(id) => id.get_value(),
-                //AST::Block(b) => b.get_value(),
                 _ => todo!("get_value -> {:#?}", self),
             }
         }
@@ -155,9 +150,8 @@ pub mod ast {
                 AST::BinaryExpr(bin) => bin.gen_code(scope, ctx),
                 AST::IfStmt(i) => i.gen_code(scope, ctx),
                 AST::ForStmt(f) => f.gen_code(scope, ctx),
-                //AST::BlockExpr(b) => b.gen_code(scope, ctx),
-                //AST::ClaimExpr(c) => c.gen_code(scope, ctx),
                 AST::BreakExpr(b) => b.gen_code(scope, ctx),
+                AST::ClosureExpr(c) => c.gen_code(scope, ctx),
                 AST::StructDef(def) => def.gen_code(scope, ctx),
                 AST::EnumDef(en) => en.gen_code(scope, ctx),
                 AST::Impl(i) => i.gen_code(scope, ctx),
@@ -173,7 +167,6 @@ pub mod ast {
                 AST::InitializerList(list) => list.gen_code(scope, ctx),
                 AST::StaticLiteral(stat) => stat.gen_code(scope, ctx),
                 AST::Id(id) => id.gen_code(scope, ctx),
-                //AST::Block(b) => b.gen_code(scope, ctx),
                 _ => todo!("gen_code -> {:#?}", self),
             }
         }
@@ -192,9 +185,8 @@ pub mod ast {
                 AST::BinaryExpr(bin) => bin.get_type(scope, ctx),
                 AST::IfStmt(i) => i.get_type(scope, ctx),
                 AST::ForStmt(f) => f.get_type(scope, ctx),
-                //AST::BlockExpr(b) => b.get_type(scope, ctx),
-                //AST::ClaimExpr(c) => c.get_type(scope, ctx),
                 AST::BreakExpr(b) => b.get_type(scope, ctx),
+                AST::ClosureExpr(c) => c.get_type(scope, ctx),
                 AST::StructDef(def) => def.get_type(scope, ctx),
                 AST::EnumDef(en) => en.get_type(scope, ctx),
                 AST::Impl(i) => i.get_type(scope, ctx),
@@ -210,7 +202,6 @@ pub mod ast {
                 AST::InitializerList(list) => list.get_type(scope, ctx),
                 AST::StaticLiteral(stat) => stat.get_type(scope, ctx),
                 AST::Id(id) => id.get_type(scope, ctx),
-                //AST::Block(b) => b.get_type(scope, ctx),
                 _ => todo!("get_type -> {:#?}", self),
             }
         }
@@ -240,7 +231,6 @@ pub mod ast {
         pub body: Exprs,
         pub returns: bool,
         pub scope: Scope,
-        //index: usize,
     }
 
     impl Block {

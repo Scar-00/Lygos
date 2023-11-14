@@ -1,9 +1,6 @@
-use crate::types::Type;
-use crate::lexer::Tagged;
-use crate::ast::{Block, Generate};
-
-use crate::ast::{symbol, Impl, symbol::{Symbol, Variable}};
-use crate::types::containers;
+use crate::types::{Type, containers, FuncPtr};
+use crate::lexer::{Tagged, Loc};
+use crate::ast::{symbol, Impl, symbol::{Symbol, Variable}, Block, Generate};
 
 #[derive(Debug, Clone)]
 pub struct FunctionArg {
@@ -134,4 +131,44 @@ impl Into<symbol::Function> for &mut Function {
                                 self.is_def
                             )
     }
+}
+
+#[derive(Debug)]
+pub struct ClosureExpr {
+    loc: Loc,
+    inner: Function,
+}
+
+impl ClosureExpr {
+    pub fn new(loc: Loc, inner: Function) -> Self {
+        Self{ loc, inner }
+    }
+}
+
+impl Generate for ClosureExpr {
+    fn loc(&self) -> &Loc {
+        &self.loc
+    }
+
+    fn get_value(&self) -> String { "closure".to_owned() }
+
+    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+        let refs: Vec<llvm::TypeRef> = self.inner.args.iter().map(|i| {
+            scope.resolve_type(&i.typ, ctx)
+        }).collect();
+
+        let ty = llvm::FunctionTypeRef::get(scope.resolve_type(&self.inner.ret_type, ctx), &refs, false);
+        let func = llvm::Function::create(ty, "", ctx.module);
+        self.inner.gen_code(scope, ctx);
+        return Some(func.into());
+    }
+
+    fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> {
+        let arg_tys = self.inner.args.iter().map(|i| {
+            i.typ.clone()
+        }).collect();
+        return Some(Type::FuncPtr(FuncPtr::new(self.loc.clone(), arg_tys, self.inner.ret_type.clone())));
+    }
+
+    fn collect_symbols(&self, _: &mut super::Scope) {}
 }

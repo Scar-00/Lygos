@@ -12,7 +12,7 @@ pub use scope::Scope;
 mod r#struct;
 pub use r#struct::{StructDef, StructField, EnumDef};
 mod function;
-pub use function::{Function, FunctionArg};
+pub use function::{Function, FunctionArg, ClosureExpr};
 mod r#impl;
 pub use r#impl::Impl;
 mod r#trait;

@@ -14,6 +14,7 @@ lazy_static! {
         map.insert("sizeof", crate::ast::intrinsics::macro_sizeof);
         map.insert("file", crate::ast::intrinsics::macro_file);
         map.insert("line", crate::ast::intrinsics::macro_line);
+        map.insert("impl_debug", crate::ast::intrinsics::impl_debug);
 
         map
     };

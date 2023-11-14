@@ -1,9 +1,12 @@
 use crate::ast::{AST, MacroCall, Scope, Generate};
 use crate::GenerationContext;
-use crate::log::{error_msg_label, ErrorLabel, token_expected, error_msg};
+use crate::log::{error_msg_label, ErrorLabel, token_expected, error_msg, error_msg_labels};
 use crate::Parser;
 use crate::types::{Type, BaseTypes, TokenType, Path, Pointer};
-use crate::lexer::{Tagged, Token, Loc};
+use crate::lexer::{Tagged, Token, Loc, Lexer};
+use crate::ast::symbol::{Symbol, Variable};
+
+use std::path::PathBuf;
 
 fn get_formatting_function(call_loc: &Loc, ty: Type, scope: &mut Scope, debug: bool) -> String {
     let name = ty.get_full_name();
@@ -170,10 +173,19 @@ pub fn macro_sizeof(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext
     if let AST::Mod(m) = parser.build_ast() {
         let ident = &m.body.body[0];
 
-        let ty = if let Some(ty) = Type::from_string(ident.get_value()) {
-            ty
+
+        let ty = if scope.has_symbol(ident.get_value()) {
+            if let Symbol::Variable(_) = scope.resolve_symbol(&Tagged::new(ident.loc().clone(), ident.get_value().clone())) {
+                if let Some(ty) = ident.get_type(scope, ctx) {
+                    ty
+                }else {
+                    Type::from_string(ident.get_value()).unwrap()
+                }
+            }else {
+                Type::from_string(ident.get_value()).unwrap()
+            }
         }else {
-            ident.get_type(scope, ctx).unwrap()
+            Type::from_string(ident.get_value()).unwrap()
         };
         let ty = scope.resolve_type(&ty, ctx);
         let size = ctx.module.get_data_layout().get_type_size_in_bits(&ty);
@@ -183,7 +195,7 @@ pub fn macro_sizeof(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext
     }
 }
 
-pub fn macro_file(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) -> llvm::ValueRef {
+pub fn macro_file(call: &MacroCall, _: &mut Scope, ctx: &GenerationContext) -> llvm::ValueRef {
     let file = call.loc().file.to_str().unwrap();
     return llvm::ConstantStruct::get(
             llvm::StructTypeRef::get(&ctx.ctx, &[ llvm::TypeRef::get_ptr(llvm::TypeRef::get_int(&ctx.ctx, 8), 0), llvm::TypeRef::get_int(&ctx.ctx, 64)], false).into(),
@@ -197,4 +209,88 @@ pub fn macro_file(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) 
 pub fn macro_line(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) -> llvm::ValueRef {
     todo!();
     //return llvm::ConstantInt::get(&llvm::TypeRef::get_int(&ctx.ctx, 64), call.);
+}
+
+pub fn impl_debug(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) -> llvm::ValueRef {
+    if call.args.len() != 1 {
+        token_expected(call.loc(), "incorrect number of arguments supplied", &format!("expected `1` argument, got `{}`", call.args.len()));
+    }
+
+    let ty = call.args[0][0].clone();
+    if ty.typ != TokenType::Id {
+        token_expected(&ty.loc, "unexpected token found", "expected identifier");
+    }
+    let strct = scope.get_struct(&Tagged::from(ty));
+
+    let mut func = format!("
+        impl Debug for {} {{
+            fn fmt_debug(&self, fmt: &mut Formatter) -> FormattingError {{
+                let mut debug = fmt.debug_struct(\"{}\");
+    ", strct.name.inner(), strct.name.inner());
+    for field in &strct.fields {
+        match &field.typ {
+            Type::Path(_) => func += format!("debug.field(\"{}\", format_args$(\"{{:?}}\", self.{}));\n", field.id.inner(), field.id.inner()).as_str(),
+            Type::Pointer(ptr) => {
+                if ptr.is_ref {
+                    func += format!("let tmp = self.{}; debug.field(\"{}\", format_args$(\"{{:?}}\", tmp));\n", field.id.inner(), field.id.inner()).as_str();
+                }else {
+                    func += format!("
+                        if self.{} != (:{})0 {{
+                            let tmp = self.{};
+                            debug.field(\"{}\", format_args$(\"{{:?}}\", *tmp));
+                        }} else {{
+                            debug.field(\"{}\", format_args$(\"{{}}\", \"NULL\"));
+                        }}
+                    ", field.id.inner(), field.typ.get_full_name(), field.id.inner(), field.id.inner(), field.id.inner()).as_str();
+                }
+            },
+            Type::Array(arr) => {
+                func += format!("
+                    if debug.has_fields {{
+                        fmt.write_str(\", \");
+                    }}
+                    fmt.write_str(\"{}: [\");
+                    for let mut i: u32 = 0 in i < (:u32){} {{
+                        let tmp = self.{};
+                        let s = format_(format_args$(\"{{:?}}\", tmp[i]));
+                        fmt.write_str(s.as_str());
+                        if (i + (:u32)1) < (:u32){} {{
+                            fmt.write_str(\", \");
+                        }}
+                        s.drop();
+                        i = i + (:u32)1;
+                    }}
+                    fmt.write_str(\"]\");
+                ", field.id.inner(), arr.elems, field.id.inner(), arr.elems).as_str();
+            },
+            _ => {
+                error_msg_labels(&format!("cannot format `{}`", field.id.inner()), &[
+                    ErrorLabel::from(&field.typ.get_loc(), "cannot format type"),
+                ]);
+            }
+        }
+    }
+    func += "
+                debug.finish();
+            }
+        }
+    ";
+
+    //println!("{}", func);
+    //panic!();
+
+    let mut lexer = Lexer::from(&func, &PathBuf::from("internal"));
+    let mut parser = Parser::new(&mut lexer);
+    let ast = parser.build_ast();
+    if let AST::Mod(mut m) = ast {
+        if let AST::Impl(imp) = &mut m.body.body[0] {
+            imp.gen_code(scope, ctx);
+        }else {
+            todo!();
+        }
+    }else {
+        todo!();
+    }
+
+    return llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 1), 0);
 }
