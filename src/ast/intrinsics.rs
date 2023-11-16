@@ -4,7 +4,7 @@ use crate::log::{error_msg_label, ErrorLabel, token_expected, error_msg, error_m
 use crate::Parser;
 use crate::types::{Type, BaseTypes, TokenType, Path, Pointer};
 use crate::lexer::{Tagged, Token, Loc, Lexer};
-use crate::ast::symbol::{Symbol, Variable};
+use crate::ast::symbol::Symbol;
 
 use std::path::PathBuf;
 
@@ -37,8 +37,8 @@ fn get_formatting_function(call_loc: &Loc, ty: Type, scope: &mut Scope, debug: b
         }
     }
     error_msg_label(
-            format!("cannot format type `{}` with the default formatter", name).as_str(),
-            ErrorLabel::from(call_loc, "not formattable")
+        format!("cannot format type `{}` with the default formatter", name).as_str(),
+        ErrorLabel::from(call_loc, "not formattable")
     );
 }
 
@@ -206,7 +206,7 @@ pub fn macro_file(call: &MacroCall, _: &mut Scope, ctx: &GenerationContext) -> l
         );
 }
 
-pub fn macro_line(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) -> llvm::ValueRef {
+pub fn macro_line(_call: &MacroCall, _scope: &mut Scope, _ctx: &GenerationContext) -> llvm::ValueRef {
     todo!();
     //return llvm::ConstantInt::get(&llvm::TypeRef::get_int(&ctx.ctx, 64), call.);
 }

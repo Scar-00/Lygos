@@ -471,6 +471,7 @@ impl Drop for Context {
     }
 }
 
+#[allow(dead_code)]
 pub struct Module<'a> {
     ctx: &'a Context,
     ptr: *mut (),
@@ -513,7 +514,7 @@ impl<'a> Drop for Module<'a> {
     }
 }
 
-
+#[allow(dead_code)]
 pub struct IRBuilder<'a> {
     ctx: &'a Context,
     ptr: *mut (),

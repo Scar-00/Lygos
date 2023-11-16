@@ -1,6 +1,6 @@
-use crate::types::{Type, FuncPtr};
+use crate::types::Type;
 use crate::lexer::{Tagged, Loc};
-use crate::ast::{AST, FunctionArg, Generate, symbol, symbol::Symbol, Block};
+use crate::ast::{AST, FunctionArg, Generate, symbol, symbol::Symbol};
 use crate::log::*;
 
 #[derive(Debug)]
@@ -181,8 +181,7 @@ impl Generate for MemberCallExpr {
             }
             return call.gen_code_internal(scope, ctx, Some(&self.obj), Some(obj));
         }
-        assert!(false, "fn should allways be of type `callexpr`");
-        None
+        unreachable!("fn should allways be of type `callexpr`");
     }
 
     fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<Type> {
@@ -223,17 +222,24 @@ impl Generate for ReturnExpr {
             return None;
         }
 
+        if scope.get_return_alloc().is_none() {
+            let loc = self.value.as_ref().unwrap().loc();
+            error_msg_label(
+                format!("invalid return type `{}` for function with return type `void`", self.value.as_ref().unwrap().get_type(scope, ctx).unwrap().get_full_name()).as_str(),
+                ErrorLabel::from(loc, "invalid return type")
+            );
+        }
+
+        if !ctx.current_function.is_null()  {
+            if let AST::InitializerList(list) = &mut **self.value.as_mut().unwrap() {
+                let ty = unsafe{ ctx.current_function.as_ref().unwrap() }.ret_type.clone();
+                list.set_typ(Some(ty));
+            }
+        }
+
         let mut value = self.value.as_mut().unwrap().gen_code(scope, ctx).unwrap();
         if self.value.as_ref().unwrap().should_load() {
             value = value.try_load(ctx.builder);
-        }
-
-        if scope.get_return_alloc().is_none() {
-            let loc = self.value.as_ref().unwrap().loc().clone();
-            error_msg_label(
-                format!("invalid return type `{}` for function with return type `void`", self.value.as_ref().unwrap().get_type(scope, ctx).unwrap().get_full_name()).as_str(),
-                ErrorLabel::new(loc.file.to_str().unwrap(), loc.start..loc.end, "invalid return type")
-            );
         }
 
         if !ctx.current_function.is_null()  {

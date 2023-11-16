@@ -15,7 +15,7 @@ pub struct Function {
     obj: Option<Impl>,
     args: Vec<FunctionArg>,
     body: Block,
-    ret_type: Type,
+    pub ret_type: Type,
     is_def: bool,
     is_var_arg: bool,
     pub ret_block: Option<llvm::BasicBlock>,

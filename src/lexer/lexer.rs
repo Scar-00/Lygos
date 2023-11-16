@@ -160,13 +160,6 @@ pub mod lexer {
                 self.advance();
             }
             let loc = Loc::new(self.file.clone(), start, self.line_index);
-            /*if KeyWords.contains_key(&value.as_str()) {
-                return Token::new(
-                    value.as_str(),
-                    KeyWords.get(&value.as_str()).unwrap().clone(),
-                    loc,
-                );
-            }*/
             if let Some(typ) = KeyWords.get(&value.as_str()) {
                 return Token::new(value.as_str(), typ.clone(), loc);
             }

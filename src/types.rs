@@ -71,6 +71,7 @@ pub enum TokenType {
     KwMacro,
     KwEnum,
     KwBreak,
+    KwContinue,
     //KwClaim,
 
     Eof,
@@ -99,6 +100,7 @@ lazy_static! {
         map.insert("macro", TokenType::KwMacro);
         map.insert("enum", TokenType::KwEnum);
         map.insert("break", TokenType::KwBreak);
+        map.insert("continue", TokenType::KwContinue);
         //map.insert("claim", TokenType::KwClaim);
 
         map

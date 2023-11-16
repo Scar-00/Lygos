@@ -26,6 +26,8 @@
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Linker/Linker.h>
 
+#include <utility>
+
 struct FFIString {
     char *data;
     size_t len;
@@ -82,6 +84,7 @@ llvm::Instruction::CastOps convert_ops(ExternCastOps op) {
         case PtrToInt: return llvm::Instruction::CastOps::PtrToInt;
         case AddrSpaceCast: return llvm::Instruction::CastOps::AddrSpaceCast;
     }
+    __builtin_unreachable();
 }
 
 extern "C" {

@@ -1,7 +1,7 @@
 use crate::lexer::{Tagged, Loc};
 use crate::ast::{AST, Generate};
 use crate::{types, types::{Type, Path}};
-use crate::ast::{symbol, symbol::Symbol, Block};
+use crate::ast::{symbol, symbol::Symbol};
 
 /*
  *  TODO(S):
@@ -234,7 +234,7 @@ impl Generate for TypeAlias {
     fn collect_symbols(&self, _: &mut super::Scope) {}
 }
 
-
+/*
 #[derive(Debug)]
 pub struct BlockExpr {
     loc: Loc,
@@ -312,4 +312,4 @@ impl Generate for ClaimExpr {
 
     fn collect_symbols(&self, _: &mut super::Scope) {
     }
-}
+}*/

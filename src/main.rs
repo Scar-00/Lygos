@@ -85,7 +85,7 @@ fn main() {
         };
     }
 
-    let res = if opt.emit_exe {
+    let _res = if opt.emit_exe {
         io::emit_exe(&out_file, &m, &target_machine)
     }else {
         io::emit_obj(&out_file, &m, &target_machine)

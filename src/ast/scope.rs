@@ -3,23 +3,23 @@ use crate::ast::{symbol, symbol::Symbol};
 use crate::lexer::Tagged;
 use crate::log::{error_msg_label, error_msg_labels, ErrorLabel};
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Scope {
     pub parent: Pointer<Scope>,
     symbol_table: HashMap<String, symbol::Symbol>,
-    known_symbols: HashSet<String>,
+    //known_symbols: HashSet<String>,
     return_value: Option<llvm::ValueRef>,
 }
 
 impl Scope {
     pub fn new() -> Self {
-        Self { parent: Pointer::new(), symbol_table: HashMap::new(), known_symbols: HashSet::new(), return_value: None }
+        Self { parent: Pointer::new(), symbol_table: HashMap::new(), /*known_symbols: HashSet::new(),*/ return_value: None }
     }
 
     pub fn with_parent(parent: &Scope) -> Self {
-        Self{ parent: Pointer::from(parent), symbol_table: HashMap::new(), known_symbols: HashSet::new(), return_value: None }
+        Self{ parent: Pointer::from(parent), symbol_table: HashMap::new(), /*known_symbols: HashSet::new(),*/ return_value: None }
     }
 
     pub fn set_parent(&mut self, parent: &Scope) {

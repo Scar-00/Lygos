@@ -976,6 +976,7 @@ pub mod parser {
                 TokenType::Char => AST::NumberLiteral(NumberLiteral::new(self.eat().clone().into(), NumberType::Char)),
                 TokenType::String => AST::StringLiteral(StringLiteral::new(self.eat().clone().into())),
                 TokenType::KwBreak => AST::BreakExpr(BreakExpr::new(self.eat().loc.clone())),
+                TokenType::KwContinue => todo!("implement parsing of `KwContinue`"),
                 TokenType::Pipe => self.parse_closure(),
                 _ => {
                     token_expected(&self.at().loc, format!("unexpected token found: `{:?}`", tok.typ).as_str(), "unexpected token found");

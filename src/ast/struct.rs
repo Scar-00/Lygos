@@ -1,6 +1,6 @@
 use crate::types::Type;
 use crate::lexer::{Tagged, Lexer, Token};
-use crate::ast::{Generate, AST};
+use crate::ast::Generate;
 use crate::ast::symbol::{Symbol, Struct, Enum};
 
 #[derive(Debug, Clone)]

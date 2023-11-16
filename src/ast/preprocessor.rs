@@ -1,4 +1,4 @@
-use crate::lexer::{Token, Loc, Tagged, Lexer};
+use crate::lexer::{Token, Tagged, Lexer};
 use crate::types::TokenType;
 use crate::log::{ErrorLabel, error_msg_label};
 use crate::ast::r#macro::{MacroArm, MacroArgType, MacroArg, Macro, MacroCall, IntrinsicMarcos};
