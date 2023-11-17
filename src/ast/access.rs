@@ -257,13 +257,14 @@ impl Generate for ResolutionExpr {
          *
          */
 
-        if let AST::CallExpr(_call) = &mut *self.member {
+        if let AST::CallExpr(call) = &mut *self.member {
             //let call_value = call.get_value();
             //if let AST::Id(name) = &mut *call.caller {
                 //let function = scope.get_struct(&tagged).get_function(call_value);
                 //name.id = Tagged::new(name.id.loc().clone(), function.name_mangeled.clone());
-            return self.member.gen_code(scope, ctx);
+                //return self.member.gen_code(scope, ctx);
             //}
+            return call.gen_code_internal(scope, ctx, Some((&self.obj, true)), None);
         }
 
         println!("{:#?}", self.member);
@@ -274,12 +275,14 @@ impl Generate for ResolutionExpr {
         );
     }
 
-    fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<crate::types::Type> {
+    fn get_type(&self, scope: &mut super::Scope, _: &crate::GenerationContext) -> Option<crate::types::Type> {
         let tagged = Tagged::new(self.obj.loc().clone(), self.obj.get_value());
         if scope.is_enum(&tagged) {
             return Some(Type::Path(Path::new(self.obj.loc().clone(), self.obj.get_value())));
         }
-        return self.member.get_type(scope, ctx);
+        let strct = scope.get_struct(&Tagged::new(self.obj.loc().clone(), self.obj.get_value()));
+        let func = strct.get_function(self.member.get_value());
+        return Some(func.ret_type.clone());
     }
 
     fn collect_symbols(&mut self, _scope: &mut super::Scope) {}

@@ -14,13 +14,22 @@ impl CallExpr {
         Self{ caller, args }
     }
 
-    fn gen_code_internal(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext, obj: Option<&AST>, obj_value: Option<llvm::ValueRef>) -> Option<llvm::ValueRef> {
-        if obj.is_some() || obj_value.is_some() {
+    pub fn gen_code_internal(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext, obj: Option<(&AST, bool)>, obj_value: Option<llvm::ValueRef>) -> Option<llvm::ValueRef> {
+        if obj_value.is_some() {
             assert!(obj.is_some() && obj_value.is_some(), "obj & obj_value need to both be defined");
         }
 
         let fn_name = Tagged::new(self.loc().clone(), self.caller.get_value());
-        let mut func: Option<llvm::Function> = ctx.module.get_function(&fn_name.inner()).map(|i| i.into());
+        let fully_qualified_name = match obj {
+            Some(obj) => {
+                let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
+                let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
+                let r#fn = strct.get_function(self.caller.get_value());
+                r#fn.name_mangeled.clone()
+            },
+            None => self.caller.get_value(),
+        };
+        let mut func: Option<llvm::Function> = ctx.module.get_function(&fully_qualified_name).map(|i| i.into());
 
         /*
          * FIXME(S):
@@ -31,8 +40,8 @@ impl CallExpr {
 
         let ty = match obj {
             Some(obj) => {
-                let struct_name = obj.get_type(scope, ctx).unwrap().get_name();
-                let strct = scope.get_struct(&Tagged::new(obj.loc().clone(), struct_name));
+                let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
+                let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
                 let r#fn = strct.get_function(fn_name.inner());
                 r#fn.ret_type.clone()
             }
@@ -60,8 +69,8 @@ impl CallExpr {
         }else {
             match obj {
                 Some(obj) => {
-                    let struct_name = obj.get_type(scope, ctx).unwrap().get_name();
-                    let strct = scope.get_struct(&Tagged::new(obj.loc().clone(), struct_name));
+                    let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
+                    let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
                     strct.get_function(fn_name.inner()).clone()
                 }
                 None => scope.get_function(&fn_name).clone(),
@@ -69,7 +78,7 @@ impl CallExpr {
         };
 
         if func.is_none() {
-            let mut args: Vec<llvm::TypeRef> = r#fn.args.iter().map(|t| scope.resolve_type(&t.typ, ctx)).collect();
+            let args: Vec<llvm::TypeRef> = r#fn.args.iter().map(|t| scope.resolve_type(&t.typ, ctx)).collect();
             let fn_type = llvm::FunctionTypeRef::get(scope.resolve_type(&r#fn.ret_type, ctx), &args, false);
             func = Some(llvm::Function::create(fn_type, &r#fn.name_mangeled, &ctx.module));
             /*error_msg_label(format!("unknown function `{}`", self.caller.get_value()).as_str(),
@@ -100,6 +109,7 @@ impl CallExpr {
             val
         }).collect();
 
+        let is_memeber = obj_value.is_some();
         if let Some(mut obj_value) = obj_value {
             let ty = &r#fn.args[0].typ;
             if let Type::Pointer(_) = ty {
@@ -112,7 +122,7 @@ impl CallExpr {
             args.insert(0, obj_value);
         }
 
-        let adder = if obj.is_some() { 1 } else { 0 };
+        let adder = if is_memeber { 1 } else { 0 };
         let mut iter = adder;
         while iter < r#fn.args.len() && iter < self.args.len() {
             let expected_type = &r#fn.args[iter].typ;
@@ -202,7 +212,7 @@ impl Generate for MemberCallExpr {
             return call.gen_code_internal(scope, ctx, Some(&self.obj), Some(obj));
         }*/
         if let AST::CallExpr(call) = &mut *self.r#fn {
-            return call.gen_code_internal(scope, ctx, Some(&self.obj), Some(obj));
+            return call.gen_code_internal(scope, ctx, Some((&self.obj, false)), Some(obj));
         }
         unreachable!("fn should allways be of type `callexpr`");
     }

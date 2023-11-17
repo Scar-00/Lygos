@@ -52,7 +52,8 @@ impl Generate for Impl {
             if let AST::Function(func) = func {
                 if let Some(strct) = scope.try_resolve_symbol(&self.typ) {
                     if let symbol::Symbol::Struct(strct) = strct {
-                        let func_sym: symbol::Function = func.into();
+                        let mut func_sym: symbol::Function = func.into();
+                        func_sym.name_mangeled = strct.name.inner().to_owned() + "_" + func_sym.name.inner();
                         strct.register_function(func_sym);
                         continue;
                     }
