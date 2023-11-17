@@ -150,7 +150,7 @@ impl Generate for MemberExpr {
         return Some(struct_fields[index].typ.clone());
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -210,7 +210,7 @@ impl Generate for AccessExpr {
         }
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -250,13 +250,20 @@ impl Generate for ResolutionExpr {
             );
         }
 
-        if let AST::CallExpr(call) = &mut *self.member {
-            let call_value = call.get_value();
-            if let AST::Id(name) = &mut *call.caller {
-                let function = scope.get_struct(&tagged).get_function(call_value);
-                name.id = Tagged::new(name.id.loc().clone(), function.name_mangeled.clone());
-                return self.member.gen_code(scope, ctx);
-            }
+        /*
+         *  TODO(S): somehow tell `call::gen_code_internal` that memeber is actually a static
+         *  function of an object and its signature thus needs to be looked up in the struct
+         *  instead of a global symbol
+         *
+         */
+
+        if let AST::CallExpr(_call) = &mut *self.member {
+            //let call_value = call.get_value();
+            //if let AST::Id(name) = &mut *call.caller {
+                //let function = scope.get_struct(&tagged).get_function(call_value);
+                //name.id = Tagged::new(name.id.loc().clone(), function.name_mangeled.clone());
+            return self.member.gen_code(scope, ctx);
+            //}
         }
 
         println!("{:#?}", self.member);
@@ -275,5 +282,5 @@ impl Generate for ResolutionExpr {
         return self.member.get_type(scope, ctx);
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }

@@ -55,5 +55,5 @@ impl Generate for AssignmentExpr {
         self.lhs.get_type(scope, ctx)
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }

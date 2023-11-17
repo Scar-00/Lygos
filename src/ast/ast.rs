@@ -215,7 +215,20 @@ pub mod ast {
          *
          */
 
-        fn collect_symbols(&self, _scope: &mut Scope) {}
+        fn collect_symbols(&mut self, scope: &mut Scope) {
+            match self {
+                AST::Mod(m) => m.collect_symbols(scope),
+                AST::TypeAlias(a) => a.collect_symbols(scope),
+                AST::StructDef(s) => s.collect_symbols(scope),
+                AST::EnumDef(v) => v.collect_symbols(scope),
+                AST::Function(v) => v.collect_symbols(scope),
+                AST::Impl(v) => v.collect_symbols(scope),
+                AST::Macro(_) => return,
+                AST::MacroCall(v) => v.collect_symbols(scope),
+                AST::Trait(v) => v.collect_symbols(scope),
+                _ => todo!("collect_symbols -> {:#?}", self),
+            }
+        }
     }
 
     pub trait Generate {
@@ -223,7 +236,7 @@ pub mod ast {
         fn get_value(&self) -> String;
         fn gen_code(&mut self, scope: &mut Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef>;
         fn get_type(&self, scope: &mut Scope, ctx: &crate::GenerationContext) -> Option<Type>;
-        fn collect_symbols(&self, scope: &mut Scope);
+        fn collect_symbols(&mut self, scope: &mut Scope);
     }
 
     #[derive(Debug)]

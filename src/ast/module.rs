@@ -24,6 +24,17 @@ impl Generate for Mod {
     fn get_value(&self) -> String { "root".to_owned() }
 
     fn gen_code(&mut self, _: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+        println!("{:#?}", self.body.scope);
+
+        for expr in &mut self.body.body {
+            expr.gen_code(&mut self.body.scope, ctx);
+        }
+        None
+    }
+
+    fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
+
+    fn collect_symbols(&mut self, _: &mut super::Scope) {
         let chars_ty = Pointer::new(Loc::new("internal".into(), 0, 1), Box::new(Type::Path(Path::new(Loc::new("internal".into(), 0, 1), "i8".to_owned()))), false, false);
         let len_ty = Path::new(Loc::new("internal".into(), 0, 1), "u64".to_owned());
         let fields = vec![
@@ -34,12 +45,9 @@ impl Generate for Mod {
         self.body.scope.add_symbol("str", Symbol::Struct(strct));
 
         for expr in &mut self.body.body {
-            expr.gen_code(&mut self.body.scope, ctx);
+            expr.collect_symbols(&mut self.body.scope);
         }
-        None
+
+        self.body.scope.check_structs();
     }
-
-    fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
-
-    fn collect_symbols(&self, _: &mut super::Scope) {}
 }

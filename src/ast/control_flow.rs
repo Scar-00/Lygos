@@ -93,7 +93,7 @@ impl Generate for IfStmt {
         None
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -155,7 +155,7 @@ impl Generate for ForStmt {
         None
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -195,5 +195,5 @@ impl Generate for BreakExpr {
         None
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }

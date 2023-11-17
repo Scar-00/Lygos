@@ -26,11 +26,12 @@ impl Generate for Trait {
     }
 
     fn gen_code(&mut self, scope: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
-        scope.add_symbol(self.id.inner().clone(), Symbol::Trait(symbol::Trait::new(Pointer::from(self))));
         None
     }
 
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, scope: &mut super::Scope) {
+        scope.add_symbol(self.id.inner().clone(), Symbol::Trait(symbol::Trait::new(Pointer::from(self))));
+    }
 }

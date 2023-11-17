@@ -80,7 +80,7 @@ impl Generate for UnaryExpr {
         }
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -157,5 +157,5 @@ impl Generate for CastExpr {
         return Some(self.target_type.clone());
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }

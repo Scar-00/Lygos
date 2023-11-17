@@ -69,11 +69,16 @@ pub struct Struct {
     functions: HashMap<String, Function>,
     traits: HashSet<String>,
     pub generated: Option<llvm::TypeRef>,
+    pub resolved: bool,
 }
 
 impl Struct {
     pub fn new(name: Tagged<String>, fields: Vec<crate::ast::StructField>) -> Self {
-        Self{ name, fields, functions: HashMap::new(), traits: HashSet::new(), generated: None }
+        Self{ name, fields, functions: HashMap::new(), traits: HashSet::new(), generated: None, resolved: true }
+    }
+
+    pub fn new_dummy(name: Tagged<String>) -> Self {
+        Self{ name, fields: Vec::new(), functions: HashMap::new(), traits: HashSet::new(), generated: None, resolved: true }
     }
 
     pub fn register_function(&mut self, func: Function) {
@@ -98,6 +103,12 @@ impl Struct {
 
     pub fn implements_trait<S: AsRef<str>>(&self, name: S) -> bool {
         return self.traits.contains(name.as_ref());
+    }
+
+    pub fn resolve(&mut self, name: Tagged<String>, fields: Vec<crate::ast::StructField>) {
+        self.resolved = true;
+        self.name = name;
+        self.fields = fields;
     }
 }
 

@@ -83,7 +83,5 @@ impl Generate for MacroCall {
         }
     }
 
-    fn collect_symbols(&self, _: &mut Scope) {
-
-    }
+    fn collect_symbols(&mut self, _: &mut Scope) {}
 }

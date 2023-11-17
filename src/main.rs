@@ -63,10 +63,10 @@ fn main() {
     let mut lexer = Lexer::from(&content, &file);
     let mut parser = Parser::new(&mut lexer);
     let mut ast = parser.build_ast();
-    //println!("{:#?}", &ast);
+    let mut scope = Scope::new();
+    ast.collect_symbols(&mut scope);
     let ctx = GenerationContext::new(&ctx, &m, &builder);
     ast.gen_code(&mut Scope::new(), &ctx);
-    //println!("{}", m.print());
 
     let out_file = PathBuf::from(&opt.output_file);
 

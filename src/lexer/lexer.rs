@@ -19,6 +19,12 @@ pub mod lexer {
         }
     }
 
+    impl Default for Loc {
+        fn default() -> Self {
+            Self{ file: PathBuf::new(), start: 0, end: 1 }
+        }
+    }
+
     impl std::ops::Add for Loc {
         type Output = Loc;
         fn add(self, rhs: Self) -> Self::Output {
