@@ -4,12 +4,17 @@ use std::path::PathBuf;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use ariadne::{sources, ReportKind, Report, Color, Source, Label};
+use ariadne::{sources, ReportKind, Report, Color, Source, Label, Config, CharSet};
 
 thread_local! {
     static SRC_FILES: RefCell<HashMap<PathBuf, String>> = {
         RefCell::new(HashMap::with_capacity(1))
     }
+}
+
+#[inline]
+fn get_config() -> Config {
+    Config::default().with_char_set(CharSet::Unicode).with_multiline_arrows(false)
 }
 
 /*fn get_file_content(path: PathBuf) -> String {
@@ -36,6 +41,7 @@ pub fn token_expected<S: AsRef<str>>(loc: &Loc, msg: S, info: S) -> ! {
             .with_message(info.as_ref())
             .with_color(Color::Red)
         )
+        .with_config(get_config())
         .finish()
         .eprint((path_str, Source::from(lazily_load_src_file(&loc.file.clone().into()))))
         .unwrap();
@@ -52,6 +58,7 @@ pub fn token_expected_help<S: AsRef<str>>(loc: &Loc, msg: S, info: S, help: S) -
             .with_color(Color::Red)
         )
         .with_help(help.as_ref())
+        .with_config(get_config())
         .finish()
         .eprint((path_str, Source::from(lazily_load_src_file(&loc.file.clone().into()))))
         .unwrap();
@@ -61,6 +68,7 @@ pub fn token_expected_help<S: AsRef<str>>(loc: &Loc, msg: S, info: S, help: S) -
 pub fn error_msg(path: &str, msg: &str) -> ! {
     Report::<(&str, std::ops::Range<usize>)>::build(ReportKind::Error, "", 0)
         .with_message(msg)
+        .with_config(get_config())
         .finish()
         .eprint((path, Source::from(lazily_load_src_file(&PathBuf::from(path)))))
         .unwrap();
@@ -96,6 +104,7 @@ pub fn error_msg_label(msg: &str, label: ErrorLabel) -> ! {
     Report::<(String, std::ops::Range<usize>)>::build(ReportKind::Error, "", 0)
         .with_message(msg)
         .with_label(Label::from(&label))
+        .with_config(get_config())
         .finish()
         .eprint((label.path.clone(), Source::from(lazily_load_src_file(&PathBuf::from(&label.path)))))
         .unwrap();
@@ -108,6 +117,7 @@ pub fn error_msg_label_info(msg: &str, label: ErrorLabel, info: &str) -> ! {
         .with_message(msg)
         .with_label(Label::from(&label))
         .with_note(info)
+        .with_config(get_config())
         .finish()
         .eprint((label.path.clone(), Source::from(lazily_load_src_file(&PathBuf::from(&label.path)))))
         .unwrap();
@@ -116,7 +126,6 @@ pub fn error_msg_label_info(msg: &str, label: ErrorLabel, info: &str) -> ! {
 }
 
 pub fn error_msg_labels(msg: &str, labels: &[ErrorLabel]) -> ! {
-
     let sources_vec: Vec<(String, String)> = labels.iter().map(|label| {
         return (label.path.to_owned(), lazily_load_src_file(&PathBuf::from(&label.path)));
     }).collect();
@@ -126,6 +135,7 @@ pub fn error_msg_labels(msg: &str, labels: &[ErrorLabel]) -> ! {
         builder.add_label(Label::from(label));
     }
     builder.with_message(msg)
+        .with_config(get_config())
         .finish()
         .eprint(sources(sources_vec.clone()))
         .unwrap();

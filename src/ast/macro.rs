@@ -75,7 +75,7 @@ impl Generate for MacroCall {
         return Some((IntrinsicMarcos.get(self.id.inner().as_str()).unwrap())(self, scope, ctx));
     }
 
-    fn get_type(&self, _scope: &mut Scope, _ctx: &crate::GenerationContext) -> Option<Type> {
+    fn get_type(&self, _: &mut Scope, _: &crate::GenerationContext) -> Option<Type> {
         match self.id.inner().as_str() {
             "format_args" => Some(Type::Path(Path::new(self.id.loc().clone(), "Arguments".into()))),
             "sizeof" => Some(Type::Path(Path::new(self.id.loc().clone(), "u64".into()))),
@@ -83,7 +83,5 @@ impl Generate for MacroCall {
         }
     }
 
-    fn collect_symbols(&self, _: &mut Scope) {
-
-    }
+    fn collect_symbols(&mut self, _: &mut Scope) {}
 }

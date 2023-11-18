@@ -75,5 +75,5 @@ impl Generate for BinaryExpr {
         }
     }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _scope: &mut super::Scope) {}
 }

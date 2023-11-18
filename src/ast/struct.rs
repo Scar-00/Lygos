@@ -53,15 +53,22 @@ impl Generate for StructDef {
         self.id.inner().to_string()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, _ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
-        let r#struct = Struct::new(self.id.clone(), self.fields.clone());
-        scope.add_symbol(self.id.inner(), Symbol::Struct(r#struct));
+    fn gen_code(&mut self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         return None;
     }
 
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, scope: &mut super::Scope) {
+        if let Some(strct) = scope.try_resolve_symbol(&self.id) {
+            if let Symbol::Struct(strct) = strct {
+                strct.resolve(self.id.clone(), self.fields.clone());
+            }
+        }else {
+            let r#struct = Struct::new(self.id.clone(), self.fields.clone());
+            scope.add_symbol(self.id.inner(), Symbol::Struct(r#struct));
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -86,12 +93,13 @@ impl Generate for EnumDef {
         self.id.inner().to_string()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, _ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
-        scope.add_symbol(self.id.inner().clone(), Symbol::Enum(Enum::new(self.id.clone(), self.variants.clone(), self.typ.clone())));
+    fn gen_code(&mut self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         return None;
     }
 
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, scope: &mut super::Scope) {
+        scope.add_symbol(self.id.inner().clone(), Symbol::Enum(Enum::new(self.id.clone(), self.variants.clone(), self.typ.clone())));
+    }
 }

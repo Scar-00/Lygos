@@ -64,6 +64,13 @@ impl Scope {
         return scope.symbol_table.get_mut(name.inner().as_ref()).unwrap();
     }
 
+    pub fn try_resolve_symbol<S: AsRef<str>>(&self, name: &Tagged<S>) -> Option<&mut Symbol> {
+        if self.has_symbol(name.inner()) {
+            return Some(self.resolve_symbol(name));
+        }
+        return None;
+    }
+
     pub fn get_struct<S: AsRef<str>>(&self, name: &Tagged<S>) -> &mut symbol::Struct {
         if !self.has_symbol(name.inner()) {
             error_msg_label(
@@ -71,13 +78,21 @@ impl Scope {
                 ErrorLabel::from(&name.loc(), "unknwon type")
             );
         }
-        if let Symbol::Struct(strct) = self.resolve_symbol(name) {
+        /*if let Symbol::Struct(strct) = self.resolve_symbol(name) {
             return strct;
         }else {
             error_msg_label(
                 format!("could not resolve struct type `{}`", name.inner().as_ref()).as_str(),
                 ErrorLabel::from(&name.loc(), "unknwon type")
             );
+        }*/
+        match self.resolve_symbol(name) {
+            Symbol::Struct(strct) => return strct,
+            Symbol::TypeAlias(alias) => return self.get_struct(&Tagged::new(alias.dest_type.get_loc(), alias.dest_type.get_full_name())),
+            _ => error_msg_label(
+                format!("could not resolve struct type `{}`", name.inner().as_ref()).as_str(),
+                ErrorLabel::from(&name.loc(), "unknwon type")
+            ),
         }
     }
 
@@ -225,5 +240,18 @@ impl Scope {
         }
 
         return unsafe{crate::types::containers::to_mut(self)}.parent.as_mut().resolve(id);
+    }
+
+    pub fn check_structs(&self) {
+        for entry in &self.symbol_table {
+            if let Symbol::Struct(strct) = entry.1 {
+                if !strct.resolved {
+                    error_msg_label(
+                        &format!("cannot resolve type `{}` in this scope", strct.name.inner()),
+                        ErrorLabel::from(strct.name.loc(), "unknown type")
+                    );
+                }
+            }
+        }
     }
 }

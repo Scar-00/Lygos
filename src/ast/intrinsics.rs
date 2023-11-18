@@ -25,7 +25,7 @@ fn get_formatting_function(call_loc: &Loc, ty: Type, scope: &mut Scope, debug: b
                     ErrorLabel::from(call_loc, "not formattable")
                 );
             }
-            return scope.get_struct(&tagged).get_function("fmt_debug").name_mangeled.clone();
+            return scope.get_struct(&tagged).get_function(call_loc, "fmt_debug").name_mangeled.clone();
         }else {
             if !scope.get_struct(&tagged).implements_trait("Display") {
                 error_msg_label(
@@ -33,7 +33,7 @@ fn get_formatting_function(call_loc: &Loc, ty: Type, scope: &mut Scope, debug: b
                     ErrorLabel::from(call_loc, "not formattable")
                 );
             }
-            return scope.get_struct(&tagged).get_function("fmt").name_mangeled.clone();
+            return scope.get_struct(&tagged).get_function(call_loc, "fmt").name_mangeled.clone();
         }
     }
     error_msg_label(
@@ -276,20 +276,18 @@ pub fn impl_debug(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) 
         }
     ";
 
-    //println!("{}", func);
-    //panic!();
-
     let mut lexer = Lexer::from(&func, &PathBuf::from("internal"));
     let mut parser = Parser::new(&mut lexer);
     let ast = parser.build_ast();
     if let AST::Mod(mut m) = ast {
         if let AST::Impl(imp) = &mut m.body.body[0] {
+            imp.collect_symbols(scope);
             imp.gen_code(scope, ctx);
         }else {
-            todo!();
+            unreachable!("[impl_debug]: Mod::body::body[0] can never be anything else then impl");
         }
     }else {
-        todo!();
+        unreachable!("[impl_debug]: ast can never be anything else then ast::Mod");
     }
 
     return llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 1), 0);

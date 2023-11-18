@@ -1,6 +1,6 @@
 use crate::types::Type;
 use crate::types::containers::Pointer;
-use crate::log::{error_msg_label, error_msg, ErrorLabel};
+use crate::log::{error_msg_label,  ErrorLabel};
 use crate::lexer::{Loc, Tagged};
 
 use llvm::ValueRef;
@@ -69,20 +69,28 @@ pub struct Struct {
     functions: HashMap<String, Function>,
     traits: HashSet<String>,
     pub generated: Option<llvm::TypeRef>,
+    pub resolved: bool,
 }
 
 impl Struct {
     pub fn new(name: Tagged<String>, fields: Vec<crate::ast::StructField>) -> Self {
-        Self{ name, fields, functions: HashMap::new(), traits: HashSet::new(), generated: None }
+        Self{ name, fields, functions: HashMap::new(), traits: HashSet::new(), generated: None, resolved: true }
+    }
+
+    pub fn new_dummy(name: Tagged<String>) -> Self {
+        Self{ name, fields: Vec::new(), functions: HashMap::new(), traits: HashSet::new(), generated: None, resolved: true }
     }
 
     pub fn register_function(&mut self, func: Function) {
         self.functions.insert(func.name.inner().clone(), func);
     }
 
-    pub fn get_function<S: AsRef<str>>(&mut self, id: S) -> &mut Function {
+    pub fn get_function<S: AsRef<str>>(&mut self, loc: &Loc, id: S) -> &mut Function {
         if !self.functions.contains_key(id.as_ref()) {
-            error_msg("", format!("unknown function `{}` in struct `{}`", id.as_ref(), self.name.inner()).as_str());
+            error_msg_label(
+                "unknown function",
+                ErrorLabel::from(loc, &format!("unknown function `{}` in struct `{}`", id.as_ref(), self.name.inner()).as_str())
+            );
         }
         return self.functions.get_mut(id.as_ref()).unwrap();
     }
@@ -98,6 +106,12 @@ impl Struct {
 
     pub fn implements_trait<S: AsRef<str>>(&self, name: S) -> bool {
         return self.traits.contains(name.as_ref());
+    }
+
+    pub fn resolve(&mut self, name: Tagged<String>, fields: Vec<crate::ast::StructField>) {
+        self.resolved = true;
+        self.name = name;
+        self.fields = fields;
     }
 }
 

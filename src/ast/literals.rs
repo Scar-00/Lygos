@@ -54,9 +54,7 @@ impl Generate for Identifier {
         return Some(var.typ.clone());
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {
-
-    }
+    fn collect_symbols(&mut self, _: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -99,7 +97,7 @@ impl Generate for StringLiteral {
         return Some(Type::Path(Path::new(self.value.loc().clone(), "str".into())));
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _: &mut super::Scope) {}
 }
 
 
@@ -162,7 +160,7 @@ impl Generate for NumberLiteral {
         }
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -198,7 +196,7 @@ impl Generate for StaticLiteral {
         return Some(self.typ.clone());
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _: &mut super::Scope) { /*TODO: what do i do here ??*/ }
 }
 
 #[derive(Debug)]
@@ -222,8 +220,7 @@ impl Generate for TypeAlias {
         self.id.inner().clone()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
-        scope.add_symbol(self.id.inner().clone(), Symbol::TypeAlias(symbol::TypeAlias::new(self.id.clone(), self.typ.clone())));
+    fn gen_code(&mut self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         None
     }
 
@@ -231,7 +228,9 @@ impl Generate for TypeAlias {
         return Some(self.typ.clone());
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, scope: &mut super::Scope) {
+        scope.add_symbol(self.id.inner().clone(), Symbol::TypeAlias(symbol::TypeAlias::new(self.id.clone(), self.typ.clone())));
+    }
 }
 
 /*

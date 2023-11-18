@@ -14,13 +14,22 @@ impl CallExpr {
         Self{ caller, args }
     }
 
-    fn gen_code_internal(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext, obj: Option<&AST>, obj_value: Option<llvm::ValueRef>) -> Option<llvm::ValueRef> {
-        if obj.is_some() || obj_value.is_some() {
+    pub fn gen_code_internal(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext, obj: Option<(&AST, bool)>, obj_value: Option<llvm::ValueRef>) -> Option<llvm::ValueRef> {
+        if obj_value.is_some() {
             assert!(obj.is_some() && obj_value.is_some(), "obj & obj_value need to both be defined");
         }
 
         let fn_name = Tagged::new(self.loc().clone(), self.caller.get_value());
-        let mut func: Option<llvm::Function> = ctx.module.get_function(&fn_name.inner()).map(|i| i.into());
+        let fully_qualified_name = match obj {
+            Some(obj) => {
+                let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
+                let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
+                let r#fn = strct.get_function(self.caller.loc(), self.caller.get_value());
+                r#fn.name_mangeled.clone()
+            },
+            None => self.caller.get_value(),
+        };
+        let mut func: Option<llvm::Function> = ctx.module.get_function(&fully_qualified_name).map(|i| i.into());
 
         /*
          * FIXME(S):
@@ -29,14 +38,24 @@ impl CallExpr {
          *
          */
 
-        let ty = if scope.has_symbol(fn_name.inner()) {
-            if let Symbol::Function(_) = scope.resolve_symbol(&fn_name) {
-                scope.get_function(&fn_name).ret_type.clone()
-            }else {
-                self.caller.get_type(scope, ctx).unwrap()
+        let ty = match obj {
+            Some(obj) => {
+                let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
+                let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
+                let r#fn = strct.get_function(fn_name.loc(), fn_name.inner());
+                r#fn.ret_type.clone()
             }
-        }else {
-            self.caller.get_type(scope, ctx).unwrap()
+            None => {
+                if scope.has_symbol(fn_name.inner()) {
+                    if let Symbol::Function(_) = scope.resolve_symbol(&fn_name) {
+                        scope.get_function(&fn_name).ret_type.clone()
+                    }else {
+                        self.caller.get_type(scope, ctx).unwrap()
+                    }
+                }else {
+                    self.caller.get_type(scope, ctx).unwrap()
+                }
+            }
         };
         let mut is_ptr = false;
         let r#fn = if let Type::FuncPtr(func_ptr) = ty {
@@ -48,13 +67,20 @@ impl CallExpr {
             }).collect();
             symbol::Function::new(Tagged::new(self.caller.loc().clone(), "".to_owned()), "".to_owned(), args, *func_ptr.ret_type, true)
         }else {
-            scope.get_function(&fn_name).clone()
+            match obj {
+                Some(obj) => {
+                    let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
+                    let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
+                    strct.get_function(fn_name.loc(), fn_name.inner()).clone()
+                }
+                None => scope.get_function(&fn_name).clone(),
+            }
         };
 
         if func.is_none() {
-            error_msg_label(format!("unknown function `{}`", self.caller.get_value()).as_str(),
-                            ErrorLabel::from(self.loc(), "unknown function")
-                            );
+            let args: Vec<llvm::TypeRef> = r#fn.args.iter().map(|t| scope.resolve_type(&t.typ, ctx)).collect();
+            let fn_type = llvm::FunctionTypeRef::get(scope.resolve_type(&r#fn.ret_type, ctx), &args, false);
+            func = Some(llvm::Function::create(fn_type, &r#fn.name_mangeled, &ctx.module));
         }
 
         if !is_ptr {
@@ -62,7 +88,7 @@ impl CallExpr {
             if !func.is_var_arg() && func.args().len() != (self.args.len() + if obj_value.is_some() { 1 } else { 0 }) {
                 error_msg_label(
                     format!("function `{}` expected `{}` args, but `{}` were supplied",
-                        fn_name.inner(), func.args().len(), self.args.len()
+                        fn_name.inner(), func.args().len(), self.args.len() + if obj_value.is_some() { 1 } else { 0 }
                     ).as_str(),
                     ErrorLabel::from(self.loc(), "incorrect number of arguments supplied"),
                 );
@@ -80,6 +106,7 @@ impl CallExpr {
             val
         }).collect();
 
+        let is_memeber = obj_value.is_some();
         if let Some(mut obj_value) = obj_value {
             let ty = &r#fn.args[0].typ;
             if let Type::Pointer(_) = ty {
@@ -92,7 +119,7 @@ impl CallExpr {
             args.insert(0, obj_value);
         }
 
-        let adder = if obj.is_some() { 1 } else { 0 };
+        let adder = if is_memeber { 1 } else { 0 };
         let mut iter = adder;
         while iter < r#fn.args.len() && iter < self.args.len() {
             let expected_type = &r#fn.args[iter].typ;
@@ -141,7 +168,7 @@ impl Generate for CallExpr {
         return Some(scope.get_function(&fn_name).ret_type.clone());
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {
+    fn collect_symbols(&mut self, _: &mut super::Scope) {
 
     }
 }
@@ -174,23 +201,27 @@ impl Generate for MemberCallExpr {
             obj = obj.try_load(ctx.builder);
         }
 
-        let struct_name = self.obj.get_type(scope, ctx).unwrap().get_name();
+        /*let struct_name = self.obj.get_type(scope, ctx).unwrap().get_name();
         if let AST::CallExpr(call) = &mut *self.r#fn {
             if let AST::Id(id) = &mut *call.caller {
                 *id.id.inner_mut() = struct_name + "_" + id.id.inner();
             }
             return call.gen_code_internal(scope, ctx, Some(&self.obj), Some(obj));
+        }*/
+        if let AST::CallExpr(call) = &mut *self.r#fn {
+            return call.gen_code_internal(scope, ctx, Some((&self.obj, false)), Some(obj));
         }
         unreachable!("fn should allways be of type `callexpr`");
     }
 
     fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<Type> {
-        return self.r#fn.get_type(scope, ctx);
+        let struct_name = self.obj.get_type(scope, ctx).unwrap().get_name();
+        let strct = scope.get_struct(&Tagged::new(self.obj.loc().clone(), struct_name));
+        let r#fn = strct.get_function(self.r#fn.loc(), self.r#fn.get_value());
+        return Some(r#fn.ret_type.clone());
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {
-
-    }
+    fn collect_symbols(&mut self, _: &mut super::Scope) {}
 }
 
 #[derive(Debug)]
@@ -255,5 +286,5 @@ impl Generate for ReturnExpr {
 
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _: &mut super::Scope) {}
 }

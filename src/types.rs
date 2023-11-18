@@ -107,9 +107,6 @@ lazy_static! {
     };
 }
 
-//TODO: implement 'claim' -> it signals, that the expression should be uses as the return value of
-//      the block it is contanined in (can only be applied to the last expression in the block)
-
 lazy_static! {
     pub static ref BaseTypes: Vec<&'static str> = {
         let mut vec = Vec::new();

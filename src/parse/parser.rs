@@ -820,7 +820,6 @@ pub mod parser {
                     for t in stream.0.into_iter().rev() {
                         self.tokens.insert(self.index, t);
                     }
-                    //dbg!(&self.tokens);
                     callee = self.parse_globals();
 
                     /*

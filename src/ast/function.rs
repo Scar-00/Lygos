@@ -37,6 +37,8 @@ impl Generate for Function {
     }
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+        //let current_insert = ctx.builder.get_insert_block();
+
         self.body.scope.set_parent(scope);
 
         if let Some(obj) = &self.obj {
@@ -53,9 +55,6 @@ impl Generate for Function {
 
             return llvm::Function::create(fn_type, &self.name_mangeled, &ctx.module);
         });
-
-        scope.add_symbol(self.name_mangeled.clone(), Symbol::Function(symbol::Function::new(self.id.clone(), self.name_mangeled.clone(), self.args.clone(), self.ret_type.clone(), self.is_def)));
-
 
         if !self.is_def {
             return None;
@@ -103,12 +102,15 @@ impl Generate for Function {
         }
 
         func.verify();
+        //ctx.builder.set_insert_point(&current_insert);
         None
     }
 
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
 
-    fn collect_symbols(&self, _scope: &mut super::Scope) {}
+    fn collect_symbols(&mut self, scope: &mut super::Scope) {
+        scope.add_symbol(self.name_mangeled.clone(), Symbol::Function(symbol::Function::new(self.id.clone(), self.name_mangeled.clone(), self.args.clone(), self.ret_type.clone(), self.is_def)));
+    }
 }
 
 impl Into<symbol::Function> for &Function {
@@ -170,5 +172,5 @@ impl Generate for ClosureExpr {
         return Some(Type::FuncPtr(FuncPtr::new(self.loc.clone(), arg_tys, self.inner.ret_type.clone())));
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {}
+    fn collect_symbols(&mut self, _: &mut super::Scope) {}
 }

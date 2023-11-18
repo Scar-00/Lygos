@@ -187,7 +187,6 @@ impl Preprocessor {
                 }
             }
         });
-        //dbg!(&tokens);
         //if tokens.last().unwrap().typ == TokenType::Semi {
         //    tokens.remove(tokens.len() - 1);
         //}
