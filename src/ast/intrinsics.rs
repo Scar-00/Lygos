@@ -25,7 +25,7 @@ fn get_formatting_function(call_loc: &Loc, ty: Type, scope: &mut Scope, debug: b
                     ErrorLabel::from(call_loc, "not formattable")
                 );
             }
-            return scope.get_struct(&tagged).get_function("fmt_debug").name_mangeled.clone();
+            return scope.get_struct(&tagged).get_function(call_loc, "fmt_debug").name_mangeled.clone();
         }else {
             if !scope.get_struct(&tagged).implements_trait("Display") {
                 error_msg_label(
@@ -33,7 +33,7 @@ fn get_formatting_function(call_loc: &Loc, ty: Type, scope: &mut Scope, debug: b
                     ErrorLabel::from(call_loc, "not formattable")
                 );
             }
-            return scope.get_struct(&tagged).get_function("fmt").name_mangeled.clone();
+            return scope.get_struct(&tagged).get_function(call_loc, "fmt").name_mangeled.clone();
         }
     }
     error_msg_label(

@@ -24,7 +24,7 @@ impl CallExpr {
             Some(obj) => {
                 let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
                 let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
-                let r#fn = strct.get_function(self.caller.get_value());
+                let r#fn = strct.get_function(self.caller.loc(), self.caller.get_value());
                 r#fn.name_mangeled.clone()
             },
             None => self.caller.get_value(),
@@ -42,7 +42,7 @@ impl CallExpr {
             Some(obj) => {
                 let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
                 let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
-                let r#fn = strct.get_function(fn_name.inner());
+                let r#fn = strct.get_function(fn_name.loc(), fn_name.inner());
                 r#fn.ret_type.clone()
             }
             None => {
@@ -71,7 +71,7 @@ impl CallExpr {
                 Some(obj) => {
                     let struct_name = if obj.1 { obj.0.get_value() } else { obj.0.get_type(scope, ctx).unwrap().get_name() };
                     let strct = scope.get_struct(&Tagged::new(obj.0.loc().clone(), struct_name));
-                    strct.get_function(fn_name.inner()).clone()
+                    strct.get_function(fn_name.loc(), fn_name.inner()).clone()
                 }
                 None => scope.get_function(&fn_name).clone(),
             }
@@ -81,9 +81,6 @@ impl CallExpr {
             let args: Vec<llvm::TypeRef> = r#fn.args.iter().map(|t| scope.resolve_type(&t.typ, ctx)).collect();
             let fn_type = llvm::FunctionTypeRef::get(scope.resolve_type(&r#fn.ret_type, ctx), &args, false);
             func = Some(llvm::Function::create(fn_type, &r#fn.name_mangeled, &ctx.module));
-            /*error_msg_label(format!("unknown function `{}`", self.caller.get_value()).as_str(),
-                            ErrorLabel::from(self.loc(), "unknown function")
-                            );*/
         }
 
         if !is_ptr {
@@ -220,10 +217,8 @@ impl Generate for MemberCallExpr {
     fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<Type> {
         let struct_name = self.obj.get_type(scope, ctx).unwrap().get_name();
         let strct = scope.get_struct(&Tagged::new(self.obj.loc().clone(), struct_name));
-        let r#fn = strct.get_function(self.r#fn.get_value());
+        let r#fn = strct.get_function(self.r#fn.loc(), self.r#fn.get_value());
         return Some(r#fn.ret_type.clone());
-        //return self.r#fn.get_type(scope, ctx); //INFO: maybe change this to
-                                               //obj.get_type().get_func(name).ret_type
     }
 
     fn collect_symbols(&mut self, _: &mut super::Scope) {}

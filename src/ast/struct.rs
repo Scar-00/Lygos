@@ -53,7 +53,7 @@ impl Generate for StructDef {
         self.id.inner().to_string()
     }
 
-    fn gen_code(&mut self, _scope: &mut super::Scope, _ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+    fn gen_code(&mut self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         return None;
     }
 
@@ -93,7 +93,7 @@ impl Generate for EnumDef {
         self.id.inner().to_string()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, _ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+    fn gen_code(&mut self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         return None;
     }
 

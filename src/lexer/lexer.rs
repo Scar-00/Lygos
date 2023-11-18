@@ -21,7 +21,7 @@ pub mod lexer {
 
     impl Default for Loc {
         fn default() -> Self {
-            Self{ file: PathBuf::new(), start: 0, end: 1 }
+            Self{ file: PathBuf::from("internal"), start: 0, end: 1 }
         }
     }
 

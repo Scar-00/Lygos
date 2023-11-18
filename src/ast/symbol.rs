@@ -1,6 +1,6 @@
 use crate::types::Type;
 use crate::types::containers::Pointer;
-use crate::log::{error_msg_label, error_msg, ErrorLabel};
+use crate::log::{error_msg_label,  ErrorLabel};
 use crate::lexer::{Loc, Tagged};
 
 use llvm::ValueRef;
@@ -85,9 +85,12 @@ impl Struct {
         self.functions.insert(func.name.inner().clone(), func);
     }
 
-    pub fn get_function<S: AsRef<str>>(&mut self, id: S) -> &mut Function {
+    pub fn get_function<S: AsRef<str>>(&mut self, loc: &Loc, id: S) -> &mut Function {
         if !self.functions.contains_key(id.as_ref()) {
-            error_msg("", format!("unknown function `{}` in struct `{}`", id.as_ref(), self.name.inner()).as_str());
+            error_msg_label(
+                "unknown function",
+                ErrorLabel::from(loc, &format!("unknown function `{}` in struct `{}`", id.as_ref(), self.name.inner()).as_str())
+            );
         }
         return self.functions.get_mut(id.as_ref()).unwrap();
     }

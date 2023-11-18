@@ -24,8 +24,6 @@ impl Generate for Mod {
     fn get_value(&self) -> String { "root".to_owned() }
 
     fn gen_code(&mut self, _: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
-        println!("{:#?}", self.body.scope);
-
         for expr in &mut self.body.body {
             expr.gen_code(&mut self.body.scope, ctx);
         }

@@ -25,7 +25,7 @@ impl Generate for Trait {
         self.id.inner().to_string()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+    fn gen_code(&mut self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         None
     }
 

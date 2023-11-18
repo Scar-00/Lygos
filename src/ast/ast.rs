@@ -207,11 +207,7 @@ pub mod ast {
         }
 
         /*
-         *  TODO:
-         *  do symbol collection before the actual compilation, so the order of decleration does
-         *  not matter
-         *
-         *  individual symbols should not depend on any other declaration in the module tree
+         *  FIXME(S): find a soulution for static literals and trait collection
          *
          */
 
@@ -226,6 +222,7 @@ pub mod ast {
                 AST::Macro(_) => return,
                 AST::MacroCall(v) => v.collect_symbols(scope),
                 AST::Trait(v) => v.collect_symbols(scope),
+                AST::StaticLiteral(_) => return,
                 _ => todo!("collect_symbols -> {:#?}", self),
             }
         }

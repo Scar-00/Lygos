@@ -188,6 +188,7 @@ impl Generate for StaticLiteral {
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let v = self.value.as_mut().map(|v| v.gen_code(scope, ctx).unwrap());
         let glob = llvm::GlobalVariable::new(ctx.module, &scope.resolve_type(&self.typ, ctx), v.as_ref(), false);
+        scope.add_symbol(self.id.inner().clone(), Symbol::Variable(symbol::Variable::new(self.id.loc().clone(), self.typ.clone(), glob.clone().into(), true)));
         return Some(glob.into());
     }
 
@@ -219,7 +220,7 @@ impl Generate for TypeAlias {
         self.id.inner().clone()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+    fn gen_code(&mut self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         None
     }
 

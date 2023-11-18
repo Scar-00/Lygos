@@ -280,8 +280,8 @@ impl Generate for ResolutionExpr {
         if scope.is_enum(&tagged) {
             return Some(Type::Path(Path::new(self.obj.loc().clone(), self.obj.get_value())));
         }
-        let strct = scope.get_struct(&Tagged::new(self.obj.loc().clone(), self.obj.get_value()));
-        let func = strct.get_function(self.member.get_value());
+        let strct = scope.get_struct(&tagged);
+        let func = strct.get_function(self.member.loc(), self.member.get_value());
         return Some(func.ret_type.clone());
     }
 
