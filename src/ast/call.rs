@@ -128,7 +128,7 @@ impl CallExpr {
                     format!("invalid argument type for function `{}`", fn_name.inner()).as_str(),
                     &[
                         ErrorLabel::from(self.args[iter - adder].loc(), format!("provided value has type: `{}`", self.args[iter - adder].get_type(scope, ctx).unwrap().get_full_name()).as_str()),
-                        ErrorLabel::from(r#fn.args[iter - adder].id.loc(), format!("expected type is: `{}`", expected_type.get_full_name()).as_str()),
+                        ErrorLabel::from(r#fn.args[iter].id.loc(), format!("expected type is: `{}`", expected_type.get_full_name()).as_str()),
                     ]
                 );
             }
