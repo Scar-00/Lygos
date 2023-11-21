@@ -100,14 +100,18 @@ impl Generate for MemberExpr {
             obj = alloc;
         }
 
-        /*
-         *  FIXME(S):
-         *  check the validity of the acces, forbid access of pointer value without it begin
-         *  derefferenced first
-         *
-         */
-
         if let Ok(ty) = obj.get_type().get_base() {
+            if ty.get_base().is_ok() {
+                /*
+                *  TODO(S): provide a better error & help message this does not cut it XD
+                *
+                */
+                error_msg_label_info(
+                    "invalid level of indirection",
+                    ErrorLabel::from(self.loc(), &format!("cannot access member of type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name())),
+                    "try dereferencing using `->` instead of `.`"
+                );
+            }
             return Some(ctx.builder.create_struct_gep(&ty, &obj, index as u32));
         }
         error_msg_label(
