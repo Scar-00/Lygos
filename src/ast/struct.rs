@@ -2,6 +2,7 @@ use crate::types::Type;
 use crate::lexer::{Tagged, Lexer, Token};
 use crate::ast::Generate;
 use crate::ast::symbol::{Symbol, Struct, Enum};
+use crate::log::{error_msg_label_info, ErrorLabel};
 
 #[derive(Debug, Clone)]
 pub struct StructField {
@@ -42,6 +43,10 @@ impl StructDef {
         let mut lexer = Lexer::from(&formatting_function, &"internal".into());
         return lexer.get_tokens();
     }
+
+    fn is_self_referential(&self) -> Option<StructField> {
+        None
+    }
 }
 
 impl Generate for StructDef {
@@ -60,6 +65,14 @@ impl Generate for StructDef {
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> { None }
 
     fn collect_symbols(&mut self, scope: &mut super::Scope) {
+        if let Some(field) = self.is_self_referential() {
+            error_msg_label_info(
+                "cannot self referece",
+                ErrorLabel::from(field.id.loc(), "referece to `Self`"),
+                "try adding a `*` or `&`"
+            );
+        }
+
         if let Some(strct) = scope.try_resolve_symbol(&self.id) {
             if let Symbol::Struct(strct) = strct {
                 strct.resolve(self.id.clone(), self.fields.clone());

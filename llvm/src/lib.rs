@@ -103,6 +103,8 @@ extern "C" {
     fn FunctionTypeGet(ret: *mut (), params: *mut *mut (), len: usize, is_var_arg: bool) -> *mut ();
 
     fn StructTypeCreate(elems: *mut *mut (), len: usize, name: CStr, packed: bool) -> *mut ();
+    fn StructTypeCreateOpaque(ctx: *mut (), name: CStr) -> *mut ();
+    fn StructTypeSetBody(ty: *mut (), elems: *mut *mut (), len: usize, packed: bool);
     fn StructTypeGet(ctx: *mut (), elems: *mut *mut (), elems_count: usize, packed: bool) -> *mut ();
 
     fn ArrayTypeGet(ty: *mut (), num_elems: usize) -> *mut ();
@@ -277,13 +279,22 @@ impl Into<TypeRef> for FunctionTypeRef {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StructTypeRef(*mut ());
 
 impl StructTypeRef {
     pub fn create(name: &str, elems: &[TypeRef], packed: bool) -> Self {
         let mut elems: Vec<*mut ()> = elems.iter().map(|p| p.0).collect();
         return Self{ 0: unsafe{ StructTypeCreate(elems.as_mut_ptr(), elems.len(), to_cstr!(name), packed) } };
+    }
+
+    pub fn create_opaque(ctx: &Context, name: &str) -> Self {
+        return Self{ 0: unsafe{ StructTypeCreateOpaque(ctx.ptr, to_cstr!(name)) } };
+    }
+
+    pub fn set_body(&mut self, elems: &[TypeRef], packed: bool) {
+        let mut elems: Vec<*mut ()> = elems.iter().map(|p| p.0).collect();
+        unsafe{ StructTypeSetBody(self.0,elems.as_mut_ptr(), elems.len(), packed ) };
     }
 
     pub fn get(ctx: &Context, elems: &[TypeRef], packed: bool) -> Self {

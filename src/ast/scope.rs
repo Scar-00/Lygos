@@ -181,8 +181,11 @@ impl Scope {
                             if let Some(ty) = &s.generated {
                                 return ty.clone();
                             }else {
+                                let mut ty = llvm::StructTypeRef::create_opaque(ctx.ctx, s.name.inner());
+                                s.generated = Some(Into::<llvm::TypeRef>::into(ty.clone()));
                                 let fields: Vec<llvm::TypeRef> = s.fields.iter().map(|f| self.resolve_type(&f.typ, ctx)).collect();
-                                let ty: llvm::TypeRef = llvm::StructTypeRef::create(&s.name.inner(), &fields, false).into();
+                                ty.set_body(&fields, false);
+                                let ty = Into::<llvm::TypeRef>::into(ty);
                                 s.generated = Some(ty.clone());
                                 return ty;
                             }

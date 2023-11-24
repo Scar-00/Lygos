@@ -341,6 +341,18 @@ extern "C" {
         return llvm::StructType::create(elems_arr, name, packed);
     }
 
+    llvm::StructType *StructTypeCreateOpaque(llvm::LLVMContext *ctx,  const char *name) {
+        return llvm::StructType::create(*ctx, name);
+    }
+
+    void StructTypeSetBody(llvm::StructType *self, llvm::Type **elems, size_t elems_count, bool packed) {
+        std::vector<llvm::Type*> elems_arr;
+        for(size_t i = 0; i < elems_count; i++) {
+            elems_arr.push_back(elems[i]);
+        }
+        self->setBody(elems_arr, packed);
+    }
+
     llvm::StructType *StructTypeGet(llvm::LLVMContext *ctx, llvm::Type **elems, size_t elems_count, bool packed) {
         std::vector<llvm::Type*> elems_arr;
         for(size_t i = 0; i < elems_count; i++) {

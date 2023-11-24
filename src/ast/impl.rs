@@ -32,10 +32,7 @@ impl Generate for Impl {
          *
          */
 
-        if let Some(t) = &self.trat {
-            let strct = scope.get_struct(&self.typ);
-            strct.register_trait_impl(t);
-        }
+
 
         for func in &mut self.body.body {
             if let AST::Function(func) = func {
@@ -50,20 +47,26 @@ impl Generate for Impl {
     fn collect_symbols(&mut self, scope: &mut super::Scope) {
         for func in &mut self.body.body {
             if let AST::Function(func) = func {
-                if let Some(strct) = scope.try_resolve_symbol(&self.typ) {
+                let strct = if let Some(strct) = scope.try_resolve_symbol(&self.typ) {
                     if let symbol::Symbol::Struct(strct) = strct {
-                        let mut func_sym: symbol::Function = func.into();
-                        func_sym.name_mangeled = strct.name.inner().to_owned() + "_" + func_sym.name.inner();
-                        strct.register_function(func_sym);
-                        continue;
+                        strct
+                    }else {
+                        scope.add_symbol(self.typ.inner(), symbol::Symbol::Struct(symbol::Struct::new_dummy(self.typ.clone())));
+                        scope.get_struct(&self.typ)
                     }
-                }
-                scope.add_symbol(self.typ.inner(), symbol::Symbol::Struct(symbol::Struct::new_dummy(self.typ.clone())));
-                let strct = scope.get_struct(&self.typ);
+                }else {
+                    scope.add_symbol(self.typ.inner(), symbol::Symbol::Struct(symbol::Struct::new_dummy(self.typ.clone())));
+                    scope.get_struct(&self.typ)
+                };
+
                 let mut func_sym: symbol::Function = func.into();
                 func_sym.name_mangeled = strct.name.inner().to_owned() + "_" + func_sym.name.inner();
                 strct.register_function(func_sym);
             }
+        }
+        if let Some(t) = &self.trat {
+            let strct = scope.get_struct(&self.typ);
+            strct.register_trait_impl(t);
         }
     }
 }
