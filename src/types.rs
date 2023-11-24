@@ -72,6 +72,7 @@ pub enum TokenType {
     KwEnum,
     KwBreak,
     KwContinue,
+    //KwDefer
     //KwClaim,
 
     Eof,

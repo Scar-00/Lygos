@@ -145,6 +145,7 @@ extern "C" {
 
     fn PrintValue(value: *mut ()) -> FFIString;
     fn ValueType(value: *mut ()) -> *mut ();
+    fn ValueIsConstatnt(value: *mut ()) -> bool;
 
     fn PrintType(ty: *mut ()) -> FFIString;
 
@@ -258,6 +259,10 @@ impl ValueRef {
             return builder.create_load(&self.get_type().get_base().expect("cannot happen"), &self);
         }
         return ValueRef::new(self.0.clone());
+    }
+
+    pub fn is_constant(&self) -> bool {
+        return unsafe{ ValueIsConstatnt(self.0) };
     }
 }
 

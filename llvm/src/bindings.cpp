@@ -485,6 +485,10 @@ extern "C" {
         return value->getType();
     }
 
+    bool ValueIsConstatnt(llvm::Value *value) {
+        return llvm::isa<llvm::Constant>(value);
+    }
+
     FFIString PrintType(llvm::Type *type) {
         std::string s;
         llvm::raw_string_ostream os(s);
