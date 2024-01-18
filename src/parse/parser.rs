@@ -43,7 +43,7 @@ pub mod parser {
             parser.tokens.push(Token::new(
                 "",
                 TokenType::Eof,
-                Loc::new(PathBuf::new(), 0, 0),
+                Loc::default(),
             ));
             return parser;
         }
@@ -1046,8 +1046,8 @@ pub mod parser {
                 return Type::FuncPtr(FuncPtr::new(Loc::new(self.peek(-1).loc.file.clone(), start, self.peek(-1).loc.end), params, ret_type));
             }
 
-            let mut path = self.eat().value.clone();
             let path_loc = self.at().loc.clone();
+            let mut path = self.eat().value.clone();
             if path == "Self" {
                 if self.current_impl.is_null() && self.current_trait.is_null() {
                     token_expected(&path_loc, "unexpected token found", "encountered type `Self` outside of `impl` or `trait` block");

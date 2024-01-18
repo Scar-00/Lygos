@@ -44,8 +44,15 @@ impl StructDef {
         return lexer.get_tokens();
     }
 
-    fn is_self_referential(&self) -> Option<StructField> {
-        None
+    fn is_self_referential(&self) -> Option<&StructField> {
+        for field in &self.fields {
+            if let Type::Path(ty) = &field.typ {
+                if ty.path == *self.id.inner() {
+                    return Some(field);
+                }
+            }
+        }
+        return None;
     }
 }
 
@@ -68,7 +75,7 @@ impl Generate for StructDef {
         if let Some(field) = self.is_self_referential() {
             error_msg_label_info(
                 "cannot self referece",
-                ErrorLabel::from(field.id.loc(), "referece to `Self`"),
+                ErrorLabel::from(&field.typ.get_loc(), "referece to `Self`"),
                 "try adding a `*` or `&`"
             );
         }

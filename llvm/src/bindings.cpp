@@ -147,9 +147,19 @@ extern "C" {
         builder->SetInsertPoint(bb);
     }
 
-    //fn BuilderGetInsertBlock(builder: *mut ()) -> *mut ();
     llvm::BasicBlock *BuilderGetInsertBlock(llvm::IRBuilder<> *builder) {
         return builder->GetInsertBlock();
+    }
+
+    //todo release this
+    llvm::IRBuilderBase::InsertPoint *BuilderSaveInsertPoint(llvm::IRBuilder<> *builder) {
+        auto ip = (llvm::IRBuilderBase::InsertPoint *)malloc(sizeof(llvm::IRBuilderBase::InsertPoint));
+        *ip = builder->saveIP();
+        return ip;
+    }
+
+    void BuilderRestoreInsertPoint(llvm::IRBuilder<> *builder, llvm::IRBuilderBase::InsertPoint *ip) {
+        builder->restoreIP(*ip);
     }
 
     llvm::Value *BuilderCreateLoad(llvm::IRBuilder<> *builder, llvm::Type *ty, llvm::Value *value) {
@@ -406,7 +416,6 @@ extern "C" {
         if(v == nullptr) {
             v = llvm::ConstantAggregateZero::get(ty);
         }
-
         return new llvm::GlobalVariable(*mod, ty, is_constant, llvm::GlobalVariable::InternalLinkage, value);
     }
 

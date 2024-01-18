@@ -38,7 +38,6 @@ impl Generate for Function {
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         //let current_insert = ctx.builder.get_insert_block();
-
         self.body.scope.set_parent(scope);
 
         if let Some(obj) = &self.obj {
@@ -102,7 +101,6 @@ impl Generate for Function {
         }
 
         func.verify();
-        //ctx.builder.set_insert_point(&current_insert);
         None
     }
 

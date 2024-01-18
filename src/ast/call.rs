@@ -33,7 +33,7 @@ impl CallExpr {
 
         /*
          * FIXME(S):
-         * the mecanism for getting type of a function is flawed, breaks when calling memeber
+         * the mecanism for getting type of a function is flawed, breaks when calling member
          * function of type which is located in another struct -> foo.bar.baz();
          *
          */

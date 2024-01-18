@@ -26,14 +26,6 @@ impl Generate for Impl {
     }
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
-        /*
-         *  TODO(S): create dummy struct in the scope and see if the struct &| trait are resolved
-         *  at a later stage -> this can then be moved into `collect_symbols`
-         *
-         */
-
-
-
         for func in &mut self.body.body {
             if let AST::Function(func) = func {
                 func.gen_code(scope, ctx);

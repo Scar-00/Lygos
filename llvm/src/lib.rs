@@ -59,10 +59,13 @@ extern "C" {
     fn ModuleGetFunction(module: *mut (), name: CStr) -> *mut ();
 
     fn CreateIRBuilder(ctx: *mut ()) -> *mut ();
-    fn DestroyIRBuilder(_: *mut ());
+    fn DestroyIRBuilder(builder: *mut ());
 
     fn BuilderSetInsertPoint(builder: *mut (), bb: *mut ());
     fn BuilderGetInsertBlock(builder: *mut ()) -> *mut ();
+    fn BuilderSaveInsertPoint(builder: *mut ()) -> *mut ();
+    fn BuilderRestoreInsertPoint(builder: *mut (), ip: *mut ());
+
     fn BuilderCreateStore(builder: *mut (), value: *mut (), ptr: *mut ()) -> *mut ();
     fn BuilderCreateLoad(builder: *mut (), ty: *mut (), value: *mut ()) -> *mut ();
     fn BuilderCreateAlloca(builder: *mut (), ty: *mut (), array_size: *mut ()) -> *mut ();
@@ -453,6 +456,15 @@ impl BasicBlock {
 
 #[repr(C)]
 #[derive(Debug)]
+pub struct InsertPoint(*mut ());
+
+impl Drop for InsertPoint {
+    fn drop(&mut self) {
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
 pub struct TargetRef(*mut ());
 #[repr(C)]
 #[derive(Debug)]
@@ -545,8 +557,16 @@ impl<'a> IRBuilder<'a> {
         unsafe{ BuilderSetInsertPoint(self.ptr, bb.0) };
     }
 
-    pub fn get_insert_block(&self, ) -> BasicBlock {
+    pub fn get_insert_block(&self) -> BasicBlock {
         BasicBlock{ 0: unsafe{ BuilderGetInsertBlock(self.ptr) } }
+    }
+
+    pub fn save_ip(&self) -> InsertPoint {
+        return InsertPoint{ 0: unsafe{ BuilderSaveInsertPoint(self.ptr) } };
+    }
+
+    pub fn restore_ip(&self, ip: &InsertPoint) {
+        unsafe{ BuilderRestoreInsertPoint(self.ptr, ip.0) };
     }
 
     pub fn create_store(&self, value: &ValueRef, ptr: &ValueRef) -> ValueRef {

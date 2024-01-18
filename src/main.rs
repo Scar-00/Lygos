@@ -13,8 +13,12 @@ use parse::Parser;
 use ast::Generate;
 use ast::Scope;
 
-//#[global_allocator]
-//static AREANA_ALLOCATOR: types::containers::Allocator = types::containers::Allocator{ buffer: None };
+/*
+ *  TODO(S): automatically promote int type values if it can be safely done: allow u32 -> u64 |
+ *  forbid u32 -> u16.
+ *  Convert constant int types to whatever is requested by the operation its used in
+ *
+ */
 
 pub struct GenerationContext<'a> {
     pub ctx: &'a llvm::Context,

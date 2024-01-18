@@ -95,6 +95,40 @@ impl CastExpr {
     }
 }
 
+/*pub fn allow_implicit_cast(src: &llvm::TypeRef, dest: &llvm::TypeRef) -> bool {
+    if src.is_int_ty() && dest.is_int_ty() {
+        if src.get_int_bit_width() > dest.get_int_bit_width() {
+            return false;
+        }
+        return true;
+    }
+    if src.is_pointer_ty() && dest.is_pointer_ty() {
+        return true;
+    }
+    /*if src.is_pointer_ty() && dest.is_int_ty() {
+        return llvm::CastOps::PtrToInt;
+    }*/
+    if src.is_float_ty() && dest.is_float_ty() {
+        if src.is_float_ty() && dest.is_double_ty() {
+            return true;
+        }
+    }
+    if src.is_int_ty() {
+        if dest.is_float_ty() {
+            return true;
+        }
+        /*if dest.is_pointer_ty() {
+            return llvm::CastOps::IntToPtr;
+        }*/
+    }
+    /*if src.is_struct_ty() && dest.is_struct_ty() {
+        if src.can_losslessly_bit_cast_to(dest) {
+            return true;
+        }
+    }*/
+    return false;
+}*/
+
 pub fn get_cast_ops(src_loc: &Loc, src: &llvm::TypeRef, dest_loc: &Loc, dest: &llvm::TypeRef) -> llvm::CastOps {
     if src.is_int_ty() && dest.is_int_ty() {
         if src.get_int_bit_width() > dest.get_int_bit_width() {

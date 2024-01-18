@@ -1,6 +1,7 @@
 use crate::lexer::{Tagged, Loc};
 use crate::ast::{AST, Generate};
 use crate::types::Type;
+use crate::log::{ErrorLabel, error_msg_label, error_msg_labels};
 
 pub type Initializer = (Option<Tagged<String>>, AST);
 
@@ -41,18 +42,24 @@ impl Generate for InitializerListExpr {
                     value = value.try_load(ctx.builder);
                 }
                 if let Some(name) = &init.0 {
-                    let mut idx = 0;
-                    for (j, field) in strct.fields.iter().enumerate() {
-                        if *field.id.inner() == *name.inner() {
-                            idx = j;
-                        }
-                    }
+                    let idx = if let Some(i) = strct.fields.iter().position(|f| *f.id.inner() == *name.inner()) {
+                        i
+                    }else {
+                        error_msg_labels(
+                            "invalid struct member", &[
+                                ErrorLabel::from(name.loc(), &format!("unkown field `{}` in struct `{}`", name.inner(), strct.name.inner())),
+                                ErrorLabel::from(strct.name.loc(), "struct decalared here"),
+                            ]);
+                    };
 
                     let gep = ctx.builder.create_struct_gep(ty, &tmp, idx as u32);
                     ctx.builder.create_store(&value, &gep);
                 }else {
-                    //TODO(S): check if i is still a valid index for the give struct
-                    //issue a warining if the initializer is incomplete
+                    if i >= strct.fields.len() {
+                        error_msg_label("out of bounds struct index", ErrorLabel::from(init.1.loc(), "out of bounds"));
+                    }
+
+                    //TODO(S): issue a warining if the initializer is incomplete
                     let gep = ctx.builder.create_struct_gep(ty, &tmp, i as u32);
                     //TODO(S): typecheck here
                     ctx.builder.create_store(&value, &gep);

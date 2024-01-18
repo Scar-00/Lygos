@@ -103,7 +103,7 @@ impl Generate for MemberExpr {
         if let Ok(ty) = obj.get_type().get_base() {
             if ty.get_base().is_ok() {
                 /*
-                *  TODO(S): provide a better error & help message this does not cut it XD
+                *  FIXME(S): provide a better error & help message this does not cut it XD
                 *
                 */
                 error_msg_label_info(
@@ -254,20 +254,7 @@ impl Generate for ResolutionExpr {
             );
         }
 
-        /*
-         *  TODO(S): somehow tell `call::gen_code_internal` that memeber is actually a static
-         *  function of an object and its signature thus needs to be looked up in the struct
-         *  instead of a global symbol
-         *
-         */
-
         if let AST::CallExpr(call) = &mut *self.member {
-            //let call_value = call.get_value();
-            //if let AST::Id(name) = &mut *call.caller {
-                //let function = scope.get_struct(&tagged).get_function(call_value);
-                //name.id = Tagged::new(name.id.loc().clone(), function.name_mangeled.clone());
-                //return self.member.gen_code(scope, ctx);
-            //}
             return call.gen_code_internal(scope, ctx, Some((&self.obj, true)), None);
         }
 
