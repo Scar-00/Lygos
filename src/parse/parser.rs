@@ -449,7 +449,7 @@ pub mod parser {
             match &self.eat().value.as_str() {
                 &"include" => {
                     let tok = self.eat().clone();
-                    let stream = self.preprocessor.expand_include(Tagged::new(tok.loc, tok.value));
+                    let stream = self.preprocessor.expand_include(IncludeFile{ path: Tagged::new(tok.loc, tok.value.into()), is_default_include_path: false });
                     let len = self.index - start_index;
                     self.index = start_index;
                     for _ in 0..len {

@@ -34,5 +34,5 @@ mod initializers;
 pub use initializers::{Initializer, InitializerListExpr};
 pub mod symbol;
 mod preprocessor;
-pub use preprocessor::{Preprocessor, TokenStream};
+pub use preprocessor::{Preprocessor, TokenStream, IncludeFile};
 mod intrinsics;

@@ -4,7 +4,7 @@ use crate::log::{ErrorLabel, error_msg_label};
 use crate::ast::r#macro::{MacroArm, MacroArgType, MacroArg, Macro, MacroCall, IntrinsicMarcos};
 
 use std::collections::{HashMap, BTreeSet};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 use path_absolutize::*;
@@ -46,6 +46,11 @@ impl DependencyGraph {
     pub fn is_file_included<S: AsRef<str>>(&self, file: S) -> bool {
         return self.included_files.contains(file.as_ref());
     }
+}
+
+pub struct IncludeFile {
+    pub path: Tagged<PathBuf>,
+    pub is_default_include_path: bool,
 }
 
 pub struct TokenStream(pub Vec<Token>);
@@ -193,9 +198,10 @@ impl Preprocessor {
         return Some(TokenStream{ 0: tokens });
     }
 
-    pub fn expand_include<P: AsRef<Path>>(&mut self, file: Tagged<P>) -> TokenStream {
-        let base = &file.loc().file.parent().unwrap().absolutize().unwrap();
-        let joined = base.join(file.inner());
+    pub fn expand_include(&mut self, file: IncludeFile) -> TokenStream {
+        //println!("exe_path -> {:?}", std::env::current_exe().unwrap());
+        let base = &file.path.loc().file.parent().unwrap().absolutize().unwrap();
+        let joined = base.join(file.path.inner());
         let file_path = joined.absolutize().unwrap();
 
         if self.dependencies.is_file_included(file_path.to_str().unwrap()) {
@@ -205,8 +211,8 @@ impl Preprocessor {
         let content = match crate::io::read_file(&file_path) {
             Ok(c) => c,
             Err(_) => crate::log::error_msg_label(
-                format!("could not read file `{}`", file.inner().as_ref().to_str().unwrap()).as_str(),
-                ErrorLabel::from(file.loc(), "could not read file"),
+                format!("could not read file `{}`", file.path.inner().to_str().unwrap()).as_str(),
+                ErrorLabel::from(file.path.loc(), "could not read file"),
             ),
         };
 
