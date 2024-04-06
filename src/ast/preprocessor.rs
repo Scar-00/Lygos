@@ -4,7 +4,7 @@ use crate::log::{ErrorLabel, error_msg_label};
 use crate::ast::r#macro::{MacroArm, MacroArgType, MacroArg, Macro, MacroCall, IntrinsicMarcos};
 
 use std::collections::{HashMap, BTreeSet};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use path_absolutize::*;
@@ -199,10 +199,16 @@ impl Preprocessor {
     }
 
     pub fn expand_include(&mut self, file: IncludeFile) -> TokenStream {
-        //println!("exe_path -> {:?}", std::env::current_exe().unwrap());
-        let base = &file.path.loc().file.parent().unwrap().absolutize().unwrap();
-        let joined = base.join(file.path.inner());
-        let file_path = joined.absolutize().unwrap();
+        let file_path = if !file.is_default_include_path {
+            let base = &file.path.loc().file.parent().unwrap().absolutize().unwrap();
+            let joined = base.join(file.path.inner());
+            joined.absolutize().unwrap().to_path_buf()
+        }else {
+            let default_path = std::env::current_exe().unwrap();
+            let default_path = default_path.parent().unwrap().parent().unwrap().parent().unwrap();
+            let joined = default_path.join(file.path.inner());
+            joined
+        };
 
         if self.dependencies.is_file_included(file_path.to_str().unwrap()) {
             return TokenStream{ 0: Vec::new() };
@@ -222,33 +228,14 @@ impl Preprocessor {
     }
 }
 
-/*
-mod comptime {
+/*mod comptime {
     use crate::lexer::Tagged;
-    use crate::types::Type as RuntimeType;
     use crate::ast::AST;
 
-    pub enum Type {
-        None,
-        Type(RuntimeType),
-        Expr(AST),
-    }
-
-    pub struct FunctionArg {
-        id: Tagged<String>,
-        ty: Type,
-    }
 
     pub struct Function {
         id: Tagged<String>,
-        params: Vec<FunctionArg>,
-        ret_type: Type,
+        params: Vec<AST>,
+        ret_type: AST,
     }
-
-    impl Function {
-        pub fn new(id: Tagged<String>, params: Vec<FunctionArg>, ret_type: Type) -> Function {
-            return Self{ id, params, ret_type };
-        }
-    }
-}
-*/
+}*/

@@ -448,8 +448,12 @@ pub mod parser {
             self.eat();
             match &self.eat().value.as_str() {
                 &"include" => {
-                    let tok = self.eat().clone();
-                    let stream = self.preprocessor.expand_include(IncludeFile{ path: Tagged::new(tok.loc, tok.value.into()), is_default_include_path: false });
+                    let is_def = if self.at().typ == TokenType::AngleLeft { true } else { false };
+                    let tok = if is_def { self.eat(); self.eat().clone() } else { self.eat().clone() };
+                    if is_def && self.eat().typ != TokenType::AngleRight {
+                        token_expected(&tok.loc, "unexpected token found", "expected closing bracked `>`");
+                    }
+                    let stream = self.preprocessor.expand_include(IncludeFile{ path: Tagged::new(tok.loc, tok.value.into()), is_default_include_path: is_def });
                     let len = self.index - start_index;
                     self.index = start_index;
                     for _ in 0..len {

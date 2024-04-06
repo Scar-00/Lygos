@@ -4,7 +4,10 @@ fn main() {
     println!("cargo:rustc-link-lib=LLVM-16");
     println!("cargo:rustc-link-lib=stdc++");
     let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    println!("cargo:rustc-link-search=native={}", std::path::Path::new(&dir).join("src").display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        std::path::Path::new(&dir).join("src").display()
+    );
 
     cc::Build::new()
         .file("src/bindings.cpp")

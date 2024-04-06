@@ -43,7 +43,7 @@ impl Generate for VarDecl {
                     crate::ast::get_cast_ops(value.loc(), &val.get_type(), &ty.get_loc(), &typ), &val, &typ);
             }
 
-            let ty = if let Some(ty) = &self.typ { ty.clone() }else { value.get_type(scope, ctx).unwrap() };
+            let ty = if let Some(ty) = &self.typ { ty.clone() } else { value.get_type(scope, ctx).unwrap() };
 
             let alloca = ctx.builder.create_alloca(&val.get_type(), None);
             ctx.builder.create_store(&val, &alloca);

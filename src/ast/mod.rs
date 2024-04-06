@@ -1,7 +1,7 @@
 mod access;
 pub use access::{MemberExpr, AccessExpr, ResolutionExpr};
 mod ast;
-pub use ast::ast::{AST, Exprs, Generate, Block};
+pub use ast::ast::{AST, Generate, Block};
 mod module;
 pub use module::Mod;
 mod scope;
@@ -34,5 +34,5 @@ mod initializers;
 pub use initializers::{Initializer, InitializerListExpr};
 pub mod symbol;
 mod preprocessor;
-pub use preprocessor::{Preprocessor, TokenStream, IncludeFile};
+pub use preprocessor::{Preprocessor, IncludeFile};
 mod intrinsics;
