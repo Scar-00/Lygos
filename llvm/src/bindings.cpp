@@ -435,6 +435,14 @@ extern "C" {
         return llvm::ConstantStruct::get(ty, constants_arr);
     }
 
+    llvm::Constant *GetConstantArr(llvm::ArrayType *type, llvm::Constant **values, size_t values_len) {
+        std::vector<llvm::Constant*> constants_arr;
+        for(size_t i = 0; i < values_len; i++) {
+            constants_arr.push_back(values[i]);
+        }
+        return llvm::ConstantArray::get(type, constants_arr);
+    }
+
     void InitAll(void) {
         llvm::InitializeAllTargetInfos();
         llvm::InitializeAllTargets();
