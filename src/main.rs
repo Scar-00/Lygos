@@ -58,7 +58,6 @@ fn main() {
     let target_machine = llvm::create_target_machine(target, tt.as_str(), cpu, features);
 
     let ctx = llvm::Context::new();
-    ctx.set_opaque_pointers(false);
     let mut m = llvm::Module::new(opt.input_file.unwrap().as_str(), &ctx);
     m.set_data_layout(&target_machine);
     m.set_target_triple(&tt);

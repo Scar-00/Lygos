@@ -44,7 +44,6 @@ pub enum CastOps {
 extern "C" {
     fn CreateContext() -> *mut ();
     fn DestroyContext(_: *mut ());
-    fn ContextSetOpaquePointers(ctx: *mut (), enable: bool);
     fn GetTargetTriiple() -> FFIString;
     fn LookUpTarget(tt: CStr) -> *mut ();
     fn CreateTargetMachine(target: *mut (), tt: CStr, cpu: CStr, features: CStr) -> *mut ();
@@ -127,7 +126,10 @@ extern "C" {
     fn TypeCanLossLesslyBitCast(ty: *mut (), dest: *mut ()) -> bool;
     fn TypeGetIntBitWidth(ty: *mut ()) -> u32;
 
-    fn TypeTryGetPointerBase(ty: *mut ()) -> *mut ();
+    fn TypeGetContainedType(ty: *mut (), index: usize) -> *mut ();
+    fn TypeGetNumContainedTypes(ty: *mut ()) -> usize;
+
+    //fn TypeTryGetPointerBase(ty: *mut ()) -> *mut ();
 
     fn FunctionCreate(typ: *mut (), name: CStr, module: *mut ()) -> *mut ();
     fn FunctionGetArgs(func: *mut ()) -> FuncArgs;
@@ -228,12 +230,20 @@ impl TypeRef {
         return unsafe{ TypeGetIntBitWidth(self.0) };
     }
 
-    pub fn get_base(&self) -> Result<TypeRef, LoadingError> {
+    /*pub fn get_base(&self) -> Result<TypeRef, LoadingError> {
         let res = unsafe{ TypeTryGetPointerBase(self.0) };
         if res.is_null() {
             return Err(LoadingError::InvalidLevelOfIndirection);
         }
         return Ok(TypeRef::new(res));
+    }*/
+
+    pub fn get_num_contained_types(&self) -> usize {
+        return unsafe{ TypeGetNumContainedTypes(self.0) };
+    }
+
+    pub fn get_contained_type(&self, index: usize) -> Self {
+        return Self{ 0: unsafe{ TypeGetContainedType(self.0, index) } };
     }
 
     pub fn print(&self) -> String {
@@ -257,11 +267,18 @@ impl ValueRef {
         return TypeRef::new(unsafe{ ValueType(self.0) });
     }
 
-    pub fn try_load(&self, builder: &IRBuilder) -> ValueRef {
+    /*pub fn try_load(&self, builder: &IRBuilder) -> ValueRef {
         if self.get_type().is_pointer_ty() {
             return builder.create_load(&self.get_type().get_base().expect("cannot happen"), &self);
         }
         return ValueRef::new(self.0.clone());
+    }*/
+
+    pub fn try_load(&self, base: &TypeRef, builder: &IRBuilder) -> ValueRef {
+        //if self.get_type().is_pointer_ty() {
+            return builder.create_load(base, &self);
+        //}
+        //return ValueRef::new(self.0.clone());
     }
 
     pub fn is_constant(&self) -> bool {
@@ -486,10 +503,6 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         return Self{ ptr: unsafe { CreateContext() } };
-    }
-
-    pub fn set_opaque_pointers(&self, enable: bool) {
-        unsafe{ ContextSetOpaquePointers(self.ptr, enable) };
     }
 }
 

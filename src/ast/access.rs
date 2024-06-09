@@ -45,14 +45,19 @@ impl Generate for MemberExpr {
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
+        let obj_ty = self.obj.get_type(scope, ctx).unwrap();
         if self.deref {
-            obj = obj.try_load(ctx.builder);
+            if let Some(base) = obj_ty.get_base() {
+                obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
+            }else {
+
+            }
         }
 
-        let obj_ty = self.obj.get_type(scope, ctx).unwrap();
         if let Type::Pointer(ptr) = &obj_ty {
             if ptr.is_ref {
-                obj = obj.try_load(ctx.builder);
+                let base = &ptr.typ;
+                obj = obj.try_load(&scope.resolve_type(base, ctx), ctx.builder);
             }
         }
         let type_name = obj_ty.get_name();
@@ -100,8 +105,20 @@ impl Generate for MemberExpr {
             obj = alloc;
         }
 
-        if let Ok(ty) = obj.get_type().get_base() {
-            if ty.get_base().is_ok() {
+        let base: Option<Type> = if self.deref {
+            let tmp = self.obj.get_type(scope, ctx).unwrap();
+            tmp.get_base().cloned()
+        }else if let Type::Pointer(ptr) = &obj_ty {
+            if ptr.is_ref {
+                Some(*ptr.typ.clone())
+            }else {
+                Some(obj_ty)
+            }
+        }else {
+            Some(obj_ty)
+        };
+        if let Some(ty) = base {
+            if ty.get_base().is_some() {
                 /*
                 *  FIXME(S): provide a better error & help message this does not cut it XD
                 *
@@ -112,8 +129,9 @@ impl Generate for MemberExpr {
                     "try dereferencing using `->` instead of `.`"
                 );
             }
-            return Some(ctx.builder.create_struct_gep(&ty, &obj, index as u32));
+            return Some(ctx.builder.create_struct_gep(&scope.resolve_type(&ty, ctx), &obj, index as u32));
         }
+
         error_msg_label(
             "cannot deref value type",
             ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str())
@@ -180,30 +198,35 @@ impl Generate for AccessExpr {
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
-        if !crate::types::is_array_type(&obj.get_type()) {
+        /*if !crate::types::is_array_type(&obj.get_type()) {
             obj = obj.try_load(ctx.builder);
-        }
+        }*/
+        /*if let Type::Array(arr) = self.obj.get_type(scope, ctx).unwrap() {
+            obj = obj.try_load(&scope.resolve_type(&arr.typ, ctx), ctx.builder);
+        }*/
 
         let mut index = self.index.gen_code(scope, ctx).unwrap();
         if self.index.should_load() {
-            index = index.try_load(ctx.builder);
+            let base = self.index.get_type(scope, ctx).unwrap();
+            index = index.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         let zero = llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 64), 0);
 
         let mut idx_list = vec![index];
-        if crate::types::is_array_type(&obj.get_type()) {
+        if let Type::Array(_) = self.obj.get_type(scope, ctx).unwrap() {
             idx_list.insert(0, zero);
         }
 
-        if let Ok(ty) = obj.get_type().get_base() {
-            return Some(ctx.builder.create_gep(&ty, &obj, &idx_list, true));
-        }
+        //if let Some(ty) = self.obj.get_type(scope, ctx).unwrap().get_base() {
+        let base = self.obj.get_type(scope, ctx).unwrap();
+        return Some(ctx.builder.create_gep(&scope.resolve_type(&base, ctx), &obj, &idx_list, true));
+        //}
 
-        error_msg_label(
-            "cannot deref value type",
-            ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str())
-        );
+        //error_msg_label(
+        //    "cannot deref value type",
+        //    ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str())
+        //);
     }
 
     fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<crate::types::Type> {

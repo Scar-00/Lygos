@@ -35,7 +35,8 @@ impl Generate for AssignmentExpr {
         let mut value = self.rhs.gen_code(scope, ctx).unwrap();
 
         if self.rhs.should_load() {
-            value = value.try_load(ctx.builder);
+            let base = self.rhs.get_type(scope, ctx).unwrap();
+            value = value.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         let lhs_ty = self.lhs.get_type(scope, ctx).unwrap();

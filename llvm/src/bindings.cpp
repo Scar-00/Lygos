@@ -89,16 +89,18 @@ llvm::Instruction::CastOps convert_ops(ExternCastOps op) {
 
 extern "C" {
     llvm::LLVMContext *CreateContext() {
-        return new llvm::LLVMContext();
+        auto ctx = new llvm::LLVMContext();
+        ctx->setOpaquePointers(true);
+        return ctx;
     }
 
     void DestroyContext(llvm::LLVMContext *ctx) {
         delete ctx;
     }
 
-    void ContextSetOpaquePointers(llvm::LLVMContext *ctx, bool enable) {
-        ctx->setOpaquePointers(enable);
-    }
+    //void ContextSetOpaquePointers(llvm::LLVMContext *ctx, bool enable) {
+    //    ctx->setOpaquePointers(enable);
+    //}
 
     llvm::Module *CreateModule(const char *name, llvm::LLVMContext *ctx) {
         return new llvm::Module(name, *ctx);
@@ -328,12 +330,20 @@ extern "C" {
         return ty->getIntegerBitWidth();
     }
 
+    llvm::Type *TypeGetContainedType(llvm::Type *ty, size_t index) {
+        return ty->getContainedType(index);
+    }
+
+    size_t TypeGetNumContainedTypes(llvm::Type *ty) {
+        return ty->getNumContainedTypes();
+    }
+
     //this returns NULL on failure
-    llvm::Type *TypeTryGetPointerBase(llvm::Type *ty) {
+    /*llvm::Type *TypeTryGetPointerBase(llvm::Type *ty) {
         if(!ty->isPointerTy())
             return nullptr;
         return ((llvm::PointerType *)ty)->getContainedType(0);
-    }
+    }*/
 
     llvm::FunctionType *FunctionTypeGet(llvm::Type *ret, llvm::Type **params, size_t params_len, bool is_var_arg) {
         std::vector<llvm::Type*> params_arr;

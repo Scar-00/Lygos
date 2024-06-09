@@ -32,9 +32,10 @@ impl Generate for VarDecl {
                 list.set_typ(self.typ.clone());
             }
 
+            let value_ty = value.get_type(scope, ctx).unwrap();
             let mut val = value.gen_code(scope, ctx).unwrap();
             if value.should_load() {
-                val = val.try_load(ctx.builder);
+                val = val.try_load(&scope.resolve_type(&value_ty, ctx), ctx.builder);
             }
 
             if let Some(ty) = &self.typ {

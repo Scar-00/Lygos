@@ -80,14 +80,18 @@ fn format_(args: Arguments) -> String {
     let buf = String::new(len);
     let formatter = Formatter::new(&buf);
 
+
     let idx = 0;
     for let i: u32 = 0 in i < args.arg_count {
         let arg = args.args[i];
         formatter.write_str(args.pieces[i]);
         arg.fmt(&formatter);
+        exit(11);
         i = i + (:u32)1;
         idx = idx + 1;
     }
+
+
     if ((:u32)idx) < args.pieces_count {
         formatter.write_str(args.pieces[idx]);
     }
@@ -179,6 +183,7 @@ fn ptr_fmt(v: &i8, fmt: &Formatter) -> FormattingError {
 
 impl Display for str {
     fn fmt(&self, fmt: &Formatter) -> FormattingError {
+        exit(10);
         return fmt.write_str(self);
     }
 }

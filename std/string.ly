@@ -8,11 +8,14 @@ struct T {
 
 impl str {
     fn len(&self) -> u64 {
-        return ((:*T)&self).len;
+        return ((:*T)&self)->len;
+        //let t = ((:*T)&self);
+        //return (:u64)0;
     }
 
     fn as_ptr(&self) -> *i8 {
-        return ((:*T)&self).data;
+        return ((:*T)&self)->data;
+        //return (:*i8)0;
     }
 
     fn from_parts(ptr: *i8, len: u64) -> Self {

@@ -36,7 +36,8 @@ impl Generate for UnaryExpr {
                 return Some(if let AST::MemberExpr(_) = *self.obj {
                     obj
                 }else {
-                    ctx.builder.create_load(&obj.get_type().get_base().unwrap(), &obj)
+                    let base = self.obj.get_type(scope, ctx).unwrap();
+                    ctx.builder.create_load(&scope.resolve_type(&base, ctx), &obj)
                 });
             },
             "&" => {
@@ -50,7 +51,8 @@ impl Generate for UnaryExpr {
             },
             "!" => {
                 if self.obj.should_load() {
-                    obj = obj.try_load(ctx.builder);
+                    let base = self.obj.get_type(scope, ctx).unwrap();
+                    obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
                 }
                 let zero = llvm::ConstantInt::get(&obj.get_type(), 0);
                 let ne = ctx.builder.create_icmp_ne(&obj, &zero);
@@ -178,7 +180,8 @@ impl Generate for CastExpr {
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         if self.obj.should_load() {
-            obj = obj.try_load(ctx.builder);
+            let base = self.obj.get_type(scope, ctx).unwrap();
+            obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         let dest_ty = scope.resolve_type(&self.target_type, ctx);

@@ -108,9 +108,11 @@ pub fn macro_format(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext
             );
         });
 
-        let arg = ctx.builder.create_alloca(&scope.resolve_type(&arg_ty, ctx), None);
+        let arg_ty = scope.resolve_type(&arg_ty, ctx);
+        let arg = ctx.builder.create_alloca(&arg_ty, None);
         let type_ptr = Type::Pointer(Pointer::new(Loc::new("internal".into(), 0, 1), Box::new(arg_idents[i].get_type(scope, ctx).unwrap()), false, false));
-        let value = ctx.builder.create_alloca(&scope.resolve_type(&type_ptr, ctx), None);
+        let value_ty = scope.resolve_type(&type_ptr, ctx);
+        let value = ctx.builder.create_alloca(&value_ty, None);
 
         if !value_val.get_type().is_pointer_ty() {
             let alloc = ctx.builder.create_alloca(&value_val.get_type(), None);
@@ -120,24 +122,24 @@ pub fn macro_format(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext
 
         ctx.builder.create_store(&value_val, &value);
 
-        let value_gep = ctx.builder.create_struct_gep(&arg.get_type().get_base().unwrap(), &arg, 0);
-        let load = ctx.builder.create_load(&value.get_type().get_base().unwrap(), &value);
-        ctx.builder.create_store(&ctx.builder.create_pointer_cast(&load, &llvm::TypeRef::get_ptr(llvm::TypeRef::get_int(ctx.ctx, 8), 0)), &value_gep);
+        let value_gep = ctx.builder.create_struct_gep(&arg_ty, &arg, 0);
+        let load = ctx.builder.create_load(&value_ty, &value);
+        ctx.builder.create_store(&load, &value_gep);
 
-        let ptr_gep = ctx.builder.create_struct_gep(&arg.get_type().get_base().unwrap(), &arg, 1);
-        ctx.builder.create_store(&ctx.builder.create_cast(llvm::CastOps::BitCast, &func.into(), &fmt_type), &ptr_gep);
+        let ptr_gep = ctx.builder.create_struct_gep(&arg_ty, &arg, 1);
+        ctx.builder.create_store(&func.into(), &ptr_gep);
 
         let idx = llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 32), i as i32);
-        let arr_index = ctx.builder.create_gep(&args_arr.get_type().get_base().unwrap(), &args_arr, &[zero.clone(), idx], true);
-        ctx.builder.create_store(&ctx.builder.create_load(&arg.get_type().get_base().unwrap(), &arg), &arr_index);
+        let arr_index = ctx.builder.create_gep(&arr_ty, &args_arr, &[zero.clone(), idx], true);
+        ctx.builder.create_store(&ctx.builder.create_load(&arg_ty, &arg), &arr_index);
     }
     let piece_type = llvm::StructTypeRef::get(&ctx.ctx, &[llvm::TypeRef::get_ptr(llvm::TypeRef::get_int(&ctx.ctx, 8), 0), llvm::TypeRef::get_int(&ctx.ctx, 64)], false).into();
-    let piecies_ty = llvm::ArrayTypeRef::get(&piece_type, piecies.len()).into();
-    let pieces_arr = ctx.builder.create_alloca(&piecies_ty, None);
+    let pieces_ty = llvm::ArrayTypeRef::get(&piece_type, piecies.len()).into();
+    let pieces_arr = ctx.builder.create_alloca(&pieces_ty, None);
 
     for i in 0..piecies.len() {
         let idx = llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 32), i as i32);
-        let gep = ctx.builder.create_gep(&pieces_arr.get_type().get_base().unwrap(), &pieces_arr, &[zero.clone(), idx], true);
+        let gep = ctx.builder.create_gep(&pieces_ty, &pieces_arr, &[zero.clone(), idx], true);
         let lit = llvm::ConstantStruct::get(piece_type.clone(),
             &[
                 ctx.builder.create_global_string_pointer(piecies[i].as_str()),
@@ -147,8 +149,8 @@ pub fn macro_format(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext
         ctx.builder.create_store(&lit, &gep);
     }
 
-    let arr_idx = ctx.builder.create_gep(&args_arr.get_type().get_base().unwrap(), &args_arr, &[zero.clone(), zero.clone()], true);
-    let pieces_idx = ctx.builder.create_gep(&pieces_arr.get_type().get_base().unwrap(), &pieces_arr, &[zero.clone(), zero.clone()], true);
+    let arr_idx = ctx.builder.create_gep(&arr_ty, &args_arr, &[zero.clone(), zero.clone()], true);
+    let pieces_idx = ctx.builder.create_gep(&pieces_ty, &pieces_arr, &[zero.clone(), zero.clone()], true);
 
     let func = ctx.module.get_function("Arguments_new").unwrap_or_else(|| {
         error_msg("internal", "Arguments::new is undefined");

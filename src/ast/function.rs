@@ -95,7 +95,7 @@ impl Generate for Function {
         }
 
         if let Some(alloc) = self.body.scope.get_return_alloc() {
-            ctx.builder.create_ret(Some(&alloc.try_load(ctx.builder)));
+            ctx.builder.create_ret(Some(&alloc.try_load(&scope.resolve_type(&self.ret_type, ctx), ctx.builder)));
         }else {
             ctx.builder.create_ret(None);
         }

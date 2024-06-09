@@ -313,14 +313,23 @@ impl Type {
         }
         return Some(Type::Path(Path::new(loc, s.to_owned())));
     }
+
+    pub fn get_base(&self) -> Option<&Type> {
+        match self {
+            Type::Pointer(ptr) => Some(&ptr.typ),
+            Type::Array(arr) => Some(&arr.typ),
+            Type::Slice(slice) => Some(&slice.typ),
+            _ => None,
+        }
+    }
 }
 
-pub fn is_array_type(ty: &llvm::TypeRef) -> bool {
+/*pub fn is_array_type(ty: &llvm::TypeRef) -> bool {
     if let Ok(ty) = ty.get_base() {
         return is_array_type(&ty);
     }
     return ty.is_array_ty();
-}
+}*/
 
 pub mod containers {
     #[derive(Debug)]

@@ -35,7 +35,7 @@ impl CallExpr {
          * FIXME(S):
          * the mecanism for getting type of a function is flawed, breaks when calling member
          * function of type which is located in another struct -> foo.bar.baz();
-         *
+         *call
          */
 
         let ty = match obj {
@@ -58,14 +58,14 @@ impl CallExpr {
             }
         };
         let mut is_ptr = false;
-        let r#fn = if let Type::FuncPtr(func_ptr) = ty {
+        let r#fn = if let Type::FuncPtr(func_ptr) = &ty {
             let ptr = self.caller.gen_code(scope, ctx).unwrap();
-            func = Some(llvm::Function::from(ctx.builder.create_load(&ptr.get_type().get_base().expect("this should be a pointer by now"), &ptr)));
+            func = Some(llvm::Function::from(ctx.builder.create_load(&scope.resolve_type(&ty, ctx), &ptr)));
             is_ptr = true;
             let args = func_ptr.params.iter().map(|arg| {
                 FunctionArg{ id: Tagged::new(arg.get_loc().clone(), "".to_owned()), typ: arg.clone() }
             }).collect();
-            symbol::Function::new(Tagged::new(self.caller.loc().clone(), "".to_owned()), "".to_owned(), args, *func_ptr.ret_type, true)
+            symbol::Function::new(Tagged::new(self.caller.loc().clone(), "".to_owned()), "".to_owned(), args, *func_ptr.ret_type.clone(), true)
         }else {
             match obj {
                 Some(obj) => {
@@ -96,9 +96,10 @@ impl CallExpr {
         }
 
         let mut args: Vec<llvm::ValueRef> = self.args.iter_mut().map(|arg| {
+            let arg_ty = arg.get_type(scope, ctx).unwrap();
             let mut val = arg.gen_code(scope, ctx).unwrap();
             if arg.should_load() {
-                val = val.try_load(ctx.builder);
+                val = val.try_load(&scope.resolve_type(&arg_ty, ctx), ctx.builder);
             }
 
             // TODO(S): add try to safely cast args to expected type
@@ -138,9 +139,15 @@ impl CallExpr {
         }
 
         if is_ptr {
-            let typ = &self.caller.get_type(scope, ctx).unwrap();
-            let ty = scope.resolve_type(typ, ctx);
-            return Some(ctx.builder.create_ptr_call(&ty.get_base().unwrap(), &func.unwrap().into(), &args));
+            if let Type::FuncPtr(ptr) = ty {
+                let params: Vec<llvm::TypeRef> = ptr.params.iter().map(|param| scope.resolve_type(param, ctx)).collect();
+                let func_ty = llvm::FunctionTypeRef::get(
+                    scope.resolve_type(&*ptr.ret_type, ctx),
+                    &params,
+                    false
+                );
+                return Some(ctx.builder.create_ptr_call(&func_ty.into(), &func.unwrap().into(), &args));
+            }
         }
         return Some(ctx.builder.create_call(&func.unwrap().into(), &args));
     }
@@ -196,9 +203,10 @@ impl Generate for MemberCallExpr {
     }
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+        let obj_ty = self.obj.get_type(scope, ctx).unwrap();
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         if self.deref {
-            obj = obj.try_load(ctx.builder);
+            obj = obj.try_load(&scope.resolve_type(&obj_ty, ctx), ctx.builder);
         }
 
         /*let struct_name = self.obj.get_type(scope, ctx).unwrap().get_name();
@@ -268,9 +276,10 @@ impl Generate for ReturnExpr {
             }
         }
 
+        let value_ty = self.value.as_ref().unwrap().get_type(scope, ctx).unwrap();
         let mut value = self.value.as_mut().unwrap().gen_code(scope, ctx).unwrap();
         if self.value.as_ref().unwrap().should_load() {
-            value = value.try_load(ctx.builder);
+            value = value.try_load(&scope.resolve_type(&value_ty, ctx), ctx.builder);
         }
 
         if !ctx.current_function.is_null()  {
