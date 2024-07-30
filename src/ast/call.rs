@@ -59,8 +59,10 @@ impl CallExpr {
         };
         let mut is_ptr = false;
         let r#fn = if let Type::FuncPtr(func_ptr) = &ty {
+            let caller_ty = self.caller.get_type(scope, ctx).unwrap();
             let ptr = self.caller.gen_code(scope, ctx).unwrap();
-            func = Some(llvm::Function::from(ctx.builder.create_load(&scope.resolve_type(&ty, ctx), &ptr)));
+            let load = ctx.builder.create_load(&scope.resolve_type(&caller_ty, ctx), &ptr);
+            func = Some(llvm::Function::from(load));
             is_ptr = true;
             let args = func_ptr.params.iter().map(|arg| {
                 FunctionArg{ id: Tagged::new(arg.get_loc().clone(), "".to_owned()), typ: arg.clone() }

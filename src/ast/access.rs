@@ -49,8 +49,6 @@ impl Generate for MemberExpr {
         if self.deref {
             if let Some(base) = obj_ty.get_base() {
                 obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
-            }else {
-
             }
         }
 
@@ -281,7 +279,6 @@ impl Generate for ResolutionExpr {
             return call.gen_code_internal(scope, ctx, Some((&self.obj, true)), None);
         }
 
-        println!("{:#?}", self.member);
         //provide an actual error essage
         error_msg_label(
             format!("resolution expr err").as_str(),

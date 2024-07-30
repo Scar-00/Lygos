@@ -280,7 +280,14 @@ impl Type {
             Type::Slice(slice) => {
                 "[".to_owned() + &slice.typ.get_full_name() + "]"
             },
-            Type::FuncPtr(_) => todo!(),
+            Type::FuncPtr(func) => {
+                let mut string = "fn (".to_string();
+                func.params.iter().for_each(|param| {
+                    string += &(param.get_full_name() + &(", "));
+                });
+                string += &format!(") -> {}", func.ret_type.get_full_name());
+                return string;
+            }
         }
     }
 

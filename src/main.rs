@@ -78,7 +78,8 @@ fn main() {
             io::EmitType::llvm_ir => {
                 let mut out = out_file.clone();
                 out.set_extension("ll");
-                io::emit_ir(out, &ctx)
+                io::emit_ir(out.clone(), &ctx)
+                //io::emit_asm(&out, &m, &target_machine)
             }
             io::EmitType::ast => {
                 let mut out = out_file.clone();

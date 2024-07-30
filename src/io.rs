@@ -98,3 +98,12 @@ pub fn emit_obj(path: &PathBuf, m: &llvm::Module, tm: &llvm::TargetMachineRef) -
         return Err(std::io::Error::new(std::io::ErrorKind::Other, "fail"));
     }
 }
+
+pub fn emit_asm(path: &PathBuf, m: &llvm::Module, tm: &llvm::TargetMachineRef) -> std::io::Result<()> {
+    let obj_path = path.with_extension("asm");
+    if llvm::emit_asm_file(obj_path.to_str().unwrap(), m, tm) {
+        return Ok(());
+    }else {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "fail"));
+    }
+}

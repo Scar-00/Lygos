@@ -8,8 +8,9 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Support/TargetSelect.h>
-#include <llvm/Support/Host.h>
+#include <llvm/TargetParser/Host.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Transforms/Scalar.h>
@@ -25,8 +26,6 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Linker/Linker.h>
-
-#include <utility>
 
 struct FFIString {
     char *data;
@@ -90,7 +89,6 @@ llvm::Instruction::CastOps convert_ops(ExternCastOps op) {
 extern "C" {
     llvm::LLVMContext *CreateContext() {
         auto ctx = new llvm::LLVMContext();
-        ctx->setOpaquePointers(true);
         return ctx;
     }
 
@@ -421,6 +419,10 @@ extern "C" {
         return func->isVarArg();
     }
 
+    llvm::Type *FunctionGetType(llvm::Function *func) {
+        return func->getType();
+    }
+
     llvm::GlobalVariable *GlobalVariableCreate(llvm::Module *mod, llvm::Type *ty, bool is_constant, llvm::Constant *value) {
         auto v = value;
         if(v == nullptr) {
@@ -465,6 +467,7 @@ extern "C" {
         if(!target)
             printf("[llvm-error]: %s\n", err.c_str());
         return target;
+        return NULL;
     }
 
     llvm::TargetMachine *CreateTargetMachine(llvm::Target *target, const char *tt, const char *cpu, const char *features) {
@@ -520,7 +523,20 @@ extern "C" {
 
         std::error_code e;
         llvm::raw_fd_ostream os{path, e};
-        if(target_machine->addPassesToEmitFile(pass_manager, os, nullptr, llvm::CGFT_ObjectFile)) {
+        if(target_machine->addPassesToEmitFile(pass_manager, os, nullptr, llvm::CodeGenFileType::ObjectFile, false)) {
+            return false;
+        }
+        pass_manager.run(*mod);
+        os.flush();
+        return true;
+    }
+
+    bool EmitAsmFile(const char *path, llvm::Module *mod, llvm::TargetMachine *target_machine) {
+        llvm::legacy::PassManager pass_manager;
+
+        std::error_code e;
+        llvm::raw_fd_ostream os{path, e};
+        if(target_machine->addPassesToEmitFile(pass_manager, os, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
             return false;
         }
         pass_manager.run(*mod);

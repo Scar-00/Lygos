@@ -135,6 +135,7 @@ extern "C" {
     fn FunctionGetArgs(func: *mut ()) -> FuncArgs;
     fn FunctionVerify(func: *mut ()) -> bool;
     fn FunctionIsVarArg(func: *mut ()) -> bool;
+    fn FunctionGetType(func: *mut ()) -> *mut ();
 
 
     fn GlobalVariableCreate(m: *mut (), ty: *mut (), is_constant: bool, val: *mut ()) -> *mut ();
@@ -155,6 +156,7 @@ extern "C" {
     fn PrintType(ty: *mut ()) -> FFIString;
 
     fn EmitObjFile(path: CStr, m: *mut (), target_machine: *mut ()) -> bool;
+    fn EmitAsmFile(path: CStr, m: *mut (), target_machine: *mut ()) -> bool;
 
     fn InitAll();
 }
@@ -404,6 +406,10 @@ impl Function {
 
     pub fn is_var_arg(&self) -> bool {
         return unsafe{ FunctionIsVarArg(self.0) };
+    }
+
+    pub fn get_type(&self) -> TypeRef {
+        return TypeRef{ 0: unsafe{ FunctionGetType(self.0) } };
     }
 }
 
@@ -741,6 +747,10 @@ pub fn create_target_machine<S: AsRef<str>>(target: TargetRef, tt: S, cpu: S, fe
 
 pub fn emit_obj_file<P: AsRef<str>>(p: P, m: &Module, tm: &TargetMachineRef) -> bool {
     return unsafe{ EmitObjFile(to_cstr!(p.as_ref()), m.ptr, tm.0) };
+}
+
+pub fn emit_asm_file<P: AsRef<str>>(p: P, m: &Module, tm: &TargetMachineRef) -> bool {
+    return unsafe{ EmitAsmFile(to_cstr!(p.as_ref()), m.ptr, tm.0) };
 }
 
 pub fn init_all() {

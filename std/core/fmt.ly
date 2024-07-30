@@ -86,7 +86,6 @@ fn format_(args: Arguments) -> String {
         let arg = args.args[i];
         formatter.write_str(args.pieces[i]);
         arg.fmt(&formatter);
-        exit(11);
         i = i + (:u32)1;
         idx = idx + 1;
     }
@@ -183,7 +182,6 @@ fn ptr_fmt(v: &i8, fmt: &Formatter) -> FormattingError {
 
 impl Display for str {
     fn fmt(&self, fmt: &Formatter) -> FormattingError {
-        exit(10);
         return fmt.write_str(self);
     }
 }

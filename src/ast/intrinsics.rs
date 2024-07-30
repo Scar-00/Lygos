@@ -94,8 +94,9 @@ pub fn macro_format(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext
     let arg_ty = Type::Path(Path::new(Loc::new("internal".into(), 0, 1), "Argument".into()));
     let arr_ty = llvm::ArrayTypeRef::get(&scope.resolve_type(&arg_ty, ctx), args_expected).into();
 
+    let fmt_typ = scope.resolve_type(&scope.get_struct(&Tagged::new(Loc::new("internal".into(), 0, 1), "Argument".to_string())).fields[1].typ, ctx);
+
     let args_arr = ctx.builder.create_alloca(&arr_ty, None);
-    let fmt_type = scope.resolve_type(&scope.get_struct(&Tagged::new(Loc::new("internal".into(), 0, 1), "Argument".to_string())).fields[1].typ, ctx);
     for i in 0..args_expected {
         //getting a member_call_expr's type before its value is generated will lead to the
         //functions name to not be mangeled an therefore be invalid
@@ -293,4 +294,9 @@ pub fn impl_debug(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) 
     }
 
     return llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 1), 0);
+}
+
+pub fn test_macro(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext) -> llvm::ValueRef {
+    let func = ctx.module.get_function("i32_fmt").unwrap();
+    return func.into();
 }
