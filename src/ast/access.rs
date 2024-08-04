@@ -1,7 +1,7 @@
-use crate::ast::{AST, Generate};
-use crate::types::{Type, Path};
+use crate::ast::{Generate, AST};
 use crate::lexer::Tagged;
-use crate::log::{ErrorLabel, error_msg_label_info, error_msg_label};
+use crate::log::{error_msg_label, error_msg_label_info, ErrorLabel};
+use crate::types::{Path, Type};
 
 #[derive(Debug)]
 pub struct MemberExpr {
@@ -43,7 +43,11 @@ impl Generate for MemberExpr {
         self.obj.get_value()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+    fn gen_code(
+        &mut self,
+        scope: &mut super::Scope,
+        ctx: &crate::GenerationContext,
+    ) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         let obj_ty = self.obj.get_type(scope, ctx).unwrap();
         if self.deref {
@@ -59,7 +63,8 @@ impl Generate for MemberExpr {
             }
         }
         let type_name = obj_ty.get_name();
-        let struct_fields = scope.get_struct(&Tagged::new(self.obj.loc().clone(), type_name.clone()));
+        let struct_fields =
+            scope.get_struct(&Tagged::new(self.obj.loc().clone(), type_name.clone()));
         let index = if !self.use_index {
             let mut index_internal = None;
             let member_name = self.member.as_ref().unwrap().get_value();
@@ -81,16 +86,17 @@ impl Generate for MemberExpr {
                 error_msg_label_info(
                     format!("unknown field `{}` in type `{}`", member_name, type_name).as_str(),
                     ErrorLabel::from(self.member.as_ref().unwrap().loc(), "unknown field"),
-                    &fields_avail
+                    &fields_avail,
                 );
             }
             index_internal.unwrap()
-        }else {
+        } else {
             self.index
         };
 
         if let Some(mem) = &self.member {
-            if let AST::Id(_) = **mem {} else {
+            if let AST::Id(_) = **mem {
+            } else {
                 if !self.use_index {
                     self.member.as_mut().unwrap().gen_code(scope, ctx);
                 }
@@ -106,39 +112,62 @@ impl Generate for MemberExpr {
         let base: Option<Type> = if self.deref {
             let tmp = self.obj.get_type(scope, ctx).unwrap();
             tmp.get_base().cloned()
-        }else if let Type::Pointer(ptr) = &obj_ty {
+        } else if let Type::Pointer(ptr) = &obj_ty {
             if ptr.is_ref {
                 Some(*ptr.typ.clone())
-            }else {
+            } else {
                 Some(obj_ty)
             }
-        }else {
+        } else {
             Some(obj_ty)
         };
         if let Some(ty) = base {
             if ty.get_base().is_some() {
                 /*
-                *  FIXME(S): provide a better error & help message this does not cut it XD
-                *
-                */
+                 *  FIXME(S): provide a better error & help message this does not cut it XD
+                 *
+                 */
                 error_msg_label_info(
                     "invalid level of indirection",
-                    ErrorLabel::from(self.loc(), &format!("cannot access member of type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name())),
-                    "try dereferencing using `->` instead of `.`"
+                    ErrorLabel::from(
+                        self.loc(),
+                        &format!(
+                            "cannot access member of type `{}`",
+                            self.obj.get_type(scope, ctx).unwrap().get_full_name()
+                        ),
+                    ),
+                    "try dereferencing using `->` instead of `.`",
                 );
             }
-            return Some(ctx.builder.create_struct_gep(&scope.resolve_type(&ty, ctx), &obj, index as u32));
+            return Some(ctx.builder.create_struct_gep(
+                &scope.resolve_type(&ty, ctx),
+                &obj,
+                index as u32,
+            ));
         }
 
         error_msg_label(
             "cannot deref value type",
-            ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str())
+            ErrorLabel::from(
+                self.loc(),
+                format!(
+                    "cannot deref value type `{}`",
+                    self.obj.get_type(scope, ctx).unwrap().get_full_name()
+                )
+                .as_str(),
+            ),
         );
     }
 
-    fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<crate::types::Type> {
+    fn get_type(
+        &self,
+        scope: &mut super::Scope,
+        ctx: &crate::GenerationContext,
+    ) -> Option<crate::types::Type> {
         let obj_ty = self.obj.get_type(scope, ctx).unwrap();
-        let struct_fields = &scope.get_struct(&Tagged::new(self.obj.loc().clone(), obj_ty.get_name())).fields;
+        let struct_fields = &scope
+            .get_struct(&Tagged::new(self.obj.loc().clone(), obj_ty.get_name()))
+            .fields;
         let index = if !self.use_index {
             let mut index_internal = None;
             let member_name = self.member.as_ref().unwrap().get_value();
@@ -158,13 +187,18 @@ impl Generate for MemberExpr {
                 }
                 fields_avail += "]";
                 error_msg_label_info(
-                    format!("unknown field `{}` in type `{}`", member_name, obj_ty.get_name()).as_str(),
+                    format!(
+                        "unknown field `{}` in type `{}`",
+                        member_name,
+                        obj_ty.get_name()
+                    )
+                    .as_str(),
                     ErrorLabel::from(self.member.as_ref().unwrap().loc(), "unknown field"),
-                    &fields_avail
+                    &fields_avail,
                 );
             }
             index_internal.unwrap()
-        }else {
+        } else {
             self.index
         };
         return Some(struct_fields[index].typ.clone());
@@ -181,7 +215,7 @@ pub struct AccessExpr {
 
 impl AccessExpr {
     pub fn new(obj: Box<AST>, index: Box<AST>) -> Self {
-        Self{ obj, index }
+        Self { obj, index }
     }
 }
 
@@ -194,14 +228,26 @@ impl Generate for AccessExpr {
         self.obj.get_value()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+    fn gen_code(
+        &mut self,
+        scope: &mut super::Scope,
+        ctx: &crate::GenerationContext,
+    ) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
+        let mut obj_type = self.obj.get_type(scope, ctx).unwrap();
         /*if !crate::types::is_array_type(&obj.get_type()) {
             obj = obj.try_load(ctx.builder);
         }*/
-        /*if let Type::Array(arr) = self.obj.get_type(scope, ctx).unwrap() {
-            obj = obj.try_load(&scope.resolve_type(&arr.typ, ctx), ctx.builder);
-        }*/
+        match self.obj.get_type(scope, ctx).unwrap() {
+            Type::Pointer(ptr) => {
+                obj = obj.try_load(&scope.resolve_type(&Type::Pointer(ptr), ctx), ctx.builder);
+            }
+            _ => {}
+        }
+        //if let Type::Array(arr) = self.obj.get_type(scope, ctx).unwrap() {
+        //} else {
+        //    obj = obj.try_load(&scope.resolve_type(&, ctx), ctx.builder);
+        //}
 
         let mut index = self.index.gen_code(scope, ctx).unwrap();
         if self.index.should_load() {
@@ -212,14 +258,20 @@ impl Generate for AccessExpr {
         let zero = llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 64), 0);
 
         let mut idx_list = vec![index];
-        if let Type::Array(_) = self.obj.get_type(scope, ctx).unwrap() {
+        if let Type::Array(_) = &obj_type {
             idx_list.insert(0, zero);
         }
 
-        //if let Some(ty) = self.obj.get_type(scope, ctx).unwrap().get_base() {
-        let base = self.obj.get_type(scope, ctx).unwrap();
-        return Some(ctx.builder.create_gep(&scope.resolve_type(&base, ctx), &obj, &idx_list, true));
-        //}
+        if let Type::Pointer(ptr) = obj_type {
+            obj_type = *ptr.typ.clone();
+        }
+
+        return Some(ctx.builder.create_gep(
+            &scope.resolve_type(&obj_type, ctx),
+            &obj,
+            &idx_list,
+            true,
+        ));
 
         //error_msg_label(
         //    "cannot deref value type",
@@ -227,7 +279,11 @@ impl Generate for AccessExpr {
         //);
     }
 
-    fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<crate::types::Type> {
+    fn get_type(
+        &self,
+        scope: &mut super::Scope,
+        ctx: &crate::GenerationContext,
+    ) -> Option<crate::types::Type> {
         match self.obj.get_type(scope, ctx).unwrap() {
             Type::Array(arr) => return Some(*arr.typ),
             Type::Pointer(ptr) => return Some(*ptr.typ),
@@ -246,7 +302,7 @@ pub struct ResolutionExpr {
 
 impl ResolutionExpr {
     pub fn new(obj: Box<AST>, member: Box<AST>) -> Self {
-        Self{ obj, member }
+        Self { obj, member }
     }
 }
 
@@ -259,18 +315,30 @@ impl Generate for ResolutionExpr {
         self.obj.get_value()
     }
 
-    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+    fn gen_code(
+        &mut self,
+        scope: &mut super::Scope,
+        ctx: &crate::GenerationContext,
+    ) -> Option<llvm::ValueRef> {
         let member_value = self.member.get_value();
         let tagged = Tagged::new(self.obj.loc().clone(), self.obj.get_value());
         if scope.is_enum(&tagged) {
             let ev = scope.get_enum(&tagged);
             for (i, var) in ev.variants.iter().enumerate() {
                 if *var == member_value {
-                    return Some(llvm::ConstantInt::get(&scope.resolve_type(&ev.typ, ctx), i as i32));
+                    return Some(llvm::ConstantInt::get(
+                        &scope.resolve_type(&ev.typ, ctx),
+                        i as i32,
+                    ));
                 }
             }
             error_msg_label(
-                format!("unknown enum variant `{}` in enum `{}`", member_value, tagged.inner()).as_str(),
+                format!(
+                    "unknown enum variant `{}` in enum `{}`",
+                    member_value,
+                    tagged.inner()
+                )
+                .as_str(),
                 ErrorLabel::from(self.member.loc(), "unknown enum variant"),
             );
         }
@@ -286,10 +354,17 @@ impl Generate for ResolutionExpr {
         );
     }
 
-    fn get_type(&self, scope: &mut super::Scope, _: &crate::GenerationContext) -> Option<crate::types::Type> {
+    fn get_type(
+        &self,
+        scope: &mut super::Scope,
+        _: &crate::GenerationContext,
+    ) -> Option<crate::types::Type> {
         let tagged = Tagged::new(self.obj.loc().clone(), self.obj.get_value());
         if scope.is_enum(&tagged) {
-            return Some(Type::Path(Path::new(self.obj.loc().clone(), self.obj.get_value())));
+            return Some(Type::Path(Path::new(
+                self.obj.loc().clone(),
+                self.obj.get_value(),
+            )));
         }
         let strct = scope.get_struct(&tagged);
         let func = strct.get_function(self.member.loc(), self.member.get_value());

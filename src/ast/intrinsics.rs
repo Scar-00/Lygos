@@ -125,10 +125,12 @@ pub fn macro_format(call: &MacroCall, scope: &mut Scope, ctx: &GenerationContext
 
         let value_gep = ctx.builder.create_struct_gep(&arg_ty, &arg, 0);
         let load = ctx.builder.create_load(&value_ty, &value);
-        ctx.builder.create_store(&load, &value_gep);
+        let cast = ctx.builder.create_pointer_cast(&load, &llvm::TypeRef::get_ptr(llvm::TypeRef::get_int(ctx.ctx, 8), 0));
+        ctx.builder.create_store(&cast, &value_gep);
 
         let ptr_gep = ctx.builder.create_struct_gep(&arg_ty, &arg, 1);
-        ctx.builder.create_store(&func.into(), &ptr_gep);
+        let cast = ctx.builder.create_pointer_cast(&func.into(), &fmt_typ);
+        ctx.builder.create_store(&cast, &ptr_gep);
 
         let idx = llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 32), i as i32);
         let arr_index = ctx.builder.create_gep(&arr_ty, &args_arr, &[zero.clone(), idx], true);

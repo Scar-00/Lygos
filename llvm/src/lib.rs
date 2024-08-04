@@ -44,6 +44,7 @@ pub enum CastOps {
 extern "C" {
     fn CreateContext() -> *mut ();
     fn DestroyContext(_: *mut ());
+    fn ContextSetOpaquePointers(ctx: *mut (), enable: bool);
     fn GetTargetTriiple() -> FFIString;
     fn LookUpTarget(tt: CStr) -> *mut ();
     fn CreateTargetMachine(target: *mut (), tt: CStr, cpu: CStr, features: CStr) -> *mut ();
@@ -509,6 +510,10 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         return Self{ ptr: unsafe { CreateContext() } };
+    }
+
+    pub fn set_opaque_pointers(&self, enable: bool) {
+        unsafe{ ContextSetOpaquePointers(self.ptr, enable) };
     }
 }
 

@@ -9,8 +9,9 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/CodeGen.h>
+#include <llvm/Support/Host.h>
 #include <llvm/Support/TargetSelect.h>
-#include <llvm/TargetParser/Host.h>
+//#include <llvm/TargetParser/Host.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Transforms/Scalar.h>
@@ -96,9 +97,9 @@ extern "C" {
         delete ctx;
     }
 
-    //void ContextSetOpaquePointers(llvm::LLVMContext *ctx, bool enable) {
-    //    ctx->setOpaquePointers(enable);
-    //}
+    void ContextSetOpaquePointers(llvm::LLVMContext *ctx, bool enable) {
+        ctx->setOpaquePointers(enable);
+    }
 
     llvm::Module *CreateModule(const char *name, llvm::LLVMContext *ctx) {
         return new llvm::Module(name, *ctx);
@@ -523,7 +524,8 @@ extern "C" {
 
         std::error_code e;
         llvm::raw_fd_ostream os{path, e};
-        if(target_machine->addPassesToEmitFile(pass_manager, os, nullptr, llvm::CodeGenFileType::ObjectFile, false)) {
+        //
+        if(target_machine->addPassesToEmitFile(pass_manager, os, nullptr, /*llvm::CodeGenFileType::ObjectFile*/llvm::CGFT_ObjectFile, false)) {
             return false;
         }
         pass_manager.run(*mod);
@@ -536,7 +538,7 @@ extern "C" {
 
         std::error_code e;
         llvm::raw_fd_ostream os{path, e};
-        if(target_machine->addPassesToEmitFile(pass_manager, os, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
+        if(target_machine->addPassesToEmitFile(pass_manager, os, nullptr, llvm::CGFT_ObjectFile)) {
             return false;
         }
         pass_manager.run(*mod);
