@@ -11,7 +11,7 @@ pub struct UnaryExpr {
 
 impl UnaryExpr {
     pub fn new(op: Tagged<String>, obj: Box<AST>) -> Self {
-        Self { op, obj }
+        Self{ op, obj }
     }
 }
 
@@ -24,25 +24,14 @@ impl Generate for UnaryExpr {
         self.obj.get_value()
     }
 
-    fn gen_code(
-        &mut self,
-        scope: &mut super::Scope,
-        ctx: &crate::GenerationContext,
-    ) -> Option<llvm::ValueRef> {
+    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         match self.op.inner().as_str() {
             "*" => {
                 if !self.obj.get_type(scope, ctx).unwrap().is_pointer_like() {
                     error_msg_label(
                         "cannot deref value type",
-                        ErrorLabel::from(
-                            self.loc(),
-                            format!(
-                                "cannot deref value type `{}`",
-                                self.obj.get_type(scope, ctx).unwrap().get_full_name()
-                            )
-                            .as_str(),
-                        ),
+                        ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str()),
                     );
                 }
                 /*return match *self.obj {
@@ -100,18 +89,10 @@ impl Generate for UnaryExpr {
                 return None;
             }
             "&" => {
-                return Some(Type::Pointer(Pointer::new(
-                    ty.get_loc(),
-                    Box::new(ty),
-                    false,
-                    false,
-                )));
+                return Some(Type::Pointer(Pointer::new(ty.get_loc(), Box::new(ty), false, false)));
             }
             "!" => {
-                return Some(Type::Path(Path::new(
-                    self.loc().clone(),
-                    "bool".to_string(),
-                )));
+                return Some(Type::Path(Path::new(self.loc().clone(), "bool".to_string())));
             }
             _ => error_msg_label(
                 format!("unknown unary operator `{}`", self.op.inner()).as_str(),
@@ -131,7 +112,7 @@ pub struct CastExpr {
 
 impl CastExpr {
     pub fn new(obj: Box<AST>, target_type: Type) -> Self {
-        Self { obj, target_type }
+        Self{ obj, target_type }
     }
 }
 
@@ -169,12 +150,7 @@ impl CastExpr {
     return false;
 }*/
 
-pub fn get_cast_ops(
-    src_loc: &Loc,
-    src: &llvm::TypeRef,
-    dest_loc: &Loc,
-    dest: &llvm::TypeRef,
-) -> llvm::CastOps {
+pub fn get_cast_ops(src_loc: &Loc, src: &llvm::TypeRef, dest_loc: &Loc, dest: &llvm::TypeRef) -> llvm::CastOps {
     if src.is_int_ty() && dest.is_int_ty() {
         if src.get_int_bit_width() > dest.get_int_bit_width() {
             return llvm::CastOps::Trunc;
@@ -205,13 +181,10 @@ pub fn get_cast_ops(
             return llvm::CastOps::BitCast;
         }
     }
-    error_msg_labels(
-        "unable to convert types",
-        &[
-            ErrorLabel::from(src_loc, format!("`from {}`", src.print()).as_str()),
-            ErrorLabel::from(dest_loc, format!("`to {}`", dest.print()).as_str()),
-        ],
-    );
+    error_msg_labels("unable to convert types", &[
+        ErrorLabel::from(src_loc, format!("`from {}`", src.print()).as_str()),
+        ErrorLabel::from(dest_loc, format!("`to {}`", dest.print()).as_str()),
+    ]);
 }
 
 impl Generate for CastExpr {
@@ -223,11 +196,7 @@ impl Generate for CastExpr {
         self.obj.get_value()
     }
 
-    fn gen_code(
-        &mut self,
-        scope: &mut super::Scope,
-        ctx: &crate::GenerationContext,
-    ) -> Option<llvm::ValueRef> {
+    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         if self.obj.should_load() {
             let base = self.obj.get_type(scope, ctx).unwrap();
@@ -237,16 +206,7 @@ impl Generate for CastExpr {
         let dest_ty = scope.resolve_type(&self.target_type, ctx);
         let src_ty = obj.get_type();
 
-        return Some(ctx.builder.create_cast(
-            get_cast_ops(
-                &self.obj.loc(),
-                &src_ty,
-                &self.target_type.get_loc(),
-                &dest_ty,
-            ),
-            &obj,
-            &dest_ty,
-        ));
+        return Some(ctx.builder.create_cast(get_cast_ops(&self.obj.loc(), &src_ty, &self.target_type.get_loc(), &dest_ty), &obj, &dest_ty));
     }
 
     fn get_type(&self, _: &mut super::Scope, _: &crate::GenerationContext) -> Option<Type> {

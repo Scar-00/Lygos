@@ -12,11 +12,7 @@ pub struct AssignmentExpr {
 
 impl AssignmentExpr {
     pub fn new(lhs: Box<AST>, rhs: Box<AST>) -> Self {
-        Self {
-            loc: lhs.loc().clone() + rhs.loc().clone(),
-            lhs,
-            rhs,
-        }
+        Self{ loc: lhs.loc().clone() + rhs.loc().clone(), lhs, rhs }
     }
 }
 
@@ -29,11 +25,7 @@ impl Generate for AssignmentExpr {
         self.lhs.get_value()
     }
 
-    fn gen_code(
-        &mut self,
-        scope: &mut super::Scope,
-        ctx: &crate::GenerationContext,
-    ) -> Option<llvm::ValueRef> {
+    fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let var = self.lhs.gen_code(scope, ctx).unwrap();
 
         if let AST::InitializerList(list) = &mut *self.rhs {
@@ -51,21 +43,13 @@ impl Generate for AssignmentExpr {
         let rhs_ty = self.rhs.get_type(scope, ctx).unwrap();
         if !lhs_ty.matches(&rhs_ty) {
             error_msg_labels(
-                "missmatched types",
-                &[
-                    ErrorLabel::from(
-                        self.lhs.loc(),
-                        format!("expected type `{}`", lhs_ty.get_full_name()).as_str(),
-                    ),
-                    ErrorLabel::from(
-                        self.rhs.loc(),
-                        format!("but value has type `{}`", rhs_ty.get_full_name()).as_str(),
-                    ),
-                ],
-            );
+                "missmatched types", &[
+                    ErrorLabel::from(self.lhs.loc(), format!("expected type `{}`", lhs_ty.get_full_name()).as_str()),
+                    ErrorLabel::from(self.rhs.loc(), format!("but value has type `{}`", rhs_ty.get_full_name()).as_str()),
+            ]);
         }
 
-        let load = ctx.builder.create_store(&value, &var);
+        ctx.builder.create_store(&value, &var);
         return Some(var);
     }
 

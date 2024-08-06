@@ -89,8 +89,7 @@ llvm::Instruction::CastOps convert_ops(ExternCastOps op) {
 
 extern "C" {
     llvm::LLVMContext *CreateContext() {
-        auto ctx = new llvm::LLVMContext();
-        return ctx;
+        return new llvm::LLVMContext();
     }
 
     void DestroyContext(llvm::LLVMContext *ctx) {
