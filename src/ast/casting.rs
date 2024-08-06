@@ -32,7 +32,7 @@ impl Generate for UnaryExpr {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         match self.op.inner().as_str() {
             "*" => {
-                if !obj.get_type().is_pointer_ty() {
+                if !self.obj.get_type(scope, ctx).unwrap().is_pointer_like() {
                     error_msg_label(
                         "cannot deref value type",
                         ErrorLabel::from(
@@ -45,12 +45,24 @@ impl Generate for UnaryExpr {
                         ),
                     );
                 }
+                /*return match *self.obj {
+                    AST::MemberExpr(_) => obj,
+                    AST::
+
+                }*/
                 return Some(if let AST::MemberExpr(_) = *self.obj {
                     obj
                 } else {
                     let base = self.obj.get_type(scope, ctx).unwrap();
-                    ctx.builder
-                        .create_load(&scope.resolve_type(&base.get_base().unwrap(), ctx), &obj)
+                    /*
+                     *  NOTE(S): This is a dirty hack and should not be handled like this
+                     */
+                    let base_ty = scope.resolve_type(&base, ctx);
+                    if !obj.get_type().matches(&base_ty) {
+                        ctx.builder.create_load(&base_ty, &obj)
+                    }else {
+                        ctx.builder.create_load(&scope.resolve_type(&base.get_base().unwrap(), ctx), &obj)
+                    }
                 });
             }
             "&" => {

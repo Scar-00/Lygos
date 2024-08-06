@@ -329,6 +329,13 @@ impl Type {
             _ => None,
         }
     }
+
+    pub fn is_pointer_like(&self) -> bool {
+        return match self {
+            Self::Pointer(_) => true,
+            _ => false,
+        };
+    }
 }
 
 /*pub fn is_array_type(ty: &llvm::TypeRef) -> bool {

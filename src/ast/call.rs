@@ -347,6 +347,10 @@ impl Generate for ReturnExpr {
         "ret".to_owned()
     }
 
+    /*
+     *  FIXME!!!!(S): add error if the type of the return value does not match the function sigature
+     */
+
     fn gen_code(
         &mut self,
         scope: &mut super::Scope,

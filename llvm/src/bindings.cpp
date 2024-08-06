@@ -337,6 +337,10 @@ extern "C" {
         return ty->getNumContainedTypes();
     }
 
+    bool TypeMatches(llvm::Type *lhs, llvm::Type *rhs) {
+        return lhs == rhs;
+    }
+
     //this returns NULL on failure
     /*llvm::Type *TypeTryGetPointerBase(llvm::Type *ty) {
         if(!ty->isPointerTy())

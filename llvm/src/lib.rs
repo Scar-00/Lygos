@@ -129,6 +129,7 @@ extern "C" {
 
     fn TypeGetContainedType(ty: *mut (), index: usize) -> *mut ();
     fn TypeGetNumContainedTypes(ty: *mut ()) -> usize;
+    fn TypeMatches(lhs: *mut (), rhs: *mut ()) -> bool;
 
     //fn TypeTryGetPointerBase(ty: *mut ()) -> *mut ();
 
@@ -247,6 +248,10 @@ impl TypeRef {
 
     pub fn get_contained_type(&self, index: usize) -> Self {
         return Self{ 0: unsafe{ TypeGetContainedType(self.0, index) } };
+    }
+
+    pub fn matches(&self, other: &TypeRef) -> bool {
+        return unsafe{ TypeMatches(self.0, other.0) };
     }
 
     pub fn print(&self) -> String {
