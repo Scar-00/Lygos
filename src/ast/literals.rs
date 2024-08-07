@@ -35,7 +35,7 @@ impl Generate for Identifier {
         if self.deref {
             if let Type::Pointer(ptr) = &var.typ {
                 if ptr.is_ref {
-                    return Some(ctx.builder.create_load(&var.alloca.get_type().get_base().unwrap(), &var.alloca));
+                    return Some(ctx.builder.create_load(&scope.resolve_type(&var.typ, ctx), &var.alloca));
                 }
             }
         }

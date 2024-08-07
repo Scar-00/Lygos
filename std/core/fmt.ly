@@ -80,6 +80,7 @@ fn format_(args: Arguments) -> String {
     let buf = String::new(len);
     let formatter = Formatter::new(&buf);
 
+
     let idx = 0;
     for let i: u32 = 0 in i < args.arg_count {
         let arg = args.args[i];
@@ -88,6 +89,8 @@ fn format_(args: Arguments) -> String {
         i = i + (:u32)1;
         idx = idx + 1;
     }
+
+
     if ((:u32)idx) < args.pieces_count {
         formatter.write_str(args.pieces[idx]);
     }
@@ -193,10 +196,10 @@ impl Display for String {
 impl Debug for String {
     fn fmt_debug(&self, fmt: &mut Formatter) -> FormattingError {
         fmt.debug_struct("String")
-        .field("content", format_args$("{}", self.as_str()))
-        .field("len", format_args$("{}", self.len))
-        .field("cap", format_args$("{}", self.cap))
-        .finish();
+            .field("content", format_args$("{}", self.as_str()))
+            .field("len", format_args$("{}", self.len))
+            .field("cap", format_args$("{}", self.cap))
+            .finish();
     }
 }
 

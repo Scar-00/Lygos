@@ -1,7 +1,7 @@
-use crate::types::Type;
+use crate::ast::{Generate, AST};
 use crate::lexer::Loc;
-use crate::ast::{AST, Generate};
-use crate::log::{ErrorLabel, error_msg_labels};
+use crate::log::{error_msg_labels, ErrorLabel};
+use crate::types::Type;
 
 #[derive(Debug)]
 pub struct AssignmentExpr {
@@ -35,15 +35,17 @@ impl Generate for AssignmentExpr {
         let mut value = self.rhs.gen_code(scope, ctx).unwrap();
 
         if self.rhs.should_load() {
-            value = value.try_load(ctx.builder);
+            let base = self.rhs.get_type(scope, ctx).unwrap();
+            value = value.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         let lhs_ty = self.lhs.get_type(scope, ctx).unwrap();
         let rhs_ty = self.rhs.get_type(scope, ctx).unwrap();
         if !lhs_ty.matches(&rhs_ty) {
-            error_msg_labels("missmatched types", &[
-                ErrorLabel::from(self.lhs.loc(), format!("expected type `{}`", lhs_ty.get_full_name()).as_str()),
-                ErrorLabel::from(self.rhs.loc(), format!("but value has type `{}`", rhs_ty.get_full_name()).as_str()),
+            error_msg_labels(
+                "missmatched types", &[
+                    ErrorLabel::from(self.lhs.loc(), format!("expected type `{}`", lhs_ty.get_full_name()).as_str()),
+                    ErrorLabel::from(self.rhs.loc(), format!("but value has type `{}`", rhs_ty.get_full_name()).as_str()),
             ]);
         }
 

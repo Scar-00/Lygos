@@ -47,7 +47,8 @@ impl Generate for IfStmt {
 
         let mut cond = self.cond.gen_code(scope, ctx).unwrap();
         if self.cond.should_load() {
-            cond = cond.try_load(ctx.builder);
+            let base = self.cond.get_type(scope, ctx).unwrap();
+            cond = cond.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         ctx.builder.create_cond_br(&cond, &true_block, if self.else_body.is_some() {
@@ -133,7 +134,8 @@ impl Generate for ForStmt {
 
         let mut cond = self.cond.gen_code(&mut self.body.scope, ctx).unwrap();
         if self.cond.should_load() {
-            cond = cond.try_load(ctx.builder);
+            let base = self.cond.get_type(scope, ctx).unwrap();
+            cond = cond.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         ctx.builder.create_cond_br(&cond, &body_block, &merge_block);

@@ -228,6 +228,12 @@ pub mod ast {
         }
     }
 
+    /*
+     *
+     *  TODO(S): change gen_code to take an immuteable ref instead of a mutable one as it shouldn't
+     *  be necissary to mutate any field of the ast node at this point
+     *
+     */
     pub trait Generate {
         fn loc(&self) -> &Loc;
         fn get_value(&self) -> String;

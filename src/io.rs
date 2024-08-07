@@ -1,10 +1,10 @@
-use std::path::{Path, PathBuf};
+use crate::GenerationContext;
+use std::format;
 use std::fs::File;
 use std::io::prelude::*;
-use std::format;
-use crate::GenerationContext;
+use std::path::{Path, PathBuf};
 
-use clap::{Parser, arg, ValueEnum};
+use clap::{arg, Parser, ValueEnum};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
@@ -46,10 +46,15 @@ pub fn get_cli_options() -> CompilationOptions {
         (Some(file), None) => Some(file),
         (None, Some(file)) => Some(file),
         (None, None) => None,
-        _ => None
+        _ => None,
     };
 
-    return CompilationOptions{ input_file, output_file: args.output_file, emit_exe, emit_extra: args.emit };
+    return CompilationOptions {
+        input_file,
+        output_file: args.output_file,
+        emit_exe,
+        emit_extra: args.emit,
+    };
 }
 
 pub fn read_file<S: AsRef<Path>>(path: S) -> Result<String, std::io::Error> {
@@ -77,24 +82,52 @@ pub fn emit_ir<P: AsRef<Path>>(path: P, ctx: &GenerationContext) -> std::io::Res
     return Ok(());
 }
 
-pub fn emit_exe(path: &PathBuf, m: &llvm::Module, tm: &llvm::TargetMachineRef) -> std::io::Result<()> {
+pub fn emit_exe(
+    path: &PathBuf,
+    m: &llvm::Module,
+    tm: &llvm::TargetMachineRef,
+) -> std::io::Result<()> {
     emit_obj(path, m, tm)?;
     let exe_path = path.with_extension("");
     let obj_path = path.with_extension("o");
-    let cmd = format!("clang -o {} {} -lc ~/Desktop/lygos/debug_print.o", exe_path.to_str().unwrap(), obj_path.to_str().unwrap());
+    let cmd = format!(
+        "clang -o {} {} -lc ~/lygos/debug_print.o",
+        exe_path.to_str().unwrap(),
+        obj_path.to_str().unwrap()
+    );
     println!("{}", cmd);
     let cmd = std::ffi::CString::new(cmd).unwrap();
-    if unsafe{libc::system(cmd.as_ptr())} != 0 {
-        return Err(std::io::Error::new(std::io::ErrorKind::Other, "failed to execture linker command"));
+    if unsafe { libc::system(cmd.as_ptr()) } != 0 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "failed to execture linker command",
+        ));
     };
     return Ok(());
 }
 
-pub fn emit_obj(path: &PathBuf, m: &llvm::Module, tm: &llvm::TargetMachineRef) -> std::io::Result<()> {
+pub fn emit_obj(
+    path: &PathBuf,
+    m: &llvm::Module,
+    tm: &llvm::TargetMachineRef,
+) -> std::io::Result<()> {
     let obj_path = path.with_extension("o");
     if llvm::emit_obj_file(obj_path.to_str().unwrap(), m, tm) {
         return Ok(());
-    }else {
+    } else {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "fail"));
+    }
+}
+
+pub fn emit_asm(
+    path: &PathBuf,
+    m: &llvm::Module,
+    tm: &llvm::TargetMachineRef,
+) -> std::io::Result<()> {
+    let obj_path = path.with_extension("asm");
+    if llvm::emit_asm_file(obj_path.to_str().unwrap(), m, tm) {
+        return Ok(());
+    } else {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, "fail"));
     }
 }

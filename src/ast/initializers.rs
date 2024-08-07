@@ -39,7 +39,8 @@ impl Generate for InitializerListExpr {
             for (i, init) in self.initializers.iter_mut().enumerate() {
                 let mut value = init.1.gen_code(scope, ctx).unwrap();
                 if init.1.should_load() {
-                    value = value.try_load(ctx.builder);
+                    let base = init.1.get_type(scope, ctx).unwrap();
+                    value = value.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
                 }
                 if let Some(name) = &init.0 {
                     let idx = if let Some(i) = strct.fields.iter().position(|f| *f.id.inner() == *name.inner()) {

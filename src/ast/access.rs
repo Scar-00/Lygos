@@ -1,7 +1,7 @@
-use crate::ast::{AST, Generate};
-use crate::types::{Type, Path};
+use crate::ast::{Generate, AST};
 use crate::lexer::Tagged;
-use crate::log::{ErrorLabel, error_msg_label_info, error_msg_label};
+use crate::log::{error_msg_label, error_msg_label_info, ErrorLabel};
+use crate::types::{Path, Type};
 
 #[derive(Debug)]
 pub struct MemberExpr {
@@ -45,18 +45,21 @@ impl Generate for MemberExpr {
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
+        let obj_ty = self.obj.get_type(scope, ctx).unwrap();
         if self.deref {
-            obj = obj.try_load(ctx.builder);
+            if let Some(base) = obj_ty.get_base() {
+                obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
+            }
         }
 
-        let obj_ty = self.obj.get_type(scope, ctx).unwrap();
         if let Type::Pointer(ptr) = &obj_ty {
             if ptr.is_ref {
-                obj = obj.try_load(ctx.builder);
+                let base = &ptr.typ;
+                obj = obj.try_load(&scope.resolve_type(base, ctx), ctx.builder);
             }
         }
         let type_name = obj_ty.get_name();
-        let struct_fields = scope.get_struct(&Tagged::new(self.obj.loc().clone(), type_name.clone()));
+        let struct_fields =scope.get_struct(&Tagged::new(self.obj.loc().clone(), type_name.clone()));
         let index = if !self.use_index {
             let mut index_internal = None;
             let member_name = self.member.as_ref().unwrap().get_value();
@@ -87,7 +90,8 @@ impl Generate for MemberExpr {
         };
 
         if let Some(mem) = &self.member {
-            if let AST::Id(_) = **mem {} else {
+            if let AST::Id(_) = **mem {
+            } else {
                 if !self.use_index {
                     self.member.as_mut().unwrap().gen_code(scope, ctx);
                 }
@@ -100,20 +104,32 @@ impl Generate for MemberExpr {
             obj = alloc;
         }
 
-        if let Ok(ty) = obj.get_type().get_base() {
-            if ty.get_base().is_ok() {
+        let base: Option<Type> = if self.deref {
+            let tmp = self.obj.get_type(scope, ctx).unwrap();
+            tmp.get_base().cloned()
+        } else if let Type::Pointer(ptr) = &obj_ty {
+            if ptr.is_ref {
+                Some(*ptr.typ.clone())
+            } else {
+                Some(obj_ty)
+            }
+        } else {
+            Some(obj_ty)
+        };
+        if let Some(ty) = base {
+            if ty.get_base().is_some() {
                 /*
-                *  FIXME(S): provide a better error & help message this does not cut it XD
-                *
-                */
+                 *  FIXME(S): provide a better error & help message this does not cut it XD
+                 */
                 error_msg_label_info(
                     "invalid level of indirection",
                     ErrorLabel::from(self.loc(), &format!("cannot access member of type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name())),
                     "try dereferencing using `->` instead of `.`"
                 );
             }
-            return Some(ctx.builder.create_struct_gep(&ty, &obj, index as u32));
+            return Some(ctx.builder.create_struct_gep(&scope.resolve_type(&ty, ctx), &obj, index as u32));
         }
+
         error_msg_label(
             "cannot deref value type",
             ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str())
@@ -180,30 +196,40 @@ impl Generate for AccessExpr {
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
-        if !crate::types::is_array_type(&obj.get_type()) {
+        let mut obj_type = self.obj.get_type(scope, ctx).unwrap();
+        /*if !crate::types::is_array_type(&obj.get_type()) {
             obj = obj.try_load(ctx.builder);
+        }*/
+        match self.obj.get_type(scope, ctx).unwrap() {
+            Type::Pointer(ptr) => {
+                obj = obj.try_load(&scope.resolve_type(&Type::Pointer(ptr), ctx), ctx.builder);
+            }
+            _ => {}
         }
 
         let mut index = self.index.gen_code(scope, ctx).unwrap();
         if self.index.should_load() {
-            index = index.try_load(ctx.builder);
+            let base = self.index.get_type(scope, ctx).unwrap();
+            index = index.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         let zero = llvm::ConstantInt::get(&llvm::TypeRef::get_int(ctx.ctx, 64), 0);
 
         let mut idx_list = vec![index];
-        if crate::types::is_array_type(&obj.get_type()) {
+        if let Type::Array(_) = &obj_type {
             idx_list.insert(0, zero);
         }
 
-        if let Ok(ty) = obj.get_type().get_base() {
-            return Some(ctx.builder.create_gep(&ty, &obj, &idx_list, true));
+        if let Type::Pointer(ptr) = obj_type {
+            obj_type = *ptr.typ.clone();
         }
 
-        error_msg_label(
-            "cannot deref value type",
-            ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str())
-        );
+        return Some(ctx.builder.create_gep(&scope.resolve_type(&obj_type, ctx), &obj, &idx_list, true));
+
+        //error_msg_label(
+        //    "cannot deref value type",
+        //    ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str())
+        //);
     }
 
     fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<crate::types::Type> {
@@ -258,7 +284,6 @@ impl Generate for ResolutionExpr {
             return call.gen_code_internal(scope, ctx, Some((&self.obj, true)), None);
         }
 
-        println!("{:#?}", self.member);
         //provide an actual error essage
         error_msg_label(
             format!("resolution expr err").as_str(),

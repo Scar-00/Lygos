@@ -1,7 +1,7 @@
-use crate::ast::{AST, Generate};
-use crate::lexer::{Tagged, Loc};
-use crate::types::{Type, Pointer, Path};
-use crate::log::{ErrorLabel, error_msg_label, error_msg_labels};
+use crate::ast::{Generate, AST};
+use crate::lexer::{Loc, Tagged};
+use crate::log::{error_msg_label, error_msg_labels, ErrorLabel};
+use crate::types::{Path, Pointer, Type};
 
 #[derive(Debug)]
 pub struct UnaryExpr {
@@ -28,17 +28,32 @@ impl Generate for UnaryExpr {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         match self.op.inner().as_str() {
             "*" => {
-                if !obj.get_type().is_pointer_ty() {
+                if !self.obj.get_type(scope, ctx).unwrap().is_pointer_like() {
                     error_msg_label(
                         "cannot deref value type",
-                        ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str()));
+                        ErrorLabel::from(self.loc(), format!("cannot deref value type `{}`", self.obj.get_type(scope, ctx).unwrap().get_full_name()).as_str()),
+                    );
                 }
+                /*return match *self.obj {
+                    AST::MemberExpr(_) => obj,
+                    AST::
+
+                }*/
                 return Some(if let AST::MemberExpr(_) = *self.obj {
                     obj
-                }else {
-                    ctx.builder.create_load(&obj.get_type().get_base().unwrap(), &obj)
+                } else {
+                    let base = self.obj.get_type(scope, ctx).unwrap();
+                    /*
+                     *  NOTE(S): This is a dirty hack and should not be handled like this
+                     */
+                    let base_ty = scope.resolve_type(&base, ctx);
+                    if !obj.get_type().matches(&base_ty) {
+                        ctx.builder.create_load(&base_ty, &obj)
+                    }else {
+                        ctx.builder.create_load(&scope.resolve_type(&base.get_base().unwrap(), ctx), &obj)
+                    }
                 });
-            },
+            }
             "&" => {
                 /*
                  *  TODO(S):
@@ -47,16 +62,20 @@ impl Generate for UnaryExpr {
                  *
                  */
                 return Some(obj);
-            },
+            }
             "!" => {
                 if self.obj.should_load() {
-                    obj = obj.try_load(ctx.builder);
+                    let base = self.obj.get_type(scope, ctx).unwrap();
+                    obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
                 }
                 let zero = llvm::ConstantInt::get(&obj.get_type(), 0);
                 let ne = ctx.builder.create_icmp_ne(&obj, &zero);
                 return Some(ctx.builder.create_xor_vl(&ne, 1));
             }
-            _ => error_msg_label(format!("unknown unary operator `{}`", self.op.inner()).as_str(), ErrorLabel::from(self.loc(), "unknown unary operator")),
+            _ => error_msg_label(
+                format!("unknown unary operator `{}`", self.op.inner()).as_str(),
+                ErrorLabel::from(self.loc(), "unknown unary operator"),
+            ),
         }
     }
 
@@ -68,15 +87,17 @@ impl Generate for UnaryExpr {
                     return Some(*ptr.typ.clone());
                 }
                 return None;
-            },
+            }
             "&" => {
                 return Some(Type::Pointer(Pointer::new(ty.get_loc(), Box::new(ty), false, false)));
-            },
+            }
             "!" => {
                 return Some(Type::Path(Path::new(self.loc().clone(), "bool".to_string())));
             }
-            _ => error_msg_label(format!("unknown unary operator `{}`", self.op.inner()).as_str(), ErrorLabel::from(self.loc(), "unknown unary operator")),
-
+            _ => error_msg_label(
+                format!("unknown unary operator `{}`", self.op.inner()).as_str(),
+                ErrorLabel::from(self.loc(), "unknown unary operator"),
+            ),
         }
     }
 
@@ -160,7 +181,8 @@ impl Generate for CastExpr {
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         if self.obj.should_load() {
-            obj = obj.try_load(ctx.builder);
+            let base = self.obj.get_type(scope, ctx).unwrap();
+            obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
         }
 
         let dest_ty = scope.resolve_type(&self.target_type, ctx);

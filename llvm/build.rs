@@ -1,7 +1,7 @@
 fn main() {
     println!("cargo:rerun-if-changed=src/bindings.cpp");
     println!("cargo:rustc-search=-Lusr/lib");
-    println!("cargo:rustc-link-lib=LLVM-16");
+    println!("cargo:rustc-link-lib=LLVM-18");
     println!("cargo:rustc-link-lib=stdc++");
     let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     println!(

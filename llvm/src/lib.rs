@@ -128,12 +128,17 @@ extern "C" {
     fn TypeCanLossLesslyBitCast(ty: *mut (), dest: *mut ()) -> bool;
     fn TypeGetIntBitWidth(ty: *mut ()) -> u32;
 
-    fn TypeTryGetPointerBase(ty: *mut ()) -> *mut ();
+    fn TypeGetContainedType(ty: *mut (), index: usize) -> *mut ();
+    fn TypeGetNumContainedTypes(ty: *mut ()) -> usize;
+    fn TypeMatches(lhs: *mut (), rhs: *mut ()) -> bool;
+
+    //fn TypeTryGetPointerBase(ty: *mut ()) -> *mut ();
 
     fn FunctionCreate(typ: *mut (), name: CStr, module: *mut ()) -> *mut ();
     fn FunctionGetArgs(func: *mut ()) -> FuncArgs;
     fn FunctionVerify(func: *mut ()) -> bool;
     fn FunctionIsVarArg(func: *mut ()) -> bool;
+    fn FunctionGetType(func: *mut ()) -> *mut ();
 
 
     fn GlobalVariableCreate(m: *mut (), ty: *mut (), is_constant: bool, val: *mut ()) -> *mut ();
@@ -154,6 +159,7 @@ extern "C" {
     fn PrintType(ty: *mut ()) -> FFIString;
 
     fn EmitObjFile(path: CStr, m: *mut (), target_machine: *mut ()) -> bool;
+    fn EmitAsmFile(path: CStr, m: *mut (), target_machine: *mut ()) -> bool;
 
     fn InitAll();
 }
@@ -229,12 +235,24 @@ impl TypeRef {
         return unsafe{ TypeGetIntBitWidth(self.0) };
     }
 
-    pub fn get_base(&self) -> Result<TypeRef, LoadingError> {
+    /*pub fn get_base(&self) -> Result<TypeRef, LoadingError> {
         let res = unsafe{ TypeTryGetPointerBase(self.0) };
         if res.is_null() {
             return Err(LoadingError::InvalidLevelOfIndirection);
         }
         return Ok(TypeRef::new(res));
+    }*/
+
+    pub fn get_num_contained_types(&self) -> usize {
+        return unsafe{ TypeGetNumContainedTypes(self.0) };
+    }
+
+    pub fn get_contained_type(&self, index: usize) -> Self {
+        return Self{ 0: unsafe{ TypeGetContainedType(self.0, index) } };
+    }
+
+    pub fn matches(&self, other: &TypeRef) -> bool {
+        return unsafe{ TypeMatches(self.0, other.0) };
     }
 
     pub fn print(&self) -> String {
@@ -258,11 +276,18 @@ impl ValueRef {
         return TypeRef::new(unsafe{ ValueType(self.0) });
     }
 
-    pub fn try_load(&self, builder: &IRBuilder) -> ValueRef {
+    /*pub fn try_load(&self, builder: &IRBuilder) -> ValueRef {
         if self.get_type().is_pointer_ty() {
             return builder.create_load(&self.get_type().get_base().expect("cannot happen"), &self);
         }
         return ValueRef::new(self.0.clone());
+    }*/
+
+    pub fn try_load(&self, base: &TypeRef, builder: &IRBuilder) -> ValueRef {
+        //if self.get_type().is_pointer_ty() {
+            return builder.create_load(base, &self);
+        //}
+        //return ValueRef::new(self.0.clone());
     }
 
     pub fn is_constant(&self) -> bool {
@@ -388,6 +413,10 @@ impl Function {
 
     pub fn is_var_arg(&self) -> bool {
         return unsafe{ FunctionIsVarArg(self.0) };
+    }
+
+    pub fn get_type(&self) -> TypeRef {
+        return TypeRef{ 0: unsafe{ FunctionGetType(self.0) } };
     }
 }
 
@@ -737,6 +766,10 @@ pub fn create_target_machine<S: AsRef<str>>(target: TargetRef, tt: S, cpu: S, fe
 
 pub fn emit_obj_file<P: AsRef<str>>(p: P, m: &Module, tm: &TargetMachineRef) -> bool {
     return unsafe{ EmitObjFile(to_cstr!(p.as_ref()), m.ptr, tm.0) };
+}
+
+pub fn emit_asm_file<P: AsRef<str>>(p: P, m: &Module, tm: &TargetMachineRef) -> bool {
+    return unsafe{ EmitAsmFile(to_cstr!(p.as_ref()), m.ptr, tm.0) };
 }
 
 pub fn init_all() {

@@ -27,15 +27,17 @@ impl Generate for BinaryExpr {
     }
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
+        let lhs_ty = self.lhs.get_type(scope, ctx).unwrap();
         let mut lhs = self.lhs.gen_code(scope, ctx).unwrap();
+        let rhs_ty = self.rhs.get_type(scope, ctx).unwrap();
         let mut rhs = self.rhs.gen_code(scope, ctx).unwrap();
 
         if self.lhs.should_load() {
-            lhs = lhs.try_load(ctx.builder);
+            lhs = lhs.try_load(&scope.resolve_type(&lhs_ty, ctx), ctx.builder);
         }
 
         if self.rhs.should_load() {
-            rhs = rhs.try_load(ctx.builder);
+            rhs = rhs.try_load(&scope.resolve_type(&rhs_ty, ctx), ctx.builder);
         }
 
         let lhs_ty = self.lhs.get_type(scope, ctx).unwrap();

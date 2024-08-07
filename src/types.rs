@@ -280,7 +280,14 @@ impl Type {
             Type::Slice(slice) => {
                 "[".to_owned() + &slice.typ.get_full_name() + "]"
             },
-            Type::FuncPtr(_) => todo!(),
+            Type::FuncPtr(func) => {
+                let mut string = "fn (".to_string();
+                func.params.iter().for_each(|param| {
+                    string += &(param.get_full_name() + &(", "));
+                });
+                string += &format!(") -> {}", func.ret_type.get_full_name());
+                return string;
+            }
         }
     }
 
@@ -313,14 +320,30 @@ impl Type {
         }
         return Some(Type::Path(Path::new(loc, s.to_owned())));
     }
+
+    pub fn get_base(&self) -> Option<&Type> {
+        match self {
+            Type::Pointer(ptr) => Some(&ptr.typ),
+            Type::Array(arr) => Some(&arr.typ),
+            Type::Slice(slice) => Some(&slice.typ),
+            _ => None,
+        }
+    }
+
+    pub fn is_pointer_like(&self) -> bool {
+        return match self {
+            Self::Pointer(_) => true,
+            _ => false,
+        };
+    }
 }
 
-pub fn is_array_type(ty: &llvm::TypeRef) -> bool {
+/*pub fn is_array_type(ty: &llvm::TypeRef) -> bool {
     if let Ok(ty) = ty.get_base() {
         return is_array_type(&ty);
     }
     return ty.is_array_ty();
-}
+}*/
 
 pub mod containers {
     #[derive(Debug)]
