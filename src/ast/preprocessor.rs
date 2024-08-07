@@ -24,8 +24,8 @@ use path_absolutize::*;
 /*
  *  FIXME(S):
  *  rethink how to validate, that every source file is only included once in the current
- *  context, so that so overlapping symbols may occur. Because it can not garuenteed, that there
- *  is only ever one paring context operating on one source tree
+ *  context, so that no multiple defined symbols may occur. Because it can not garuenteed, that there
+ *  is only ever one parsing context operating on one source tree
  *
  */
 

@@ -102,6 +102,7 @@ extern "C" {
     fn GetConstantInt(typ: *mut (), value: i32) -> *mut ();
     fn GetConstantFP(ty: *mut (), value: f64) -> *mut ();
     fn GetConstantStruct(ty: *mut (), constatns: *mut *mut (), constatns_len: usize) -> *mut ();
+    fn GetConstantArr(ty: *mut (), values: *mut *mut (), values_len: usize) -> *mut ();
 
     fn FunctionTypeGet(ret: *mut (), params: *mut *mut (), len: usize, is_var_arg: bool) -> *mut ();
 
@@ -736,6 +737,14 @@ impl ConstantStruct {
     pub fn get(typ: TypeRef, constants: &[ValueRef]) -> ValueRef {
         let mut constants: Vec<*mut ()> = constants.iter().map(|arg| arg.0).collect();
         return ValueRef{ 0: unsafe{ GetConstantStruct(typ.0, constants.as_mut_ptr(), constants.len()) } };
+    }
+}
+
+pub struct ConstantArray;
+impl ConstantArray {
+    pub fn get(typ: TypeRef, values: &[ValueRef]) -> ValueRef {
+        let mut constants: Vec<*mut ()> = values.iter().map(|arg| arg.0).collect();
+        return ValueRef{ 0: unsafe{ GetConstantArr(typ.0, constants.as_mut_ptr(), constants.len()) } };
     }
 }
 
