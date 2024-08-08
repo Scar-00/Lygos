@@ -50,8 +50,6 @@ impl Generate for MemberExpr {
             obj = obj.try_load(&scope.resolve_type(&obj_ty, ctx), ctx.builder);
         }
 
-        println!("obj -> {}", obj.print());
-
         if let Type::Pointer(ptr) = &obj_ty {
             if ptr.is_ref {
                 let base = &ptr.typ;
