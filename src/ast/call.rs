@@ -228,7 +228,13 @@ impl Generate for MemberCallExpr {
         let obj_ty = self.obj.get_type(scope, ctx).unwrap();
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         if self.deref {
-            obj = obj.try_load(&scope.resolve_type(&obj_ty, ctx), ctx.builder);
+            let obj_type = scope.resolve_type(&obj_ty, ctx);
+            let ty = if !obj.get_type().matches(&obj_type) {
+                obj_type
+            }else {
+                scope.resolve_type(obj_ty.get_base().unwrap(), ctx)
+            };
+            obj = obj.try_load(&ty, ctx.builder);
         }
 
         /*let struct_name = self.obj.get_type(scope, ctx).unwrap().get_name();
