@@ -38,7 +38,7 @@ fn main() {
     let opt = io::get_cli_options();
 
     let file = if let Some(file) = &opt.input_file {
-        PathBuf::from(file)
+        file
     }else {
         eprintln!("[error]: no input file provided");
         std::process::exit(1);
@@ -59,12 +59,12 @@ fn main() {
 
     let ctx = llvm::Context::new();
     ctx.set_opaque_pointers(false);
-    let mut m = llvm::Module::new(opt.input_file.unwrap().as_str(), &ctx);
+    let mut m = llvm::Module::new(file.as_str(), &ctx);
     m.set_data_layout(&target_machine);
     m.set_target_triple(&tt);
     let builder = llvm::IRBuilder::new(&ctx);
 
-    let mut lexer = Lexer::from(&content, &file);
+    let mut lexer = Lexer::from(&content, &PathBuf::from(file));
     let mut parser = Parser::new(&mut lexer);
     let mut ast = parser.build_ast();
     let mut scope = Scope::new();

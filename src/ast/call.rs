@@ -109,12 +109,19 @@ impl CallExpr {
 
             // TODO(S): add try to safely cast args to expected type
 
+            //if allow_implicit_cast(val.get_type(), )
+
             val
         })
         .collect();
 
         let is_memeber = obj_value.is_some();
         if let Some(mut obj_value) = obj_value {
+            /*
+             *  NOTE(S): store `self` in temporary varialbe to deref it
+             *  NOTE(S): maybe find a more efficient way to do this?
+             *
+             */
             let ty = &r#fn.args[0].typ;
             if let Type::Pointer(_) = ty {
                 if !obj_value.get_type().is_pointer_ty() {
@@ -140,8 +147,6 @@ impl CallExpr {
                     ]
                 );
             }
-
-            //typecheck this shit
             iter += 1;
         }
 

@@ -52,7 +52,6 @@ pub struct Function {
     pub name_mangeled: String,
     pub args: Vec<crate::ast::FunctionArg>,
     pub ret_type: Type,
-    //is_member: bool,
     pub is_definition: bool,
 }
 
