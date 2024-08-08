@@ -17,7 +17,6 @@ impl str {
 
     fn from_parts(ptr: *i8, len: u64) -> Self {
         let s: T = { ptr, len };
-	//let casted = ;
         return (*((:*str)(&s)));
     }
 

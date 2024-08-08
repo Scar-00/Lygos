@@ -46,11 +46,11 @@ impl Generate for MemberExpr {
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         let mut obj = self.obj.gen_code(scope, ctx).unwrap();
         let obj_ty = self.obj.get_type(scope, ctx).unwrap();
-        if self.deref {
-            if let Some(base) = obj_ty.get_base() {
-                obj = obj.try_load(&scope.resolve_type(&base, ctx), ctx.builder);
-            }
+        if self.deref && !obj.get_type().matches(&scope.resolve_type(&obj_ty, ctx)) {
+            obj = obj.try_load(&scope.resolve_type(&obj_ty, ctx), ctx.builder);
         }
+
+        println!("obj -> {}", obj.print());
 
         if let Type::Pointer(ptr) = &obj_ty {
             if ptr.is_ref {
@@ -104,18 +104,19 @@ impl Generate for MemberExpr {
             obj = alloc;
         }
 
-        let base: Option<Type> = if self.deref {
-            let tmp = self.obj.get_type(scope, ctx).unwrap();
-            tmp.get_base().cloned()
+        let base: Option<&Type> = if self.deref {
+            obj_ty.get_base()
         } else if let Type::Pointer(ptr) = &obj_ty {
             if ptr.is_ref {
-                Some(*ptr.typ.clone())
+                Some(&*ptr.typ)
             } else {
-                Some(obj_ty)
+                Some(&obj_ty)
             }
         } else {
-            Some(obj_ty)
+            Some(&obj_ty)
         };
+
+
         if let Some(ty) = base {
             if ty.get_base().is_some() {
                 /*
