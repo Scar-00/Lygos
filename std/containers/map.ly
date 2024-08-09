@@ -38,10 +38,10 @@ macro StringMap {
             fn new(size: size_t) -> Self {
                 let this: Self = {
                     .seed = (:u64)16446456,
-                    .table = (:**StringMapNode##$name)malloc((:u64)(size * (:size_t)sizeof$(*StringMapNode##$name))),
+                    .table = (:**StringMapNode##$name)malloc(size * sizeof$(*StringMapNode##$name)),
                     .size = size,
                 };
-                memset((:*i8)this.table, 0, (this.size * (:size_t)sizeof$(*StringMapNode##$name)));
+                memset((:*i8)this.table, 0, this.size * sizeof$(*StringMapNode##$name));
                 return this;
             }
 
