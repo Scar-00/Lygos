@@ -79,7 +79,7 @@ impl Generate for MacroCall {
     fn get_type(&self, _: &mut Scope, _: &crate::GenerationContext) -> Option<Type> {
         match self.id.inner().as_str() {
             "format_args" => Some(Type::Path(Path::new(self.id.loc().clone(), "Arguments".into()))),
-            "sizeof" => Some(Type::Path(Path::new(self.id.loc().clone(), "u64".into()))),
+            "sizeof" => Some(Type::Path(Path::new(self.id.loc().clone(), "size_t".into()))),
             "test_macro" => Some(Type::FuncPtr(crate::types::FuncPtr::new(self.id.loc().clone(), vec![
                 Type::Pointer(crate::types::Pointer::new(self.id.loc().clone(), Box::new(Type::Path(Path::new(self.id.loc().clone(), "i8".to_string()))), true, false)),
                 Type::Pointer(crate::types::Pointer::new(self.id.loc().clone(), Box::new(Type::Path(Path::new(self.id.loc().clone(), "Formatter".to_string()))), true, false)),
