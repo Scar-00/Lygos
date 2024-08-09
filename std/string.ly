@@ -58,7 +58,7 @@ impl Drop for String {
 impl String {
     fn new(size: u32) -> String {
         let s: String = {
-            .data = malloc(((:u64)size) * sizeof$(i8)),
+            .data = malloc(((:size_t)size) * sizeof$(i8)),
             .len = (:u32)0,
             .cap = size,
         };
@@ -66,11 +66,10 @@ impl String {
     }
 
     fn from(s: str) -> String {
-        let typ_size: u32 = sizeof$(i8);
         let len: u32 = s.len();
         let ptr = s.as_ptr();
         let string = String::new(len);
-        memcpy(string.data, ptr, len * typ_size);
+        memcpy(string.data, ptr, ((:size_t)len) * sizeof$(i8));
         string.len = len;
         return string;
     }
@@ -80,8 +79,7 @@ impl String {
             self.cap = (:u32)1;
         }
         self.cap = self.cap * (:u32)2;
-        let size: u32 = sizeof$(i8);
-        self.data = realloc(self.data, self.cap * size);
+        self.data = realloc(self.data, ((:size_t)self.cap) * sizeof$(i8));
     }
 
     fn push(&mut self, char: i8) {

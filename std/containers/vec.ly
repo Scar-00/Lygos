@@ -19,7 +19,7 @@ macro Vec {
 
             fn with_size(size: u32) -> Self {
                 let this: Vec##$name = {
-                    .data = (:*$typ)malloc(((:u64)size) * sizeof$($typ)),
+                    .data = (:*$typ)malloc(((:size_t)size) * sizeof$($typ)),
                     .cap = size,
                     .len = (:u32)0,
                 };
@@ -32,14 +32,13 @@ macro Vec {
             }
 
             fn may_grow(&mut self) {
-                let size: u32 = sizeof$($typ);
                 if self.cap == (:u32)0 {
                     self.cap = (:u32)1;
-                    self.data = (:*$typ)realloc((:*i8)self.data, self.cap * size);
+                    self.data = (:*$typ)realloc((:*i8)self.data, ((:size_t)self.cap) * sizeof$($typ));
                 }
                 if self.cap == self.len {
                     self.cap = self.cap * (:u32)2;
-                    self.data = (:*$typ)realloc((:*i8)self.data, self.cap * size);
+                    self.data = (:*$typ)realloc((:*i8)self.data, ((:size_t)self.cap) * sizeof$($typ));
                 }
             }
 
@@ -68,7 +67,7 @@ macro Vec {
             fn insert_item(&mut self, index: u64, item: $typ) {
                 self.len = self.len + (:u32)1;
                 self.may_grow();
-                memmove((:*i8)&self.data[index + (:u64)1], (:*i8)&self.data[index], (((:u64)self.len) - index) * sizeof$($typ));
+                memmove((:*i8)&self.data[index + (:u64)1], (:*i8)&self.data[index], (((:size_t)self.len) - ((:size_t)index)) * sizeof$($typ));
                 self.data[index] = item;
             }
 
@@ -76,7 +75,7 @@ macro Vec {
                 if index > self.cap {
                     panic$("remove index out of bounds");
                 }
-                memmove((:*i8)&self.data[index], (:*i8)&self.data[index + (:u32)1], ((:u64)(self.len - index)) * sizeof$($typ));
+                memmove((:*i8)&self.data[index], (:*i8)&self.data[index + (:u32)1], ((:size_t)(self.len - index)) * sizeof$($typ));
                 self.len = self.len - (:u32)1;
             }
         }
@@ -91,9 +90,8 @@ macro Vec {
 
         impl Clone for Vec##$name {
             fn clone(&self) -> Self {
-                let typ_size: u32 = sizeof$($typ);
                 let this = Vec##$name::with_size(self.cap);
-                this.data = (:*$typ)memcpy((:*i8)this.data, (:*i8)self.data, self.cap * typ_size);
+                this.data = (:*$typ)memcpy((:*i8)this.data, (:*i8)self.data, ((:size_t)self.cap) * sizeof$($typ));
                 this.len = self.len;
                 return this;
             }
