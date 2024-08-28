@@ -36,7 +36,7 @@ macro StringMap {
 
         impl StringMap##$name {
             fn new(size: size_t) -> Self {
-                let this: Self = {
+                let this: Self = ${
                     .seed = (:u64)16446456,
                     .table = (:**StringMapNode##$name)malloc(size * sizeof$(*StringMapNode##$name)),
                     .size = size,

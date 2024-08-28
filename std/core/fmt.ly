@@ -19,7 +19,7 @@ struct Formatter {
 
 impl Formatter {
     fn new(buffer: &String) -> Self {
-        let this: Self = { &buffer };
+        let this: Self = ${ &buffer };
         return this;
     }
 
@@ -31,7 +31,7 @@ impl Formatter {
 
     fn debug_struct(&self, name: str) -> DebugStructBuilder {
         self.write_str(name);
-        let this: DebugStructBuilder = { &self, (:bool)0 };
+        let this: DebugStructBuilder = ${ &self, (:bool)0 };
         return this;
     }
 }
@@ -60,7 +60,7 @@ struct Arguments {
 
 impl Arguments {
     fn new(args: *Argument, args_count: u32, pieces: *str, pieces_count: u32) -> Self {
-        let this: Self = { args, args_count, pieces, pieces_count };
+        let this: Self = ${ args, args_count, pieces, pieces_count };
         return this;
     }
 

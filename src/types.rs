@@ -129,6 +129,7 @@ lazy_static! {
         vec.push("str");
 
         vec.push("void");
+        vec.push("()");
 
         vec
     };

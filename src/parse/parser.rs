@@ -8,6 +8,8 @@ pub mod parser {
 
 
     /*
+     *  TODO(S): REWIRTE THE WHOLE FUCKING PARSER!!!!
+     *
      *  TODO(S):
      *  instead of taking struct/enum/macro/vardecl ids directly parse out the identifier
      *
@@ -28,6 +30,7 @@ pub mod parser {
         current_impl: containers::Pointer<Impl>,
         current_trait: containers::Pointer<Trait>,
         current_block: containers::Pointer<Block>,
+        expect_tail_expression: bool,
     }
 
     impl Parser {
@@ -39,6 +42,7 @@ pub mod parser {
                 current_impl: containers::Pointer::new(),
                 current_trait: containers::Pointer::new(),
                 current_block: containers::Pointer::new(),
+                expect_tail_expression: false
             };
             parser.tokens.push(Token::new(
                 "",
@@ -56,6 +60,7 @@ pub mod parser {
                 current_impl: containers::Pointer::new(),
                 current_trait: containers::Pointer::new(),
                 current_block: containers::Pointer::new(),
+                expect_tail_expression: false,
             };
             parser.tokens.push(Token::new(
                 "",
@@ -542,9 +547,10 @@ pub mod parser {
                 TokenType::KwIf => self.parse_if_stmt(),
                 TokenType::KwFor => self.parse_for_stmt(),
                 TokenType::KwMatch => self.parse_match_stmt(),
+                TokenType::CurlyLeft => self.parse_block_expr(false),
                 _ => {
                     let node = self.parse_expr();
-                    if self.eat().typ != TokenType::Semi {
+                    if !self.expect_tail_expression && self.eat().typ != TokenType::Semi {
                         token_expected_help(&self.peek(-1).loc, "unexpected token found", "expected `;` at the end of expression", "add `;` to mark end of expression");
                     }
                     node
@@ -622,31 +628,41 @@ pub mod parser {
             todo!();
         }
 
-        /*fn parse_block_expr(&mut self) -> AST {
+        fn parse_block_expr(&mut self, is_expr: bool) -> AST {
             self.eat();
+
+            let ret = if is_expr {
+                if self.eat().typ != TokenType::Arrow {
+                    token_expected(&self.peek(-1).loc, "unexpected token found", "expected `->` after block expr");
+                }
+                Some(self.parse_type_spec())
+            }else {
+                None
+            };
+
             let mut block = Block::new();
-            let mut returns = false;
             while self.at().typ != TokenType::CurlyRight {
                 self.current_block = containers::Pointer::from(&block);
-                let expr = self.parse_stmt();
-                if let AST::ClaimExpr(_) = &expr {
-                    if self.at().typ != TokenType::CurlyRight {
-                        token_expected(expr.loc(), "unexpected token found", "expression after claim");
-                    }
-                    block.body.push(expr);
-                    returns = true;
-                    break;
-                }
-                block.body.push(expr);
+                // FIXME(S): for now only sigle token expressions will be a valid tail expressions
+                let node = if self.peek(1).typ == TokenType::CurlyRight {
+                    self.expect_tail_expression = true;
+                    let node = self.parse_stmt();
+                    self.expect_tail_expression = false;
+                    node
+                }else {
+                    self.parse_stmt()
+                };
+                block.body.push(node);
             }
             self.eat();
-            return AST::BlockExpr(BlockExpr::new(block, returns));
-        }*/
+            return AST::BlockExpr(BlockExpr::new(block, ret));
+        }
 
         fn parse_expr(&mut self) -> AST {
             return match self.at().typ {
                 TokenType::KwLet => self.parse_var_decl(),
                 TokenType::KwRet => self.parse_ret_expr(),
+                TokenType::CurlyLeft => self.parse_block_expr(true),
                 _ => self.parse_cond_expr(),
             }
         }
@@ -878,8 +894,10 @@ pub mod parser {
         }
 
         fn parse_initializer_expr(&mut self) -> AST {
-            //if self.at().typ == TokenType::Dollar {
-            //    self.eat();
+            //  TODO: change the type association from lying at the assignee to here so the created
+            //  type if clear
+            if self.at().typ == TokenType::Dollar {
+                self.eat();
             if self.at().typ == TokenType::CurlyLeft {
                 self.eat();
                 let mut values: Vec<Initializer> = Vec::new();
@@ -911,7 +929,7 @@ pub mod parser {
                 self.eat();
                 return AST::InitializerList(InitializerListExpr::new(values));
             }
-            //}
+            }
             return self.parse_paran_expr();
         }
 

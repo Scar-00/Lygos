@@ -29,7 +29,7 @@ pub use assignment::AssignmentExpr;
 mod control_flow;
 pub use control_flow::{IfStmt, ForStmt, BreakExpr};
 mod literals;
-pub use literals::{TypeAlias, Identifier, NumberLiteral, StaticLiteral, StringLiteral, NumberType};
+pub use literals::{TypeAlias, Identifier, NumberLiteral, StaticLiteral, StringLiteral, NumberType, BlockExpr};
 mod initializers;
 pub use initializers::{Initializer, InitializerListExpr};
 pub mod symbol;

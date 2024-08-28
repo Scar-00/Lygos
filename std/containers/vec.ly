@@ -9,7 +9,7 @@ macro Vec {
         impl Vec##$name {
             fn new() -> Vec##$name {
                 let size: i32 = sizeof$($typ);
-                let this: Vec##$name = {
+                let this: Vec##$name = ${
                     .data = (:*$typ)0,
                     .cap = (:u32)0,
                     .len = (:u32)0,
@@ -18,7 +18,7 @@ macro Vec {
             }
 
             fn with_size(size: u32) -> Self {
-                let this: Vec##$name = {
+                let this: Vec##$name = ${
                     .data = (:*$typ)malloc(((:size_t)size) * sizeof$($typ)),
                     .cap = size,
                     .len = (:u32)0,
@@ -27,7 +27,7 @@ macro Vec {
             }
 
             fn from_raw_parts(data: *$typ, len: u32, cap: u32) -> Self {
-                let this: Self = { data, cap, len };
+                let this: Self = ${ data, cap, len };
                 return this;
             }
 

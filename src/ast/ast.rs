@@ -22,6 +22,7 @@ pub mod ast {
         CastExpr(CastExpr),
         ReturnExpr(ReturnExpr),
         BinaryExpr(BinaryExpr),
+        BlockExpr(BlockExpr),
 
         IfStmt(IfStmt),
         ForStmt(ForStmt),
@@ -58,7 +59,7 @@ pub mod ast {
                 }
             }
             return match self {
-                AST::Id(_) | AST::MemberExpr(_) | AST::AccessExpr(_) | AST::UnaryExpr(_) | AST::InitializerList(_) => true,
+                AST::Id(_) | AST::MemberExpr(_) | AST::AccessExpr(_) | AST::UnaryExpr(_) | AST::InitializerList(_) | AST::BlockExpr(_) => true,
                 _ => false,
             }
         }
@@ -77,6 +78,7 @@ pub mod ast {
                 AST::ResolutionExpr(res) => res.loc(),
                 AST::ReturnExpr(ret) => ret.loc(),
                 AST::BinaryExpr(bin) => bin.loc(),
+                AST::BlockExpr(block) => block.loc(),
                 AST::IfStmt(i) => i.loc(),
                 AST::ForStmt(f) => f.loc(),
                 AST::BreakExpr(b) => b.loc(),
@@ -113,6 +115,7 @@ pub mod ast {
                 AST::ResolutionExpr(res) => res.get_value(),
                 AST::ReturnExpr(ret) => ret.get_value(),
                 AST::BinaryExpr(bin) => bin.get_value(),
+                AST::BlockExpr(block) => block.get_value(),
                 AST::IfStmt(i) => i.get_value(),
                 AST::ForStmt(f) => f.get_value(),
                 AST::BreakExpr(b) => b.get_value(),
@@ -148,6 +151,7 @@ pub mod ast {
                 AST::ResolutionExpr(res) => res.gen_code(scope, ctx),
                 AST::ReturnExpr(ret) => ret.gen_code(scope, ctx),
                 AST::BinaryExpr(bin) => bin.gen_code(scope, ctx),
+                AST::BlockExpr(block) => block.gen_code(scope, ctx),
                 AST::IfStmt(i) => i.gen_code(scope, ctx),
                 AST::ForStmt(f) => f.gen_code(scope, ctx),
                 AST::BreakExpr(b) => b.gen_code(scope, ctx),
@@ -183,6 +187,7 @@ pub mod ast {
                 AST::ResolutionExpr(res) => res.get_type(scope, ctx),
                 AST::ReturnExpr(ret) => ret.get_type(scope, ctx),
                 AST::BinaryExpr(bin) => bin.get_type(scope, ctx),
+                AST::BlockExpr(block) => block.get_type(scope, ctx),
                 AST::IfStmt(i) => i.get_type(scope, ctx),
                 AST::ForStmt(f) => f.get_type(scope, ctx),
                 AST::BreakExpr(b) => b.get_type(scope, ctx),
@@ -240,6 +245,7 @@ pub mod ast {
         fn gen_code(&mut self, scope: &mut Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef>;
         fn get_type(&self, scope: &mut Scope, ctx: &crate::GenerationContext) -> Option<Type>;
         fn collect_symbols(&mut self, scope: &mut Scope);
+        //fn lower(&self) -> Vec<AST>;
     }
 
     #[derive(Debug)]

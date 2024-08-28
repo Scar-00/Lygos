@@ -6,6 +6,10 @@ use std::path::{Path, PathBuf};
 
 use clap::{arg, Parser, ValueEnum};
 
+/*
+ *  TODO(S): redo the cli, this is stupid
+ */
+
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 struct CliArgs {

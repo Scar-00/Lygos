@@ -16,7 +16,7 @@ impl str {
     }
 
     fn from_parts(ptr: *i8, len: u64) -> Self {
-        let s: T = { ptr, len };
+        let s: T = ${ ptr, len };
         return (*((:*str)(&s)));
     }
 
@@ -57,7 +57,7 @@ impl Drop for String {
 
 impl String {
     fn new(size: u32) -> String {
-        let s: String = {
+        let s: String = ${
             .data = malloc(((:size_t)size) * sizeof$(i8)),
             .len = (:u32)0,
             .cap = size,

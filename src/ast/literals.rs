@@ -1,5 +1,5 @@
 use crate::lexer::{Tagged, Loc};
-use crate::ast::{AST, Generate};
+use crate::ast::{AST, Generate, Block};
 use crate::{types, types::{Type, Path}};
 use crate::ast::{symbol, symbol::Symbol};
 
@@ -233,17 +233,17 @@ impl Generate for TypeAlias {
     }
 }
 
-/*
+
 #[derive(Debug)]
 pub struct BlockExpr {
     loc: Loc,
     body: Block,
-    has_ret: bool,
+    ret: Option<Type>
 }
 
 impl BlockExpr {
-    pub fn new(body: Block, has_ret: bool) -> Self {
-        Self{ loc: Loc::new("".into(), 0, 1), body, has_ret }
+    pub fn new(body: Block, ret: Option<Type>) -> Self {
+        Self{ loc: Loc::new("".into(), 0, 1), body, ret }
     }
 }
 
@@ -258,26 +258,52 @@ impl Generate for BlockExpr {
 
     fn gen_code(&mut self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<llvm::ValueRef> {
         self.body.scope.set_parent(scope);
-        let mut last = None;
+        if let Some(ret_ty) = &self.ret {
+            let (tail, body) = if let Some((tail, body)) = self.body.body.split_last_mut() {
+                (tail, body)
+            }else {
+                todo!("BlockExpr is expected to return a value but has a empty body");
+            };
+
+            for expr in body {
+                expr.gen_code(&mut self.body.scope, ctx);
+            }
+
+            let mut value = tail.gen_code(&mut self.body.scope, ctx).unwrap();
+            let tail_type = tail.get_type(&mut self.body.scope, ctx).unwrap();
+            if tail.should_load() {
+                value = value.try_load(&self.body.scope.resolve_type(&ret_ty, ctx), ctx.builder);
+            }
+
+            if !tail_type.matches(&ret_ty) {
+                crate::log::error_msg_labels("invalid return type in block", &[
+                    crate::log::ErrorLabel::from(&ret_ty.get_loc(), &format!("type `{}` declared here", ret_ty.get_full_name())),
+                    crate::log::ErrorLabel::from(tail.loc(), &format!("but return value has type `{}`", tail_type.get_full_name())),
+                ]);
+            }
+
+            let tmp = ctx.builder.create_alloca(&self.body.scope.resolve_type(&ret_ty, ctx), None);
+            ctx.builder.create_store(&value, &tmp);
+
+            return Some(tmp);
+        }
+
+
+
         for expr in &mut self.body.body {
-            last = expr.gen_code(&mut self.body.scope, ctx);
+            expr.gen_code(&mut self.body.scope, ctx);
         }
-        return if !self.has_ret { None } else { last };
+        None
     }
 
-    fn get_type(&self, scope: &mut super::Scope, ctx: &crate::GenerationContext) -> Option<Type> {
-        if self.has_ret {
-            return self.body.body.last().map(|e| e.get_type(scope, ctx).unwrap());
-        }else {
-            return None;
-        }
+    fn get_type(&self, _scope: &mut super::Scope, _ctx: &crate::GenerationContext) -> Option<Type> {
+        self.ret.clone()
     }
 
-    fn collect_symbols(&self, _: &mut super::Scope) {
-
-    }
+    fn collect_symbols(&mut self, _: &mut super::Scope) {}
 }
 
+/*
 #[derive(Debug)]
 pub struct ClaimExpr {
     loc: Loc,

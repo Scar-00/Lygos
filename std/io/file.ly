@@ -8,13 +8,13 @@ struct PathBuf {
 
 impl PathBuf {
     fn new() -> Self {
-        return {
+        return ${
             .buf = String::new((:u32)0),
         };
     }
 
     fn from(s: String) -> Self {
-        return {
+        return ${
             .buf = s,
         };
     }
@@ -43,7 +43,7 @@ struct FilePath {
 
 impl FilePath {
     fn new(s: str) -> Self {
-        return {
+        return ${
             s
         };
     }
@@ -75,7 +75,7 @@ impl Drop for File {
 
 impl File {
     fn open(path: FilePath) -> Self {
-        let this: Self = { .path = path, .fd = fopen(path.inner.as_ptr(), "r".as_ptr()) };
+        let this: Self = ${ .path = path, .fd = fopen(path.inner.as_ptr(), "r".as_ptr()) };
         if this.fd == (:FileDescriptor)0 {
             panic$("failed to open file: {}", path);
         }
