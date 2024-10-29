@@ -1,7 +1,8 @@
 use crate::types::Type;
 use crate::lexer::Tagged;
-use crate::ast::{AST, Generate};
+use crate::ast::{AST, Generate, ASTVisitor};
 use crate::ast::symbol::{Symbol, Variable};
+use lygos_macros::VisitorImpl;
 
 #[derive(Debug)]
 pub struct VarDecl {

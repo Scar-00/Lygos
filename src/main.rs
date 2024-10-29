@@ -8,6 +8,7 @@ mod lexer;
 mod parse;
 mod types;
 mod log;
+mod visitors;
 use lexer::{Lexer, Loc};
 use parse::Parser;
 use ast::Generate;
@@ -67,6 +68,9 @@ fn main() {
     let mut lexer = Lexer::from(&content, &PathBuf::from(file));
     let mut parser = Parser::new(&mut lexer);
     let mut ast = parser.build_ast();
+    //let mut symbols = visitors::symbol::SymbolCollector{};
+    //ast.accept(&mut symbols);
+
     let mut scope = Scope::new();
     ast.collect_symbols(&mut scope);
     let ctx = GenerationContext::new(&ctx, &m, &builder);

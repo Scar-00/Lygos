@@ -9,7 +9,7 @@ use crate::ast::{symbol, symbol::Symbol};
  *
  */
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Identifier {
     pub id: Tagged<String>,
     pub deref: bool,

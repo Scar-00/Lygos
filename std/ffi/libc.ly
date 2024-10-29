@@ -23,3 +23,6 @@ fn fseek(stream: FileDescriptor, off: u64, whence: i32) -> i32;
 fn ftell(stream: FileDescriptor) -> u64;
 fn rewind(stream: FileDescriptor);
 fn fread(ptr: *i8, size: u64, n: u64, stream: FileDescriptor) -> u64;
+
+#[var_args]
+fn snprintf(buf: *i8, buf_size: size_t, format: *i8) -> i32;

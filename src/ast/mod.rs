@@ -1,7 +1,8 @@
+mod mir;
 mod access;
 pub use access::{MemberExpr, AccessExpr, ResolutionExpr};
 mod ast;
-pub use ast::ast::{AST, Generate, Block};
+pub use ast::ast::{AST, Generate, Block, ASTVisitor};
 mod module;
 pub use module::Mod;
 mod scope;
@@ -9,7 +10,7 @@ pub use scope::Scope;
 mod r#struct;
 pub use r#struct::{StructDef, StructField, EnumDef};
 mod function;
-pub use function::{Function, FunctionArg, ClosureExpr};
+pub use function::{Function, FunctionArg, ClosureExpr, Attribute};
 mod r#impl;
 pub use r#impl::Impl;
 mod r#trait;

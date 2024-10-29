@@ -97,7 +97,7 @@ pub mod parser {
         fn parse_globals(&mut self) -> AST {
             return match self.at().typ {
                 TokenType::KwStruct => self.parse_struct_decl(),
-                TokenType::KwFn => self.parse_func(),
+                TokenType::KwFn => self.parse_func(None),
                 TokenType::KwImpl => self.parse_impl(),
                 TokenType::KwStatic => self.parse_static(),
                 TokenType::KwTrait => self.parse_trait(),
@@ -199,7 +199,7 @@ pub mod parser {
             return FunctionArg{ id: Tagged::new(id.loc, id.value), typ };
         }
 
-        fn parse_func(&mut self) -> AST {
+        fn parse_func(&mut self, attr: Option<Attribute>) -> AST {
             self.eat();
 
             let id = self.eat().clone();
@@ -238,9 +238,11 @@ pub mod parser {
                 None
             };
 
+            let attributes = attr.map(|v| vec![v]).unwrap_or(Vec::new());
+
             if self.at().typ == TokenType::Semi {
                 self.eat();
-                return AST::Function(Function::new(id.into(), c_impl, args, Block::new(), ret_type, false, false));
+                return AST::Function(Function::new(id.into(), c_impl, args, Block::new(), ret_type, false, false, attributes));
             }
 
             if self.eat().typ != TokenType::CurlyLeft {
@@ -253,7 +255,7 @@ pub mod parser {
                 body.body.push(self.parse_stmt());
             }
             self.eat();
-            return AST::Function(Function::new(id.into(), c_impl, args, body, ret_type, true, false));
+            return AST::Function(Function::new(id.into(), c_impl, args, body, ret_type, true, false, attributes));
         }
 
         fn parse_impl(&mut self) -> AST {
@@ -279,7 +281,7 @@ pub mod parser {
             self.current_impl = containers::Pointer::from(&r#impl);
             while self.at().typ != TokenType::CurlyRight {
                 self.current_block = containers::Pointer::from(&r#impl.body);
-                r#impl.body.body.push(self.parse_func());
+                r#impl.body.body.push(self.parse_func(None));
             }
             self.eat();
 
@@ -332,7 +334,7 @@ pub mod parser {
             self.current_trait = containers::Pointer::from(&trat);
             while self.at().typ != TokenType::CurlyRight {
                 self.current_block = containers::Pointer::from(&trat.funcs);
-                trat.funcs.body.push(self.parse_func());
+                trat.funcs.body.push(self.parse_func(None));
             }
             self.eat();
 
@@ -443,6 +445,19 @@ pub mod parser {
             return AST::Macro(mac);
         }
 
+        fn parse_attribute(&mut self) -> AST {
+            //self.eat();
+            if self.at().typ != TokenType::Id {
+                token_expected(&self.at().loc, "unexpected token found", "expected identifier");
+            }
+            let ident = Identifier::new(Tagged::from(self.eat().clone()));
+            if self.eat().typ != TokenType::BraceRight {
+                token_expected(&self.peek(-1).loc, "unexpected token found", "expected `]` at the end of attribute declaration");
+            }
+            let attribute = Attribute::new(ident.clone());
+            return self.parse_func(Some(attribute));
+        }
+
         fn parse_pound(&mut self) -> AST {
             let start_index = self.index;
             self.eat();
@@ -465,6 +480,9 @@ pub mod parser {
                     }
                     return self.parse_globals();
                 },
+                &"[" => {
+                    return self.parse_attribute();
+                }
                 _ => token_expected(&self.at().loc, "unexpected token found", "invalid value after `#`"),
             }
         }
@@ -967,7 +985,7 @@ pub mod parser {
             }
             self.eat();
 
-            return AST::ClosureExpr(ClosureExpr::new(loc.clone(), Function::new(Tagged::new(loc, "".into()), None, args, body, ret_type, true, false)));
+            return AST::ClosureExpr(ClosureExpr::new(loc.clone(), Function::new(Tagged::new(loc, "".into()), None, args, body, ret_type, true, false, Vec::new())));
         }
 
         fn parse_primary_expr(&mut self) -> AST {

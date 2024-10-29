@@ -91,7 +91,8 @@ pub fn emit_exe(
     let exe_path = path.with_extension("");
     let obj_path = path.with_extension("o");
     let cmd = format!(
-        "clang -o {} {} -lc ~/lygos/debug_print.o",
+        "clang -o {} {} -lc",
+        // ~/lygos/debug_print.o
         exe_path.to_str().unwrap(),
         obj_path.to_str().unwrap()
     );

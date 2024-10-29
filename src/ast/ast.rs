@@ -3,10 +3,12 @@ pub mod ast {
     use crate::lexer::Loc;
     use crate::ast::*;
     use crate::types::Type;
+    use lygos_macros::{Visitor, VisitorImpl};
 
     pub type Exprs = Vec<AST>;
 
-    #[derive(Debug)]
+    #[derive(Debug, Visitor, VisitorImpl)]
+    #[visitor(ASTVisitor)]
     pub enum AST {
         Mod(Mod),
         Function(Function),
@@ -25,7 +27,7 @@ pub mod ast {
 
         IfStmt(IfStmt),
         ForStmt(ForStmt),
-        MatchStmt(),
+        //MatchStmt(()),
         BreakExpr(BreakExpr),
         ClosureExpr(ClosureExpr),
 
@@ -42,6 +44,14 @@ pub mod ast {
         StaticLiteral(StaticLiteral),
         Id(Identifier),
     }
+
+    /*impl AST {
+        fn accept(&self, visitor: &mut dyn ASTVisitor) {
+            match self {
+                Self::Mod(v) => visitor.visit_mod(v),
+            }
+        }
+    }*/
 
     impl AST {
         pub fn should_load(&self) -> bool {

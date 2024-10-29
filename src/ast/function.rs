@@ -1,6 +1,17 @@
 use crate::types::{Type, containers, FuncPtr};
 use crate::lexer::{Tagged, Loc};
-use crate::ast::{symbol, Impl, symbol::{Symbol, Variable}, Block, Generate};
+use crate::ast::{Identifier, symbol, Impl, symbol::{Symbol, Variable}, Block, Generate};
+
+#[derive(Debug)]
+pub struct Attribute {
+    name: Identifier,
+}
+
+impl Attribute {
+    pub fn new(name: Identifier) -> Self {
+        Self{ name }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct FunctionArg {
@@ -19,11 +30,12 @@ pub struct Function {
     is_def: bool,
     is_var_arg: bool,
     pub ret_block: Option<llvm::BasicBlock>,
+    attrs: Vec<Attribute>,
 }
 
 impl Function {
-    pub fn new(id: Tagged<String>, obj: Option<Impl>, args: Vec<FunctionArg>, body: Block, ret_type: Type, is_def: bool, is_var_arg: bool) -> Self {
-        Self{ id: id.clone(), name_mangeled: id.inner().to_string(), obj, args, body, ret_type, is_def, is_var_arg, ret_block: None }
+    pub fn new(id: Tagged<String>, obj: Option<Impl>, args: Vec<FunctionArg>, body: Block, ret_type: Type, is_def: bool, is_var_arg: bool, attrs: Vec<Attribute>) -> Self {
+        Self{ id: id.clone(), name_mangeled: id.inner().to_string(), obj, args, body, ret_type, is_def, is_var_arg, ret_block: None, attrs }
     }
 }
 
@@ -50,7 +62,8 @@ impl Generate for Function {
                 params.push(self.body.scope.resolve_type(&param.typ, ctx));
             }
 
-            let fn_type = llvm::FunctionTypeRef::get(self.body.scope.resolve_type(&self.ret_type, ctx), &params, self.is_var_arg);
+            let is_var_arg = self.attrs.iter().any(|attr| attr.name.get_value() == "var_args");
+            let fn_type = llvm::FunctionTypeRef::get(self.body.scope.resolve_type(&self.ret_type, ctx), &params, is_var_arg);
 
             return llvm::Function::create(fn_type, &self.name_mangeled, &ctx.module);
         });

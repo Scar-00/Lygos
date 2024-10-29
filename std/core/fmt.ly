@@ -1,7 +1,13 @@
 #include "../string.ly"
+#include "../ffi/libc.ly"
 
-fn int_to_str(buffer: *i8, i: i64, base: i32) -> i64;
-fn ptr_to_str(buffer: *i8, buf_size: u64, ptr: *i8) -> i32;
+fn int_to_str(buffer: *i8, i: i64, base: i32) -> i64 {
+    return snprintf(buffer, (:size_t)24, "%d".as_ptr(), i);
+}
+
+fn ptr_to_str(buffer: *i8, buf_size: u64, ptr: *i8) -> i64 {
+    return snprintf(buffer, (:size_t)buf_size, "%p".as_ptr(), ptr);
+}
 
 enum FormattingError {
     None,
