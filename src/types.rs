@@ -237,6 +237,16 @@ impl ArraySlice {
     }
 }
 
+/*
+ *  NOTE(S): variables that are allocated on the stack should probably be treated as pointers in the type
+ *  system unlike literal values as they are right. This change would probably make the decicion on
+ *  weather a value should be (auto)dereffernced much easier while at the same time invalidation a
+ *  lot of assumptions currently made in the type system that stack allocated variables are allways
+ *  literal values instead of pointers
+ *
+ */
+
+
 #[derive(Debug, Clone)]
 pub enum Type {
     Path(Path),
